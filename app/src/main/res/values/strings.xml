@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Miti</string>
+
+    <string name="destino_hoy">Hoy</string>
+    <string name="destino_compras">Compras</string>
+    <string name="destino_balance">Balance</string>
+</resources>
