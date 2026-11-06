@@ -540,7 +540,7 @@ dominio/
 └── repositorio/   ← los contratos para leer y guardar esas cosas
 ```
 
-Falta `casouso/` (MarcarRutina, RegistrarGasto, ObtenerBalanceDelMes...), que se crea al implementar cada funcionalidad.
+Los casos de uso (`casouso/`) y la capa de datos se agregaron en la fase 1: ver [guia-fase-1.md](guia-fase-1.md).
 
 ### Los modelos: `data class`
 
@@ -760,10 +760,6 @@ class RutinaTest {
 Los tests importantes de RNF11 (balance con 50/50, 100/0, cuotas, pagos parciales y saldo arrastrado) serán de
 `ObtenerBalanceDelMes`, con un repositorio falso. Para probar los `Flow` está **Turbine**.
 
-### Lo que falta validar en el dominio
+### Siguiente paso
 
-Hoy solo `Rutina` valida sus datos. Faltan reglas que se desprenden de la preentrega:
-
-- `Rutina`: si es `DIAS_DE_LA_SEMANA`, `dias` no puede estar vacío.
-- `Gasto`: monto mayor a 0, `cuotaInicial` entre 1 y `cuotasTotales` (la sección 11 menciona el error "cuota mayor al total"), y `beneficiarioId` obligatorio si el reparto es `UNO_SOLO`.
-- `Pago`: monto mayor a 0, y que no sea de alguien a sí mismo.
+Las validaciones que faltaban, los casos de uso y la capa de datos con Room se explican en la [guía de la fase 1](guia-fase-1.md).
