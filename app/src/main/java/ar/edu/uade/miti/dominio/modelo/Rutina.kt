@@ -1,6 +1,7 @@
 package ar.edu.uade.miti.dominio.modelo
 
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 enum class Frecuencia { DIARIA, DIAS_DE_LA_SEMANA }
@@ -16,7 +17,17 @@ data class Rutina(
     val vecesPorDia: Int,
 ) {
     init {
+        require(titulo.isNotBlank()) { "El título no puede estar vacío" }
         require(vecesPorDia in 1..3) { "vecesPorDia debe estar entre 1 y 3" }
+        if (frecuencia == Frecuencia.DIAS_DE_LA_SEMANA) {
+            require(dias.isNotEmpty()) { "Una rutina por días de la semana necesita al menos un día" }
+        }
+    }
+
+    /** Indica si la rutina se hace en [fecha]. */
+    fun correspondeA(fecha: LocalDate): Boolean = when (frecuencia) {
+        Frecuencia.DIARIA -> true
+        Frecuencia.DIAS_DE_LA_SEMANA -> fecha.dayOfWeek in dias
     }
 }
 
