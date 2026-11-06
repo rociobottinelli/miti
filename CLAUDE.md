@@ -12,6 +12,8 @@ Integrantes: Rocío Bottinelli (UI/UX y presentación) · Juan Cruz Bautista Ser
 | [docs/consigna-tpo-2026.pdf](docs/consigna-tpo-2026.pdf) | Consigna oficial del TPO: requisitos de la preentrega y de la entrega final, criterios de evaluación, uso de IA. |
 | [docs/preentrega-miti.pdf](docs/preentrega-miti.pdf) | Nuestra preentrega (Etapa 1): problema, usuarios, alcance, RF/RNF, pantallas, arquitectura (D01–D11), persistencia, offline first, tecnologías. **Es la especificación de lo que se implementa.** |
 | [docs/correcciones-preentrega.md](docs/correcciones-preentrega.md) | Devolución docente de la preentrega, transcripta, con puntos accionables C1–C7 (captura original en `docs/correcciones-preentrega.jpg`). |
+| [Figma: archivo de diseño](https://www.figma.com/design/sWFMJHbqIjYUaBmoOeMcj5/miti-UI?node-id=0-1) | **Referencia visual de la app.** Páginas "Wireframe (Pre entrega)" (todas las pantallas con sus estados: carga, contenido, vacío, error, sin conexión) y "High Fidelity" (diseño final). |
+| [Figma: prototipo](https://www.figma.com/proto/sWFMJHbqIjYUaBmoOeMcj5/miti-UI?node-id=22-13360&page-id=0%3A1&starting-point-node-id=22%3A13374) | Prototipo navegable del wireframe. |
 
 Si algo de lo que se implementa se aparta de la preentrega, hay que poder justificarlo (la consigna lo exige)
 y conviene registrarlo para el README final.
@@ -58,7 +60,7 @@ minSdk 26 (RNF12), dominio sin Android (RNF13).
 Fuera de alcance: hogares de más de 2, recurrencias complejas, tareas repetitivas, push desde servidor,
 recuperación de contraseña / Google login, calendario, categorías/precios, repartos arbitrarios, pagos reales.
 
-Navegación: barra inferior Hoy · Compras · Balance; Ajustes desde el avatar. Material 3. Figma: "miti-UI".
+Navegación: barra inferior Hoy · Compras · Balance; Ajustes desde el avatar. Material 3. Diseño: ver los links de Figma arriba.
 
 ## Arquitectura (decisiones D01–D11)
 
