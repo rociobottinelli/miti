@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
 import ar.edu.uade.miti.data.local.entity.MetadatosSync
+import ar.edu.uade.miti.data.sync.AvisoDeCambios
 import java.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,3 +38,7 @@ internal suspend fun <T> enBase(mensajeDeError: String, operacion: suspend () ->
     } catch (e: SQLiteException) {
         Resource.Error(mensajeDeError, e)
     }
+
+/** Escribe en Room y, si salió bien, avisa que hay un cambio para subir (preentrega: "después de cada cambio"). */
+internal suspend fun <T> AvisoDeCambios.escribir(operacion: suspend () -> T): Resource<T> =
+    enBase(NO_SE_GUARDO, operacion).also { if (it is Resource.Success) huboCambios() }

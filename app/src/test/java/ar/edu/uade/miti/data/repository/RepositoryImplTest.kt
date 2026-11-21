@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import ar.edu.uade.miti.data.sync.AvisoDeCambios
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -61,9 +62,11 @@ class RepositoryImplTest {
     private val reloj = relojEn(ahora)
 
     private val hogares = HogarRepositoryImpl(base.hogarDao(), hogarActivo)
-    private val rutinas = RutinaRepositoryImpl(base.rutinaDao(), hogarActivo, reloj)
-    private val pendientes = PendienteRepositoryImpl(base.pendienteDao(), hogarActivo, reloj)
-    private val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj)
+    private var avisos = 0
+    private val avisoDeCambios = AvisoDeCambios { avisos++ }
+    private val rutinas = RutinaRepositoryImpl(base.rutinaDao(), hogarActivo, reloj, avisoDeCambios)
+    private val pendientes = PendienteRepositoryImpl(base.pendienteDao(), hogarActivo, reloj, avisoDeCambios)
+    private val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj, avisoDeCambios)
 
     @After
     fun cerrar() = base.close()
@@ -145,5 +148,13 @@ class RepositoryImplTest {
         val balance = ObtenerBalanceDelMesUseCase(hogares, gastos)(noviembre).first()
 
         assertEquals(Deuda(ANA, TOMAS, 300_000), balance?.resultado)
+    }
+
+    @Test
+    fun `cada escritura avisa que hay un cambio para sincronizar`() = runTest {
+        rutinas.guardarRutina(Rutina("pancho", HOGAR, "Darle de comer a Pancho", Frecuencia.DIARIA, vecesPorDia = 2))
+        rutinas.eliminarRutina("pancho")
+
+        assertEquals(2, avisos)
     }
 }

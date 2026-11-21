@@ -25,4 +25,18 @@ interface HogarDao {
 
     @Upsert
     suspend fun guardarIntegrante(integrante: IntegranteEntity)
+
+    // --- Sincronización (#18): hogares e integrantes solo se descargan (se crean en el servidor). ---
+
+    @Query("SELECT * FROM hogares WHERE id = :id")
+    suspend fun hogaresParaSync(id: String): HogarEntity?
+
+    @Query("SELECT * FROM integrantes WHERE id = :id")
+    suspend fun integrantesParaSync(id: String): IntegranteEntity?
+
+    @Upsert
+    suspend fun guardarHogaresDescargados(filas: List<HogarEntity>)
+
+    @Upsert
+    suspend fun guardarIntegrantesDescargados(filas: List<IntegranteEntity>)
 }

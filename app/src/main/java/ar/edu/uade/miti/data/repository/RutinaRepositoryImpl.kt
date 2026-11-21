@@ -2,6 +2,7 @@ package ar.edu.uade.miti.data.repository
 
 import ar.edu.uade.miti.data.local.dao.RutinaDao
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
+import ar.edu.uade.miti.data.sync.AvisoDeCambios
 import ar.edu.uade.miti.data.mapper.toDomain
 import ar.edu.uade.miti.data.mapper.toEntity
 import ar.edu.uade.miti.domain.model.RegistroRutina
@@ -17,6 +18,7 @@ class RutinaRepositoryImpl @Inject constructor(
     private val dao: RutinaDao,
     private val hogarActivo: HogarActivo,
     private val reloj: Clock,
+    private val avisoDeCambios: AvisoDeCambios,
 ) : RutinaRepository {
     override fun observarRutinas(): Flow<List<Rutina>> =
         hogarActivo.observar(emptyList()) { id -> dao.observarRutinas(id).map { lista -> lista.map { it.toDomain() } } }
@@ -27,9 +29,9 @@ class RutinaRepositoryImpl @Inject constructor(
                 .map { lista -> lista.map { it.toDomain() } }
         }
 
-    override suspend fun guardarRutina(rutina: Rutina) = enBase(NO_SE_GUARDO) { dao.guardarRutina(rutina.toEntity(reloj.cambioPendiente())) }
+    override suspend fun guardarRutina(rutina: Rutina) = avisoDeCambios.escribir { dao.guardarRutina(rutina.toEntity(reloj.cambioPendiente())) }
 
-    override suspend fun eliminarRutina(id: String) = enBase(NO_SE_GUARDO) { dao.marcarBorrada(id, reloj.millis()) }
+    override suspend fun eliminarRutina(id: String) = avisoDeCambios.escribir { dao.marcarBorrada(id, reloj.millis()) }
 
-    override suspend fun agregarRegistro(registro: RegistroRutina) = enBase(NO_SE_GUARDO) { dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente())) }
+    override suspend fun agregarRegistro(registro: RegistroRutina) = avisoDeCambios.escribir { dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente())) }
 }

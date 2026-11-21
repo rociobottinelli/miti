@@ -20,4 +20,22 @@ interface PendienteDao {
 
     @Query("UPDATE pendientes SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
     suspend fun marcarBorrado(id: String, ahora: Long)
+
+    // --- Sincronización (#18). Incluyen filas borradas: el borrado lógico también viaja. ---
+
+    @Query("SELECT * FROM pendientes WHERE syncState = 'PENDIENTE'")
+    suspend fun pendientesPorSubir(): List<PendienteEntity>
+
+    /**
+     * Marca la fila como sincronizada solo si no cambió mientras se subía (mismo updatedAt).
+     * Si cambió, queda PENDIENTE y sube en la próxima vuelta. Devuelve las filas afectadas.
+     */
+    @Query("UPDATE pendientes SET syncState = 'SINCRONIZADO' WHERE id = :id AND updatedAt = :updatedAt")
+    suspend fun marcarPendienteSincronizado(id: String, updatedAt: Long): Int
+
+    @Query("SELECT * FROM pendientes WHERE id = :id")
+    suspend fun pendientesParaSync(id: String): PendienteEntity?
+
+    @Upsert
+    suspend fun guardarPendientesDescargados(filas: List<PendienteEntity>)
 }

@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.data.local
 
+import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncLocal
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,7 +10,14 @@ fun interface BorradorDeDatosLocales {
     suspend fun borrarTodo()
 }
 
-class BorradorDeDatosLocalesRoom @Inject constructor(private val base: AppDatabase) : BorradorDeDatosLocales {
-    // clearAllTables bloquea el hilo: se corre fuera del principal.
-    override suspend fun borrarTodo() = withContext(Dispatchers.IO) { base.clearAllTables() }
+class BorradorDeDatosLocalesRoom @Inject constructor(
+    private val base: AppDatabase,
+    private val estadoDeSync: EstadoDeSyncLocal,
+) : BorradorDeDatosLocales {
+    override suspend fun borrarTodo() {
+        // clearAllTables bloquea el hilo: se corre fuera del principal.
+        withContext(Dispatchers.IO) { base.clearAllTables() }
+        // Sin esto, otra cuenta que ingrese en este celular no descargaría lo anterior al último cursor.
+        estadoDeSync.borrar()
+    }
 }

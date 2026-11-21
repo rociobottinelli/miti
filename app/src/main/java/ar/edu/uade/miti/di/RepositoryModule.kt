@@ -2,11 +2,15 @@ package ar.edu.uade.miti.di
 
 import ar.edu.uade.miti.data.local.BorradorDeDatosLocales
 import ar.edu.uade.miti.data.local.BorradorDeDatosLocalesRoom
+import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncDataStore
+import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncLocal
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
 import ar.edu.uade.miti.data.local.datastore.HogarActivoDataStore
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
+import ar.edu.uade.miti.data.sync.AvisoDeCambios
+import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
 import ar.edu.uade.miti.data.repository.GeneradorDeUuid
 import ar.edu.uade.miti.data.repository.HogarRepositoryImpl
@@ -36,4 +40,6 @@ abstract class RepositoryModule {
     @Binds abstract fun sesionRepositorio(impl: SesionRepositoryImpl): SesionRepository
     @Binds abstract fun sesionLocal(impl: SesionLocalDataStore): SesionLocal
     @Binds abstract fun borradorDeDatosLocales(impl: BorradorDeDatosLocalesRoom): BorradorDeDatosLocales
+    @Binds abstract fun estadoDeSync(impl: EstadoDeSyncDataStore): EstadoDeSyncLocal
+    @Binds abstract fun avisoDeCambios(impl: ProgramadorDeSync): AvisoDeCambios
 }

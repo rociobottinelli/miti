@@ -4,6 +4,7 @@ import ar.edu.uade.miti.BuildConfig
 import ar.edu.uade.miti.data.remote.AuthApiService
 import ar.edu.uade.miti.data.remote.ClavePublicableInterceptor
 import ar.edu.uade.miti.data.remote.ConfiguracionSupabase
+import ar.edu.uade.miti.data.remote.SyncApiService
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -54,10 +55,15 @@ object NetworkModule {
         Retrofit.Builder()
             .baseUrl(configuracion.urlBase)
             .client(cliente)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            // withNullSerialization: los campos en null viajan como null (ver SyncApiService).
+            .addConverterFactory(MoshiConverterFactory.create(moshi).withNullSerialization())
             .build()
 
     @Provides
     @Singleton
     fun authApiService(retrofit: Retrofit): AuthApiService = retrofit.create(AuthApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun syncApiService(retrofit: Retrofit): SyncApiService = retrofit.create(SyncApiService::class.java)
 }

@@ -104,3 +104,34 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
     del TPO alcanza; una versión real los cifraría con Android Keystore.
   - Cerrar sesión borra la base local aunque haya cambios sin sincronizar. Cuando exista el sync (#18), conviene
     avisar antes ("tenés N cambios sin enviar").
+
+## Sincronización con WorkManager (#18)
+
+- **Qué hace (D06):** `SyncWorker` corre el `Sincronizador`. Primero sube lo `PENDIENTE` de Room y después
+  descarga lo que cambió en Supabase desde la última vez. Room sigue siendo la única fuente de verdad (D04):
+  la UI ve lo que el sync escribe en Room, nunca la red.
+- **Disparadores** (preentrega, sección 14): al abrir la app (`MainActivity.onStart`), después de cada
+  escritura (los repositorios avisan con `AvisoDeCambios`), al recuperar la red (el trabajo espera la
+  restricción `CONNECTED`) y cada 15 minutos. Ante errores, WorkManager reintenta con espera creciente (RNF09).
+- **Decisiones:**
+  - **Gana la última modificación también en el servidor** (migración 3): si un celular sube tarde una versión
+    más vieja que la guardada, se ignora. Sin esto, el último en *sincronizar* pisaba al último en *editar*.
+    Al descargar, una fila remota solo pisa a la local si es igual o más nueva.
+  - **Una fila no se marca sincronizada si cambió mientras se subía** (se compara `updatedAt`): ese cambio
+    sube en la vuelta siguiente.
+  - **Descarga incremental por `server_updated_at`** (hora del servidor, no del celular), con un minuto de
+    margen hacia atrás para no perder cambios de transacciones que confirmaron tarde. Repetir filas no hace daño.
+  - **Una fila que el servidor rechaza por sus datos no frena a las demás:** el lote se reintenta de a una y la
+    rechazada queda `PENDIENTE` (se informa en el resultado).
+  - Se mandan los `null` explícitos y la lista de columnas (`columns`) en cada subida: PostgREST toma las
+    columnas del primer objeto del lote y podía ignorar, por ejemplo, el `gasto_id` de las demás compras.
+  - Si el celular no tiene hogar activo (recién ingresó), lo busca en el servidor.
+  - Al cerrar sesión se borran también los cursores de descarga, para que otra cuenta baje todo de nuevo.
+  - El sync vive en `data/sync/` (no está en la estructura de la cátedra): junta piezas de `local` y `remote`
+    y el worker de WorkManager, que no son ni un repositorio ni una fuente.
+- **Cómo se probó:** 15 tests con servidor falso (subida, nulls explícitos, descarga, cursor y margen,
+  paginación, conflictos en los dos sentidos, borrado, fila rechazada, error del servidor, sin conexión, cambio
+  durante la subida, búsqueda del hogar) y una prueba de **dos celulares contra el Supabase real**
+  (`e2e/SincronizacionDosCelularesE2ETest`, solo corre con `MITI_E2E=1`).
+- **Limitación conocida (C2, #20):** con "gana la última modificación", si los dos editan el mismo gasto sin
+  conexión, una edición se pierde sin aviso. La prueba de punta a punta lo muestra a propósito.

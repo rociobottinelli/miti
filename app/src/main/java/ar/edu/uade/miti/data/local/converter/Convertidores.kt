@@ -17,9 +17,7 @@ import java.time.temporal.ChronoUnit
 class Convertidores {
 
     @TypeConverter
-    fun desdeFechaHora(valor: LocalDateTime?): String? =
-        // Se descartan los milisegundos para que todas las fechas tengan el mismo largo de texto.
-        valor?.truncatedTo(ChronoUnit.SECONDS)?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    fun desdeFechaHora(valor: LocalDateTime?): String? = valor?.comoTexto()
 
     @TypeConverter
     fun aFechaHora(valor: String?): LocalDateTime? = valor?.let(LocalDateTime::parse)
@@ -44,3 +42,9 @@ class Convertidores {
     fun aDias(valor: String): Set<DayOfWeek> =
         if (valor.isEmpty()) emptySet() else valor.split(",").map(DayOfWeek::valueOf).toSet()
 }
+
+/**
+ * Fecha y hora como texto, igual en Room y en Supabase: "2026-11-21T08:15:00". Se descartan los milisegundos
+ * para que todas las fechas tengan el mismo largo de texto (y se ordenen bien como texto).
+ */
+fun LocalDateTime.comoTexto(): String = truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
