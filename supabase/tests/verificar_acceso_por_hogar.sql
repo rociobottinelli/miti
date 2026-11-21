@@ -1,4 +1,4 @@
--- Miti · verificación de las reglas de acceso (issue #10, RNF10).
+-- Miti · verificación de las reglas de acceso (issue #10, RNF10) y de "gana la última modificación" (#18, D08).
 --
 -- Cómo usarlo: pegarlo entero en el SQL Editor de Supabase y ejecutarlo.
 -- Todo corre en una transacción que termina en ROLLBACK: no deja usuarios ni datos.
@@ -217,6 +217,28 @@ begin
         raise exception 'FALLÓ: el rol anon puede leer gastos';
     exception when insufficient_privilege then null;
     end;
+end $$;
+
+-- 8. Gana la última modificación (migración 3): una versión vieja que llega tarde no pisa a la nueva.
+reset role;
+select pg_temp.como('00000000-0000-4000-a000-00000000000a', 'ana@prueba.miti');
+set local role authenticated;
+do $$
+begin
+    update public.rutinas set titulo = 'Versión nueva', updated_at = 100 where id = '10000000-0000-4000-a000-000000000001';
+    -- Llega tarde la edición de un celular que estuvo offline, hecha antes (updated_at 50).
+    insert into public.rutinas (id, hogar_id, titulo, frecuencia, veces_por_dia, updated_at)
+    values ('10000000-0000-4000-a000-000000000001', current_setting('prueba.hogar_ana')::uuid,
+            'Versión vieja', 'DIARIA', 2, 50)
+    on conflict (id) do update set titulo = excluded.titulo, updated_at = excluded.updated_at;
+    if (select titulo from public.rutinas where id = '10000000-0000-4000-a000-000000000001') <> 'Versión nueva' then
+        raise exception 'FALLÓ: una versión vieja pisó a la nueva';
+    end if;
+
+    update public.rutinas set titulo = 'Versión más nueva', updated_at = 200 where id = '10000000-0000-4000-a000-000000000001';
+    if (select titulo from public.rutinas where id = '10000000-0000-4000-a000-000000000001') <> 'Versión más nueva' then
+        raise exception 'FALLÓ: una versión más nueva no se guardó';
+    end if;
 end $$;
 
 reset role;
