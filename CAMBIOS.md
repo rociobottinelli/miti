@@ -37,3 +37,25 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Pendiente:** las columnas de Room siguen en camelCase. La cátedra prefiere `snake_case` con `@ColumnInfo`,
   pero cambiarlo es un cambio de esquema (versión 2 + migración), así que queda para cuando haya que tocar la
   base por otro motivo (por ejemplo, la detección de conflictos de C2, #20).
+
+## Errores como `Resource` en lugar de excepciones (#30)
+
+- **Problema:** en la fase 1, los casos de uso lanzaban excepciones (`require`, `checkNotNull`) ante datos
+  inválidos, falta de hogar activo o ítems inexistentes, y los repositorios no avisaban si Room fallaba. Una
+  pantalla que no atrapara la excepción cerraba la app, y "no se pudo guardar" no se distinguía de "no hay datos".
+- **Qué cambió:**
+  - `core/Resource.kt` (`Success` / `Error`), con `map` y `getOrElse` para encadenar sin `try` en cada caso de uso.
+  - Las escrituras de los repositorios devuelven `Resource<Unit>` y `obtenerPendiente`, `Resource<Pendiente?>`.
+    `enBase` (en `data/repository/Comunes.kt`) atrapa **solo** `SQLiteException`; la cancelación de la corrutina
+    y cualquier otra excepción siguen su curso. Las lecturas siguen siendo `Flow` (Room es la fuente de verdad).
+  - Los casos de uso que escriben devuelven `Resource`. Los modelos siguen validándose en su `init`; `validar { }`
+    convierte esa validación en `Resource.Error` antes de llegar al repositorio, así **un dato inválido nunca se
+    guarda** (hay un test por cada caso).
+  - Los fakes de test tienen una `falla` configurable para simular que la base falla.
+- **Riesgo que resuelve:** la app no se cierra por un error de datos, y el ViewModel (fase 2) puede mostrar un
+  estado `Error` distinto de "vacío", con el mensaje del `Resource`.
+- **Limitación conocida:** `TerminarCompraUseCase` guarda el gasto y después cierra los ítems en dos escrituras.
+  Si la segunda falla, el gasto queda guardado y la compra sigue abierta. Es raro (la base local falla muy poco),
+  pero para resolverlo bien habría que hacer las dos escrituras en una sola transacción de Room; queda anotado.
+- **Pendiente:** los mensajes de error son textos en el dominio y la capa de datos. Cuando existan los ViewModels,
+  conviene que las pantallas los muestren desde `strings.xml` (por tipo de error) en lugar de mostrar el texto tal cual.

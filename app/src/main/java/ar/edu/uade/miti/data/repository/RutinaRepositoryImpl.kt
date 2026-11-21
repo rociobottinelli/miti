@@ -27,10 +27,9 @@ class RutinaRepositoryImpl @Inject constructor(
                 .map { lista -> lista.map { it.toDomain() } }
         }
 
-    override suspend fun guardarRutina(rutina: Rutina) = dao.guardarRutina(rutina.toEntity(reloj.cambioPendiente()))
+    override suspend fun guardarRutina(rutina: Rutina) = enBase(NO_SE_GUARDO) { dao.guardarRutina(rutina.toEntity(reloj.cambioPendiente())) }
 
-    override suspend fun eliminarRutina(id: String) = dao.marcarBorrada(id, reloj.millis())
+    override suspend fun eliminarRutina(id: String) = enBase(NO_SE_GUARDO) { dao.marcarBorrada(id, reloj.millis()) }
 
-    override suspend fun agregarRegistro(registro: RegistroRutina) =
-        dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente()))
+    override suspend fun agregarRegistro(registro: RegistroRutina) = enBase(NO_SE_GUARDO) { dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente())) }
 }

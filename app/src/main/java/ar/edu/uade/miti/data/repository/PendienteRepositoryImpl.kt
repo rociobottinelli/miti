@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.data.repository
 
+import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.data.local.dao.PendienteDao
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
 import ar.edu.uade.miti.data.mapper.toDomain
@@ -19,12 +20,13 @@ class PendienteRepositoryImpl @Inject constructor(
     override fun observarPendientes(): Flow<List<Pendiente>> =
         hogarActivo.observar(emptyList()) { id -> dao.observarPendientes(id).map { lista -> lista.map { it.toDomain() } } }
 
-    override suspend fun obtenerPendiente(id: String): Pendiente? = dao.obtenerPendiente(id)?.toDomain()
+    override suspend fun obtenerPendiente(id: String): Resource<Pendiente?> =
+        enBase(NO_SE_LEYO) { dao.obtenerPendiente(id)?.toDomain() }
 
-    override suspend fun guardarPendientes(pendientes: List<Pendiente>) {
+    override suspend fun guardarPendientes(pendientes: List<Pendiente>) = enBase(NO_SE_GUARDO) {
         val sync = reloj.cambioPendiente()
         dao.guardarPendientes(pendientes.map { it.toEntity(sync) })
     }
 
-    override suspend fun eliminarPendiente(id: String) = dao.marcarBorrado(id, reloj.millis())
+    override suspend fun eliminarPendiente(id: String) = enBase(NO_SE_GUARDO) { dao.marcarBorrado(id, reloj.millis()) }
 }
