@@ -59,3 +59,24 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   pero para resolverlo bien habría que hacer las dos escrituras en una sola transacción de Room; queda anotado.
 - **Pendiente:** los mensajes de error son textos en el dominio y la capa de datos. Cuando existan los ViewModels,
   conviene que las pantallas los muestren desde `strings.xml` (por tipo de error) en lugar de mostrar el texto tal cual.
+
+## Esquema de Supabase con acceso por hogar (#10)
+
+- **Qué agrega a la preentrega:** la preentrega define las entidades (sección 14) y pide aislar los hogares con
+  RLS (RNF10, D11), pero no detalla el esquema remoto. Decisiones tomadas:
+  - **El integrante es el usuario de Supabase Auth** (`integrantes.id` = `auth.users.id`). Así las políticas
+    usan `auth.uid()` directamente y "quién marcó" o "quién pagó" no se puede falsificar.
+  - **`server_updated_at`** además de `updated_at`: `updated_at` es la hora del celular y decide los conflictos
+    (D08); `server_updated_at` la pone el servidor y la usa la sincronización (#18) para descargar "lo que cambió
+    desde la última vez" sin depender del reloj de cada celular.
+  - **Crear un hogar y unirse son funciones del servidor** (`crear_hogar`, `unirse_a_hogar`), no inserts directos:
+    el código de 6 caracteres y el límite de dos integrantes se validan donde nadie los puede saltear.
+    `unirse_a_hogar` bloquea el hogar mientras cuenta, así dos personas que usan el mismo código a la vez no
+    pueden entrar las dos (relacionado con C3).
+  - **Claves foráneas compuestas** (`pagador_id, hogar_id`, etc.): quien paga o es responsable tiene que ser del
+    mismo hogar que el ítem.
+  - Las columnas remotas están en `snake_case`; el mapeo con Room lo harán los DTOs de #18.
+  - El SQL vive en `supabase/migrations/` (no en un único `schema.sql` como decía el issue) para poder sumar
+    cambios versionados, por ejemplo los de C2 (#20).
+- **Riesgo que resuelve:** el aislamiento no depende de que la app filtre bien; lo aplica Postgres para cualquier
+  cliente. `supabase/tests/verificar_acceso_por_hogar.sql` lo prueba con cuatro usuarios simulados.
