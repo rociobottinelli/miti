@@ -282,7 +282,7 @@ Es la idea de D01: cada pantalla es una función de su estado. Más adelante, el
 
 ### Las funciones `@Composable`
 
-[`HoyScreen.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/hoy/HoyScreen.kt):
+[`HoyScreen.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/hoy/HoyScreen.kt):
 
 ```kotlin
 @Composable
@@ -307,7 +307,7 @@ mostrará los estados de la sección 11: carga, contenido, vacío, error y offli
 
 ### Layouts y modifiers
 
-[`PantallaEnConstruccion.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/componentes/PantallaEnConstruccion.kt):
+[`PantallaEnConstruccion.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/components/PantallaEnConstruccion.kt):
 
 ```kotlin
 @Composable
@@ -348,7 +348,7 @@ modifier
 **Material 3:** `Text` es un componente de Material 3. `MaterialTheme.typography.headlineMedium` toma el estilo del tema
 en vez de un tamaño fijo, así toda la app es consistente.
 
-### El tema: [`Theme.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/tema/Theme.kt)
+### El tema: [`Theme.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/theme/Theme.kt)
 
 ```kotlin
 // Paleta provisoria; se reemplaza por la del Figma (miti-UI).
@@ -379,7 +379,7 @@ fun MitiTheme(
 
 ### La navegación
 
-#### Las rutas: [`Ruta.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/navegacion/Ruta.kt)
+#### Las rutas: [`Ruta.kt`](../app/src/main/java/ar/edu/uade/miti/core/navigation/Ruta.kt)
 
 ```kotlin
 @Serializable
@@ -403,7 +403,7 @@ sealed interface Ruta {
 Es **navegación tipada**: escribir `Ruta.Hoyy` no compila, a diferencia de usar textos como `"hoy"`. Las rutas con datos
 vienen después, por ejemplo `data class DetalleGasto(val gastoId: String) : Ruta`.
 
-#### Los destinos de la barra inferior: [`MitiNavHost.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/MitiNavHost.kt)
+#### Los destinos de la barra inferior: [`MitiNavHost.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/MitiNavHost.kt)
 
 ```kotlin
 enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:DrawableRes val icono: Int) {
@@ -535,16 +535,16 @@ El dominio es **qué cosas existen en el problema** (rutinas, gastos, pagos) y *
 - **D05:** el dominio define interfaces y la capa de datos las implementa. El dominio no sabe que Room existe.
 
 ```
-dominio/
-├── modelo/        ← Hogar, Integrante, Rutina, RegistroRutina, Pendiente, Gasto, Pago
-└── repositorio/   ← los contratos para leer y guardar esas cosas
+domain/
+├── model/         ← Hogar, Integrante, Rutina, RegistroRutina, Pendiente, Gasto, Pago
+└── repository/    ← los contratos para leer y guardar esas cosas
 ```
 
-Los casos de uso (`casouso/`) y la capa de datos se agregaron en la fase 1: ver [guia-fase-1.md](guia-fase-1.md).
+Los casos de uso (`usecase/`) y la capa de datos se agregaron en la fase 1: ver [guia-fase-1.md](guia-fase-1.md).
 
 ### Los modelos: `data class`
 
-[`Hogar.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Hogar.kt):
+[`Hogar.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Hogar.kt):
 
 ```kotlin
 /** Un hogar tiene 1 o 2 integrantes y es dueño de todos los ítems. */
@@ -566,7 +566,7 @@ data class Hogar(
 - **Los `id` son `String`** porque serán UUID generados en el celular (D07), para crear sin conexión sin chocar ids.
 - **Las relaciones son por id** (`Integrante.hogarId`), como en la tabla de entidades de la sección 14.
 
-### [`Rutina.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Rutina.kt)
+### [`Rutina.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Rutina.kt)
 
 ```kotlin
 enum class Frecuencia { DIARIA, DIAS_DE_LA_SEMANA }
@@ -605,7 +605,7 @@ data class RegistroRutina(
 - **No hay un campo "hecha hoy".** El progreso se **calcula** contando los registros de hoy. Al día siguiente los de ayer no cuentan, así que la rutina vuelve a estar pendiente sin que nadie la reinicie (D09).
 - **`LocalDateTime`**: fecha con hora, para mostrar "Tomás · 8:15".
 
-### [`Pendiente.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Pendiente.kt): tipos que pueden ser `null`
+### [`Pendiente.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Pendiente.kt): tipos que pueden ser `null`
 
 ```kotlin
 enum class TipoPendiente { TAREA, COMPRA }
@@ -629,7 +629,7 @@ Tareas y compras comparten entidad, diferenciadas por `tipo` (sección 14).
 - `gastoId` es el vínculo compra → gasto; queda `null` si al terminar la compra eligen no registrar el gasto (flujo 3).
 - Con los valores por defecto, crear una compra es corto: `Pendiente(id = ..., hogarId = ..., tipo = TipoPendiente.COMPRA, titulo = "Leche")`.
 
-### [`Gasto.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Gasto.kt): plata, cuotas y pagos
+### [`Gasto.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Gasto.kt): plata, cuotas y pagos
 
 ```kotlin
 enum class Reparto { A_MEDIAS, UNO_SOLO }
@@ -690,7 +690,7 @@ cargue gastos sin conexión.
 se sincroniza, no del problema del hogar. Van en las entidades de Room, en la capa de datos, y un **mapper** traduce entre
 una cosa y otra. Si cambia la estrategia de sincronización (por ejemplo, por la corrección C2), el dominio no se entera.
 
-### Los repositorios: [`Repositorios.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/repositorio/Repositorios.kt)
+### Los repositorios: [`domain/repository/`](../app/src/main/java/ar/edu/uade/miti/domain/repository/)
 
 ```kotlin
 interface GastoRepository {
@@ -720,7 +720,7 @@ parte de las **coroutines** de Kotlin. Desde el ViewModel se llama, por ejemplo,
 DataStore como "hogar activo" (sección 14), y la implementación filtra por él. Es una decisión revisable si al
 implementar la capa de datos conviene pasarlo explícito.
 
-### El test: [`RutinaTest.kt`](../app/src/test/java/ar/edu/uade/miti/dominio/modelo/RutinaTest.kt)
+### El test: [`RutinaTest.kt`](../app/src/test/java/ar/edu/uade/miti/domain/model/RutinaTest.kt)
 
 ```kotlin
 class RutinaTest {

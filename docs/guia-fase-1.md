@@ -15,32 +15,35 @@ Cubre los issues #4 (Room), #5 (validaciones), #6 (rutinas), #7 (pendientes) y #
 8. [Decisiones que agregan o cambian algo de la preentrega](#8-decisiones-que-agregan-o-cambian-algo-de-la-preentrega)
 9. [Limitaciones conocidas](#9-limitaciones-conocidas)
 
+> **Nota (#30):** después de esta fase, los paquetes y nombres se alinearon con las convenciones de la cátedra (`domain/`, `data/`, `…UseCase`, `…RepositoryImpl`, `…Entity`). Esta guía ya usa los nombres nuevos; el detalle está en [CAMBIOS.md](../CAMBIOS.md).
+
 ---
 
 ## 1. El mapa de lo nuevo
 
 ```
 app/src/main/java/ar/edu/uade/miti/
-├── dominio/
-│   ├── modelo/
+├── domain/
+│   ├── model/
 │   │   ├── Rutina.kt, Pendiente.kt, Gasto.kt  ← ahora validan sus datos (#5)
-│   │   └── Balance.kt                          ← Deuda, CuotaDelMes, BalanceDelMes (#8)
-│   ├── repositorio/Repositorios.kt             ← contratos ampliados + GeneradorDeIds
-│   └── casouso/                                ← NUEVO: las acciones de la app
-│       ├── rutinas/CasosDeUsoRutinas.kt        (#6)
-│       ├── pendientes/CasosDeUsoPendientes.kt  (#7)
-│       └── gastos/CasosDeUsoGastos.kt + CalculadoraDeBalance.kt (#8)
-├── datos/                                      ← NUEVO (#4)
-│   ├── local/        Entidades, Convertidores, Daos, AppDatabase, Mappers
-│   ├── repositorio/  RepositoriosRoom.kt (implementan los contratos del dominio)
-│   └── sesion/       HogarActivo.kt (DataStore)
-└── di/DatosModule.kt                           ← NUEVO: recetas de Hilt
+│   │   ├── Balance.kt                          ← Deuda, CuotaDelMes, BalanceDelMes (#8)
+│   │   └── DatosDeGasto.kt, ListaDeCompras.kt, RutinaDelDia.kt
+│   ├── repository/   XxxRepository.kt + GeneradorDeIds.kt (contratos)
+│   └── usecase/                                ← NUEVO: las acciones de la app, una por archivo
+│       ├── rutinas/     RegistrarRutinaUseCase, MarcarRutinaUseCase... (#6)
+│       ├── pendientes/  RegistrarTareaUseCase, TerminarCompraUseCase... (#7)
+│       └── gastos/      RegistrarGastoUseCase... + CalculadoraDeBalance.kt (#8)
+├── data/                                       ← NUEVO (#4)
+│   ├── local/        AppDatabase.kt + entity/, dao/, converter/, datastore/ (HogarActivo)
+│   ├── mapper/       XxxMapper.kt: toDomain() / toEntity()
+│   └── repository/   XxxRepositoryImpl.kt (implementan los contratos del dominio)
+└── di/               DatabaseModule.kt, RepositoryModule.kt ← NUEVO: recetas de Hilt
 
 app/schemas/.../1.json                          ← esquema de la base, versión 1
 app/src/test/java/ar/edu/uade/miti/
-├── dominio/fakes/Fakes.kt                      ← repositorios en memoria para tests
-├── dominio/...Test.kt                          ← tests de modelos y casos de uso
-└── datos/RepositoryImplTest.kt               ← tests de Room (con Robolectric)
+├── domain/fakes/Fakes.kt                       ← repositorios en memoria para tests
+├── domain/.../*Test.kt                         ← tests de modelos y casos de uso
+└── data/repository/RepositoryImplTest.kt       ← tests de Room (con Robolectric)
 ```
 
 Las tres capas de la preentrega ya existen. La presentación todavía no usa nada de esto: eso llega en la fase 2.
@@ -111,7 +114,7 @@ class MarcarRutinaUseCase @Inject constructor(        // Hilt sabe crearlo
 - **Recibe un `GeneradorDeIds`**: en la app genera UUID (D07) y en los tests ids predecibles (`id-1`, `id-2`...).
 - Las **acciones** son `suspend` (escriben). Las **consultas** devuelven `Flow` (se actualizan solas).
 
-### 3.3 Rutinas (#6) — [`CasosDeUsoRutinas.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/casouso/rutinas/CasosDeUsoRutinas.kt)
+### 3.3 Rutinas (#6) — [`domain/usecase/rutinas/`](../app/src/main/java/ar/edu/uade/miti/domain/usecase/rutinas/)
 
 | Caso de uso | Qué hace |
 |---|---|
@@ -133,7 +136,7 @@ El resultado es una lista de `RutinaDelDia`, que tiene `hechas` y `completa` **c
 
 **`MarcarRutinaUseCase` no agrega una marca si la rutina ya está completa** y devuelve `false`. Es una primera respuesta a la corrección C1 ("pueden repetir tareas"): si el celular ya sabe que Pancho comió dos veces, no deja marcar una tercera. Si los dos marcan **sin conexión**, igual quedan ambas marcas y la rutina figura completa, sin superar el máximo (`hechas` está topeado por `vecesPorDia`).
 
-### 3.4 Tareas y compras (#7) — [`CasosDeUsoPendientes.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/casouso/pendientes/CasosDeUsoPendientes.kt)
+### 3.4 Tareas y compras (#7) — [`domain/usecase/pendientes/`](../app/src/main/java/ar/edu/uade/miti/domain/usecase/pendientes/)
 
 | Caso de uso | Qué hace |
 |---|---|
@@ -148,7 +151,7 @@ El resultado es una lista de `RutinaDelDia`, que tiene `hechas` y `completa` **c
 
 Notar que **un caso de uso puede usar otro**: `TerminarCompraUseCase` recibe `RegistrarGastoUseCase` en vez de repetir cómo se crea un gasto.
 
-### 3.5 Gastos y pagos (#8) — [`CasosDeUsoGastos.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/casouso/gastos/CasosDeUsoGastos.kt)
+### 3.5 Gastos y pagos (#8) — [`domain/usecase/gastos/`](../app/src/main/java/ar/edu/uade/miti/domain/usecase/gastos/)
 
 | Caso de uso | Qué hace |
 |---|---|
@@ -162,7 +165,7 @@ Notar que **un caso de uso puede usar otro**: `TerminarCompraUseCase` recibe `Re
 
 ## 4. El balance, paso a paso
 
-La regla vive en [`CalculadoraDeBalance.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/casouso/gastos/CalculadoraDeBalance.kt). Es una **función pura**: recibe gastos y pagos y devuelve el resultado, sin leer ni guardar nada. Por eso se puede probar con cualquier combinación (RNF11).
+La regla vive en [`CalculadoraDeBalance.kt`](../app/src/main/java/ar/edu/uade/miti/domain/usecase/gastos/CalculadoraDeBalance.kt). Es una **función pura**: recibe gastos y pagos y devuelve el resultado, sin leer ni guardar nada. Por eso se puede probar con cualquier combinación (RNF11).
 
 ### La idea: un solo número, el "saldo"
 
@@ -207,7 +210,7 @@ El **saldo anterior** es la suma de todas las cuotas y pagos de los meses anteri
 
 ## 5. Datos: Room, repositorios y DataStore
 
-### 5.1 Las tablas — [`Entidades.kt`](../app/src/main/java/ar/edu/uade/miti/datos/local/Entidades.kt)
+### 5.1 Las tablas — [`data/local/entity/`](../app/src/main/java/ar/edu/uade/miti/data/local/entity/)
 
 Una **entidad** es una clase que Room convierte en una tabla de SQLite: cada propiedad es una columna y cada objeto, una fila.
 
@@ -225,13 +228,13 @@ data class RutinaEntity(
 - **`Index("hogarId")`** hace que buscar por hogar sea rápido, como el índice de un libro.
 - **`@Embedded val sync: MetadatosSync`** agrega las columnas `updatedAt`, `deleted` y `syncState` en la misma tabla. Se escriben una vez y se reusan en todas.
 
-**¿Por qué entidades separadas de los modelos?** Porque las tablas tienen datos que al dominio no le importan (`updatedAt`, `deleted`, `syncState`). Los **mappers** ([`Mappers.kt`](../app/src/main/java/ar/edu/uade/miti/datos/local/Mappers.kt)) traducen entre una cosa y otra. Si mañana cambia la sincronización (por ejemplo, por C2), el dominio no se entera.
+**¿Por qué entidades separadas de los modelos?** Porque las tablas tienen datos que al dominio no le importan (`updatedAt`, `deleted`, `syncState`). Los **mappers** ([`data/mapper/`](../app/src/main/java/ar/edu/uade/miti/data/mapper/)) traducen entre una cosa y otra. Si mañana cambia la sincronización (por ejemplo, por C2), el dominio no se entera.
 
 **`EstadoSync`**: cada cambio local queda `PENDIENTE` hasta que el `SyncWorker` (issue #18) lo envíe y lo marque `SINCRONIZADO` (D06).
 
 **Sin claves foráneas, a propósito.** Con la sincronización, una fila puede llegar antes que aquella a la que apunta (por ejemplo, la marca de una rutina antes que la rutina). Una clave foránea rechazaría esa fila.
 
-### 5.2 Guardar tipos que SQLite no conoce — [`Convertidores.kt`](../app/src/main/java/ar/edu/uade/miti/datos/local/Convertidores.kt)
+### 5.2 Guardar tipos que SQLite no conoce — [`Convertidores.kt`](../app/src/main/java/ar/edu/uade/miti/data/local/converter/Convertidores.kt)
 
 SQLite solo guarda números y texto. Un **`@TypeConverter`** le enseña a Room a convertir los demás tipos:
 
@@ -244,7 +247,7 @@ SQLite solo guarda números y texto. Un **`@TypeConverter`** le enseña a Room a
 
 Las fechas en formato ISO tienen una ventaja: **se ordenan bien como texto**. Por eso la consulta "marcas entre las 00:00 de hoy y las 00:00 de mañana" funciona comparando textos. Para eso se recortan los milisegundos: así todas las fechas tienen el mismo largo.
 
-### 5.3 Las consultas — [`Daos.kt`](../app/src/main/java/ar/edu/uade/miti/datos/local/Daos.kt)
+### 5.3 Las consultas — [`data/local/dao/`](../app/src/main/java/ar/edu/uade/miti/data/local/dao/)
 
 Un **DAO** es una interfaz con las consultas. Room escribe el código al compilar (con KSP):
 
@@ -262,11 +265,11 @@ suspend fun guardarRutina(rutina: RutinaEntity)
 - **Todas las lecturas filtran `deleted = 0`**: borrar es marcar la fila (D07), y esas filas no se muestran.
 - Si un `@Query` falla (una columna mal escrita, por ejemplo), **no compila**. Room revisa el SQL contra las tablas.
 
-### 5.4 La base — [`AppDatabase.kt`](../app/src/main/java/ar/edu/uade/miti/datos/local/AppDatabase.kt)
+### 5.4 La base — [`AppDatabase.kt`](../app/src/main/java/ar/edu/uade/miti/data/local/AppDatabase.kt)
 
 Junta las tablas, los convertidores y los DAOs. Tiene `version = 1`. **Si se cambia una tabla hay que subir la versión y escribir una migración**, o los celulares que ya tienen la app instalada fallan al abrirla. El esquema de cada versión queda guardado en `app/schemas/` para poder comparar.
 
-### 5.5 Los repositorios de Room — [`RepositoriosRoom.kt`](../app/src/main/java/ar/edu/uade/miti/datos/repositorio/RepositoriosRoom.kt)
+### 5.5 Los repositorios de Room — [`data/repository/`](../app/src/main/java/ar/edu/uade/miti/data/repository/)
 
 Implementan las interfaces del dominio. Hacen tres cosas:
 
@@ -274,7 +277,7 @@ Implementan las interfaces del dominio. Hacen tres cosas:
 2. **Traducir** entidades a modelos con los mappers.
 3. **Marcar cada escritura como pendiente**, con la hora del cambio (`updatedAt`), para que la sincronización sepa qué enviar y quién gana un conflicto (D08).
 
-### 5.6 El hogar activo — [`HogarActivo.kt`](../app/src/main/java/ar/edu/uade/miti/datos/sesion/HogarActivo.kt)
+### 5.6 El hogar activo — [`HogarActivo.kt`](../app/src/main/java/ar/edu/uade/miti/data/local/datastore/HogarActivo.kt)
 
 Se guarda en **DataStore**, una forma simple de guardar pares clave-valor (sección 14 de la preentrega). Es una interfaz con una implementación, así los tests usan una versión en memoria. La sesión, el onboarding visto y la última sincronización se suman acá en el issue #16.
 
@@ -282,7 +285,7 @@ Se guarda en **DataStore**, una forma simple de guardar pares clave-valor (secci
 
 ## 6. Hilt: cómo se conecta todo
 
-[`DatosModule.kt`](../app/src/main/java/ar/edu/uade/miti/di/DatosModule.kt) tiene las **recetas** que usa Hilt para construir las cosas.
+[`di/DatabaseModule.kt` y `di/RepositoryModule.kt`](../app/src/main/java/ar/edu/uade/miti/di/) tiene las **recetas** que usa Hilt para construir las cosas.
 
 ```kotlin
 @Module
@@ -336,7 +339,7 @@ Son 61 tests y corren en la PC, sin emulador.
 
 Herramientas nuevas:
 
-- **Fakes** ([`Fakes.kt`](../app/src/test/java/ar/edu/uade/miti/dominio/fakes/Fakes.kt)): repositorios que guardan todo en un `MutableStateFlow`. Se comportan como Room (avisan cuando cambian), pero en memoria. Es D05 en acción.
+- **Fakes** ([`Fakes.kt`](../app/src/test/java/ar/edu/uade/miti/domain/fakes/Fakes.kt)): repositorios que guardan todo en un `MutableStateFlow`. Se comportan como Room (avisan cuando cambian), pero en memoria. Es D05 en acción.
 - **`relojEn(...)`**: un `Clock` congelado en una fecha y hora. Los tests no dependen de cuándo se corren.
 - **`runTest { ... }`**: permite llamar funciones `suspend` dentro de un test.
 - **Turbine** (`flow.test { awaitItem() }`): permite verificar **cada valor** que emite un `Flow`. Por ejemplo: "primero a mano; registro un gasto → Ana debe $12.000; registro el pago → a mano otra vez".
