@@ -1,7 +1,12 @@
 package ar.edu.uade.miti.di
 
+import ar.edu.uade.miti.data.local.BorradorDeDatosLocales
+import ar.edu.uade.miti.data.local.BorradorDeDatosLocalesRoom
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
 import ar.edu.uade.miti.data.local.datastore.HogarActivoDataStore
+import ar.edu.uade.miti.data.local.datastore.SesionLocal
+import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
+import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
 import ar.edu.uade.miti.data.repository.GeneradorDeUuid
 import ar.edu.uade.miti.data.repository.HogarRepositoryImpl
@@ -12,6 +17,7 @@ import ar.edu.uade.miti.domain.repository.GeneradorDeIds
 import ar.edu.uade.miti.domain.repository.HogarRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
+import ar.edu.uade.miti.domain.repository.SesionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,4 +33,7 @@ abstract class RepositoryModule {
     @Binds abstract fun gastoRepositorio(impl: GastoRepositoryImpl): GastoRepository
     @Binds abstract fun generadorDeIds(impl: GeneradorDeUuid): GeneradorDeIds
     @Binds abstract fun hogarActivo(impl: HogarActivoDataStore): HogarActivo
+    @Binds abstract fun sesionRepositorio(impl: SesionRepositoryImpl): SesionRepository
+    @Binds abstract fun sesionLocal(impl: SesionLocalDataStore): SesionLocal
+    @Binds abstract fun borradorDeDatosLocales(impl: BorradorDeDatosLocalesRoom): BorradorDeDatosLocales
 }
