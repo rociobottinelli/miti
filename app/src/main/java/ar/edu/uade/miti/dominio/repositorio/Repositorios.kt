@@ -14,14 +14,14 @@ import java.time.LocalDate
 // los tests, con fakes en memoria. Las lecturas son Flow porque Room es la fuente de verdad (D04).
 // Todas las operaciones trabajan sobre el hogar activo; borrar es un borrado lógico (D07).
 
-interface HogarRepositorio {
+interface HogarRepository {
     /** Id del hogar con el que se está trabajando, o null si todavía no hay uno. */
     suspend fun hogarActivoId(): String?
     fun observarHogar(): Flow<Hogar?>
     fun observarIntegrantes(): Flow<List<Integrante>>
 }
 
-interface RutinaRepositorio {
+interface RutinaRepository {
     fun observarRutinas(): Flow<List<Rutina>>
     fun observarRegistrosDelDia(fecha: LocalDate): Flow<List<RegistroRutina>>
     suspend fun guardarRutina(rutina: Rutina)
@@ -29,14 +29,14 @@ interface RutinaRepositorio {
     suspend fun agregarRegistro(registro: RegistroRutina)
 }
 
-interface PendienteRepositorio {
+interface PendienteRepository {
     fun observarPendientes(): Flow<List<Pendiente>>
     suspend fun obtenerPendiente(id: String): Pendiente?
     suspend fun guardarPendientes(pendientes: List<Pendiente>)
     suspend fun eliminarPendiente(id: String)
 }
 
-interface GastoRepositorio {
+interface GastoRepository {
     fun observarGastos(): Flow<List<Gasto>>
     fun observarPagos(): Flow<List<Pago>>
     suspend fun guardarGasto(gasto: Gasto)
@@ -51,5 +51,5 @@ fun interface GeneradorDeIds {
 }
 
 /** Id del hogar activo, o un error si se intenta registrar algo antes de tener hogar. */
-suspend fun HogarRepositorio.requerirHogarActivo(): String =
+suspend fun HogarRepository.requerirHogarActivo(): String =
     checkNotNull(hogarActivoId()) { "No hay un hogar activo" }

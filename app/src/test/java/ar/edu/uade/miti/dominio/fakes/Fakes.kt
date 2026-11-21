@@ -7,11 +7,11 @@ import ar.edu.uade.miti.dominio.modelo.Pago
 import ar.edu.uade.miti.dominio.modelo.Pendiente
 import ar.edu.uade.miti.dominio.modelo.RegistroRutina
 import ar.edu.uade.miti.dominio.modelo.Rutina
-import ar.edu.uade.miti.dominio.repositorio.GastoRepositorio
+import ar.edu.uade.miti.dominio.repositorio.GastoRepository
 import ar.edu.uade.miti.dominio.repositorio.GeneradorDeIds
-import ar.edu.uade.miti.dominio.repositorio.HogarRepositorio
-import ar.edu.uade.miti.dominio.repositorio.PendienteRepositorio
-import ar.edu.uade.miti.dominio.repositorio.RutinaRepositorio
+import ar.edu.uade.miti.dominio.repositorio.HogarRepository
+import ar.edu.uade.miti.dominio.repositorio.PendienteRepository
+import ar.edu.uade.miti.dominio.repositorio.RutinaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -28,13 +28,13 @@ const val HOGAR = "h1"
 const val ANA = "ana"
 const val TOMAS = "tomas"
 
-class FakeHogarRepositorio(
+class FakeHogarRepository(
     integrantes: List<Integrante> = listOf(
         Integrante(ANA, HOGAR, "Ana", "ana@mail.com"),
         Integrante(TOMAS, HOGAR, "Tomás", "tomas@mail.com"),
     ),
     private val hogarActivo: String? = HOGAR,
-) : HogarRepositorio {
+) : HogarRepository {
     val integrantes = MutableStateFlow(integrantes)
     override suspend fun hogarActivoId() = hogarActivo
     override fun observarHogar(): Flow<Hogar?> =
@@ -42,7 +42,7 @@ class FakeHogarRepositorio(
     override fun observarIntegrantes(): Flow<List<Integrante>> = integrantes
 }
 
-class FakeRutinaRepositorio : RutinaRepositorio {
+class FakeRutinaRepository : RutinaRepository {
     val rutinas = MutableStateFlow<List<Rutina>>(emptyList())
     val registros = MutableStateFlow<List<RegistroRutina>>(emptyList())
 
@@ -54,7 +54,7 @@ class FakeRutinaRepositorio : RutinaRepositorio {
     override suspend fun agregarRegistro(registro: RegistroRutina) = registros.update { it + registro }
 }
 
-class FakePendienteRepositorio : PendienteRepositorio {
+class FakePendienteRepository : PendienteRepository {
     val pendientes = MutableStateFlow<List<Pendiente>>(emptyList())
 
     override fun observarPendientes(): Flow<List<Pendiente>> = pendientes
@@ -64,7 +64,7 @@ class FakePendienteRepositorio : PendienteRepositorio {
     override suspend fun eliminarPendiente(id: String) = pendientes.update { lista -> lista.filterNot { it.id == id } }
 }
 
-class FakeGastoRepositorio : GastoRepositorio {
+class FakeGastoRepository : GastoRepository {
     val gastos = MutableStateFlow<List<Gasto>>(emptyList())
     val pagos = MutableStateFlow<List<Pago>>(emptyList())
 

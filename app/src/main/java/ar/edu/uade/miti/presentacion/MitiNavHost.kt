@@ -35,7 +35,7 @@ enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:Dr
 }
 
 @Composable
-fun MitiApp() {
+fun MitiNavHost() {
     val navController = rememberNavController()
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
@@ -77,6 +77,6 @@ fun MitiApp() {
 @Composable
 private fun MitiAppPreview() {
     MitiTheme {
-        MitiApp()
+        MitiNavHost()
     }
 }

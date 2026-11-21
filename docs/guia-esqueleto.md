@@ -178,7 +178,7 @@ Android lo lee antes de abrir la app, para saber qué contiene.
 
 ```xml
 <application
-    android:name=".MitiApplication"     ← la clase que arranca primero
+    android:name=".MitiApp"     ← la clase que arranca primero
     android:icon="@mipmap/ic_launcher"  ← el ícono
     android:label="@string/app_name"    ← el nombre que se ve ("Miti")
     android:theme="@style/Theme.Miti">
@@ -209,7 +209,7 @@ Desde el código, un recurso se nombra como `R.string.destino_hoy` o `R.drawable
 ```
 Android lee el Manifest
    ↓
-1. Crea MitiApplication    (una sola vez, vive mientras la app esté abierta)
+1. Crea MitiApp    (una sola vez, vive mientras la app esté abierta)
    ↓
 2. Abre MainActivity       (la "ventana")
    ↓
@@ -217,10 +217,10 @@ Android lee el Manifest
    ↓
 4. MitiTheme { ... }       (aplica colores y tipografías)
    ↓
-5. MitiApp()               (barra inferior + pantalla Hoy)
+5. MitiNavHost()               (barra inferior + pantalla Hoy)
 ```
 
-#### 1. [`MitiApplication.kt`](../app/src/main/java/ar/edu/uade/miti/MitiApplication.kt)
+#### 1. [`MitiApp.kt`](../app/src/main/java/ar/edu/uade/miti/MitiApp.kt)
 
 ```kotlin
 package ar.edu.uade.miti                 // en qué "carpeta lógica" vive este código
@@ -229,7 +229,7 @@ import android.app.Application           // traigo clases de otros lados
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp                          // anotación: "Hilt, arrancá acá"
-class MitiApplication : Application()    // mi clase es un tipo de Application
+class MitiApp : Application()    // mi clase es un tipo de Application
 ```
 
 - **`package`**: la dirección del archivo; coincide con las carpetas `ar/edu/uade/miti/`.
@@ -249,7 +249,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()                                // dibujar detrás de la barra de estado
         setContent {                                      // a partir de acá, la UI es Compose
             MitiTheme {
-                MitiApp()
+                MitiNavHost()
             }
         }
     }
@@ -260,7 +260,7 @@ class MainActivity : ComponentActivity() {
 - **`override`**: reemplaza la versión de la clase padre; `super.onCreate(...)` llama primero a la original.
 - **`Bundle?`**: el `?` significa que puede ser `null` (vacío). Kotlin obliga a marcar qué puede estar vacío.
 - **`setContent { ... }`**: el puente entre Android "clásico" y Compose.
-- **`MitiTheme { MitiApp() }`**: dibujá `MitiApp` usando el tema de Miti.
+- **`MitiTheme { MitiNavHost() }`**: dibujá `MitiNavHost` usando el tema de Miti.
 
 ---
 
@@ -375,7 +375,7 @@ fun MitiTheme(
 - **Un color scheme** asigna colores a **roles** (`primary`, `secondary`...). Los componentes piden "el color primary", así que cambiar el esquema cambia toda la app.
 - **`darkTheme = isSystemInDarkTheme()`**: por defecto sigue el modo oscuro del celular.
 - **`if (...) A else B`** devuelve un valor y se puede usar directo como argumento.
-- **`content: @Composable () -> Unit`**: un parámetro que es una función (composable, sin parámetros, que no devuelve nada). Por eso se puede escribir `MitiTheme { MitiApp() }`.
+- **`content: @Composable () -> Unit`**: un parámetro que es una función (composable, sin parámetros, que no devuelve nada). Por eso se puede escribir `MitiTheme { MitiNavHost() }`.
 
 ### La navegación
 
@@ -403,7 +403,7 @@ sealed interface Ruta {
 Es **navegación tipada**: escribir `Ruta.Hoyy` no compila, a diferencia de usar textos como `"hoy"`. Las rutas con datos
 vienen después, por ejemplo `data class DetalleGasto(val gastoId: String) : Ruta`.
 
-#### Los destinos de la barra inferior: [`MitiApp.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/MitiApp.kt)
+#### Los destinos de la barra inferior: [`MitiNavHost.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/MitiNavHost.kt)
 
 ```kotlin
 enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:DrawableRes val icono: Int) {
@@ -419,11 +419,11 @@ enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:Dr
 
 La barra se arma recorriendo esta lista: para agregar una pestaña alcanza con sumar una línea.
 
-#### `MitiApp`
+#### `MitiNavHost`
 
 ```kotlin
 @Composable
-fun MitiApp() {
+fun MitiNavHost() {
     val navController = rememberNavController()
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
@@ -432,7 +432,7 @@ fun MitiApp() {
 
 - **El `NavController`** maneja la navegación y lleva la **pila de pantallas** (*back stack*): navegar apila, "atrás" desapila.
 - **`remember`**: como Compose re-ejecuta las funciones cada vez que algo cambia, una variable normal se crearía de nuevo cada vez. `remember...` la crea la primera vez y la recuerda.
-- **Estado y recomposición**: `currentBackStackEntryAsState()` es un estado que Compose observa. Al cambiar de pantalla, Compose re-ejecuta `MitiApp` y la barra marca la pestaña correcta. Eso es la **recomposición**.
+- **Estado y recomposición**: `currentBackStackEntryAsState()` es un estado que Compose observa. Al cambiar de pantalla, Compose re-ejecuta `MitiNavHost` y la barra marca la pestaña correcta. Eso es la **recomposición**.
 - **`by`**: delegación; permite usar `entradaActual` sin escribir `.value`.
 - **`?.`** (*safe call*): si `entradaActual` es `null` (al arrancar todavía no hay pantalla), devuelve `null` en vez de fallar.
 
@@ -514,10 +514,10 @@ BalanceScreen (Compose)  ──► solo dibuja el estado y avisa lo que toca el 
 BalanceViewModel ──► guarda el estado (StateFlow<UiState>) y llama a casos de uso
       ▲   │
       │   ▼
-ObtenerBalanceDelMes / RegistrarPago (casos de uso, dominio)
+ObtenerBalanceDelMesUseCase / RegistrarPagoUseCase (casos de uso, dominio)
       ▲   │
       │   ▼
-GastoRepositorio (interfaz del dominio) ──► implementado con Room en la capa de datos
+GastoRepository (interfaz del dominio) ──► implementado con Room en la capa de datos
 ```
 
 La pantalla pide el ViewModel a Hilt con `viewModel: BalanceViewModel = hiltViewModel()` (de `hilt-navigation-compose`).
@@ -668,7 +668,7 @@ Gasto(
 )
 ```
 
-`ObtenerBalanceDelMes` calcularía para noviembre, diciembre y enero: cuota $10.000, la mitad es de Ana, "Ana le debe
+`ObtenerBalanceDelMesUseCase` calcularía para noviembre, diciembre y enero: cuota $10.000, la mitad es de Ana, "Ana le debe
 $5.000 a Tomás".
 
 ```kotlin
@@ -693,7 +693,7 @@ una cosa y otra. Si cambia la estrategia de sincronización (por ejemplo, por la
 ### Los repositorios: [`Repositorios.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/repositorio/Repositorios.kt)
 
 ```kotlin
-interface GastoRepositorio {
+interface GastoRepository {
     fun observarGastos(): Flow<List<Gasto>>
     fun observarPagos(): Flow<List<Pago>>
     suspend fun guardarGasto(gasto: Gasto)
@@ -701,11 +701,11 @@ interface GastoRepositorio {
 }
 ```
 
-Hay uno por cada grupo de D05: `HogarRepositorio`, `RutinaRepositorio`, `PendienteRepositorio` y `GastoRepositorio`.
+Hay uno por cada grupo de D05: `HogarRepository`, `RutinaRepository`, `PendienteRepository` y `GastoRepository`.
 
 **`interface`: un contrato sin implementación.** Dice qué se puede hacer, no cómo. Después habrá un
 `GastoRepositorioImpl` (Room + Supabase) y un `GastoRepositorioFake` para tests (una lista en memoria). El caso de uso
-recibe "algún `GastoRepositorio`": Hilt le pasa el real en la app y el test le pasa el falso. Eso es la inversión de
+recibe "algún `GastoRepository`": Hilt le pasa el real en la app y el test le pasa el falso. Eso es la inversión de
 dependencias de D05, y permite trabajar en paralelo: la UI programa contra la interfaz mientras se implementa Room.
 
 **Leer: `Flow`.** `List<Gasto>` es una lista; `Flow<...>` es **un valor que va cambiando en el tiempo**. Primero emite la
@@ -758,7 +758,7 @@ class RutinaTest {
 - **`@Test(expected = ...)`**: el test pasa si se lanza ese error, que es justo el que lanza `require`.
 
 Los tests importantes de RNF11 (balance con 50/50, 100/0, cuotas, pagos parciales y saldo arrastrado) serán de
-`ObtenerBalanceDelMes`, con un repositorio falso. Para probar los `Flow` está **Turbine**.
+`ObtenerBalanceDelMesUseCase`, con un repositorio falso. Para probar los `Flow` está **Turbine**.
 
 ### Siguiente paso
 

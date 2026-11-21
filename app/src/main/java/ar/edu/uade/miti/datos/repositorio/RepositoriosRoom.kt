@@ -5,8 +5,8 @@ import ar.edu.uade.miti.datos.local.HogarDao
 import ar.edu.uade.miti.datos.local.MetadatosSync
 import ar.edu.uade.miti.datos.local.PendienteDao
 import ar.edu.uade.miti.datos.local.RutinaDao
-import ar.edu.uade.miti.datos.local.aDominio
-import ar.edu.uade.miti.datos.local.aEntidad
+import ar.edu.uade.miti.datos.local.toDomain
+import ar.edu.uade.miti.datos.local.toEntity
 import ar.edu.uade.miti.datos.sesion.HogarActivo
 import ar.edu.uade.miti.dominio.modelo.Gasto
 import ar.edu.uade.miti.dominio.modelo.Hogar
@@ -15,11 +15,11 @@ import ar.edu.uade.miti.dominio.modelo.Pago
 import ar.edu.uade.miti.dominio.modelo.Pendiente
 import ar.edu.uade.miti.dominio.modelo.RegistroRutina
 import ar.edu.uade.miti.dominio.modelo.Rutina
-import ar.edu.uade.miti.dominio.repositorio.GastoRepositorio
+import ar.edu.uade.miti.dominio.repositorio.GastoRepository
 import ar.edu.uade.miti.dominio.repositorio.GeneradorDeIds
-import ar.edu.uade.miti.dominio.repositorio.HogarRepositorio
-import ar.edu.uade.miti.dominio.repositorio.PendienteRepositorio
-import ar.edu.uade.miti.dominio.repositorio.RutinaRepositorio
+import ar.edu.uade.miti.dominio.repositorio.HogarRepository
+import ar.edu.uade.miti.dominio.repositorio.PendienteRepository
+import ar.edu.uade.miti.dominio.repositorio.RutinaRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -44,75 +44,75 @@ private fun <T> HogarActivo.observar(vacio: T, consulta: (hogarId: String) -> Fl
 
 private fun Clock.cambioPendiente() = MetadatosSync(updatedAt = millis())
 
-class HogarRepositorioRoom @Inject constructor(
+class HogarRepositoryImpl @Inject constructor(
     private val dao: HogarDao,
     private val hogarActivo: HogarActivo,
-) : HogarRepositorio {
+) : HogarRepository {
     override suspend fun hogarActivoId(): String? = hogarActivo.id.first()
 
     override fun observarHogar(): Flow<Hogar?> =
-        hogarActivo.observar(null) { id -> dao.observarHogar(id).map { it?.aDominio() } }
+        hogarActivo.observar(null) { id -> dao.observarHogar(id).map { it?.toDomain() } }
 
     override fun observarIntegrantes(): Flow<List<Integrante>> =
-        hogarActivo.observar(emptyList()) { id -> dao.observarIntegrantes(id).map { lista -> lista.map { it.aDominio() } } }
+        hogarActivo.observar(emptyList()) { id -> dao.observarIntegrantes(id).map { lista -> lista.map { it.toDomain() } } }
 }
 
-class RutinaRepositorioRoom @Inject constructor(
+class RutinaRepositoryImpl @Inject constructor(
     private val dao: RutinaDao,
     private val hogarActivo: HogarActivo,
     private val reloj: Clock,
-) : RutinaRepositorio {
+) : RutinaRepository {
     override fun observarRutinas(): Flow<List<Rutina>> =
-        hogarActivo.observar(emptyList()) { id -> dao.observarRutinas(id).map { lista -> lista.map { it.aDominio() } } }
+        hogarActivo.observar(emptyList()) { id -> dao.observarRutinas(id).map { lista -> lista.map { it.toDomain() } } }
 
     override fun observarRegistrosDelDia(fecha: LocalDate): Flow<List<RegistroRutina>> =
         hogarActivo.observar(emptyList()) { id ->
             dao.observarRegistros(id, desde = fecha.atStartOfDay(), hasta = fecha.plusDays(1).atStartOfDay())
-                .map { lista -> lista.map { it.aDominio() } }
+                .map { lista -> lista.map { it.toDomain() } }
         }
 
-    override suspend fun guardarRutina(rutina: Rutina) = dao.guardarRutina(rutina.aEntidad(reloj.cambioPendiente()))
+    override suspend fun guardarRutina(rutina: Rutina) = dao.guardarRutina(rutina.toEntity(reloj.cambioPendiente()))
 
     override suspend fun eliminarRutina(id: String) = dao.marcarBorrada(id, reloj.millis())
 
     override suspend fun agregarRegistro(registro: RegistroRutina) =
-        dao.guardarRegistro(registro.aEntidad(reloj.cambioPendiente()))
+        dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente()))
 }
 
-class PendienteRepositorioRoom @Inject constructor(
+class PendienteRepositoryImpl @Inject constructor(
     private val dao: PendienteDao,
     private val hogarActivo: HogarActivo,
     private val reloj: Clock,
-) : PendienteRepositorio {
+) : PendienteRepository {
     override fun observarPendientes(): Flow<List<Pendiente>> =
-        hogarActivo.observar(emptyList()) { id -> dao.observarPendientes(id).map { lista -> lista.map { it.aDominio() } } }
+        hogarActivo.observar(emptyList()) { id -> dao.observarPendientes(id).map { lista -> lista.map { it.toDomain() } } }
 
-    override suspend fun obtenerPendiente(id: String): Pendiente? = dao.obtenerPendiente(id)?.aDominio()
+    override suspend fun obtenerPendiente(id: String): Pendiente? = dao.obtenerPendiente(id)?.toDomain()
 
     override suspend fun guardarPendientes(pendientes: List<Pendiente>) {
         val sync = reloj.cambioPendiente()
-        dao.guardarPendientes(pendientes.map { it.aEntidad(sync) })
+        dao.guardarPendientes(pendientes.map { it.toEntity(sync) })
     }
 
     override suspend fun eliminarPendiente(id: String) = dao.marcarBorrado(id, reloj.millis())
 }
 
-class GastoRepositorioRoom @Inject constructor(
+class GastoRepositoryImpl @Inject constructor(
     private val dao: GastoDao,
     private val hogarActivo: HogarActivo,
     private val reloj: Clock,
-) : GastoRepositorio {
+) : GastoRepository {
     override fun observarGastos(): Flow<List<Gasto>> =
-        hogarActivo.observar(emptyList()) { id -> dao.observarGastos(id).map { lista -> lista.map { it.aDominio() } } }
+        hogarActivo.observar(emptyList()) { id -> dao.observarGastos(id).map { lista -> lista.map { it.toDomain() } } }
 
     override fun observarPagos(): Flow<List<Pago>> =
-        hogarActivo.observar(emptyList()) { id -> dao.observarPagos(id).map { lista -> lista.map { it.aDominio() } } }
+        hogarActivo.observar(emptyList()) { id -> dao.observarPagos(id).map { lista -> lista.map { it.toDomain() } } }
 
-    override suspend fun guardarGasto(gasto: Gasto) = dao.guardarGasto(gasto.aEntidad(reloj.cambioPendiente()))
+    override suspend fun guardarGasto(gasto: Gasto) = dao.guardarGasto(gasto.toEntity(reloj.cambioPendiente()))
 
     override suspend fun eliminarGasto(id: String) = dao.marcarGastoBorrado(id, reloj.millis())
 
-    override suspend fun guardarPago(pago: Pago) = dao.guardarPago(pago.aEntidad(reloj.cambioPendiente()))
+    override suspend fun guardarPago(pago: Pago) = dao.guardarPago(pago.toEntity(reloj.cambioPendiente()))
 
     override suspend fun eliminarPago(id: String) = dao.marcarPagoBorrado(id, reloj.millis())
 }

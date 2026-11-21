@@ -10,18 +10,18 @@ import androidx.room.TypeConverters
  */
 @Database(
     entities = [
-        HogarEntidad::class,
-        IntegranteEntidad::class,
-        RutinaEntidad::class,
-        RegistroRutinaEntidad::class,
-        PendienteEntidad::class,
-        GastoEntidad::class,
-        PagoEntidad::class,
+        HogarEntity::class,
+        IntegranteEntity::class,
+        RutinaEntity::class,
+        RegistroRutinaEntity::class,
+        PendienteEntity::class,
+        GastoEntity::class,
+        PagoEntity::class,
     ],
     version = 1,
 )
 @TypeConverters(Convertidores::class)
-abstract class MitiDatabase : RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
     abstract fun hogarDao(): HogarDao
     abstract fun rutinaDao(): RutinaDao
     abstract fun pendienteDao(): PendienteDao

@@ -34,7 +34,7 @@ data class MetadatosSync(
 )
 
 @Entity(tableName = "hogares")
-data class HogarEntidad(
+data class HogarEntity(
     @PrimaryKey val id: String,
     val nombre: String,
     val codigoUnion: String,
@@ -42,7 +42,7 @@ data class HogarEntidad(
 )
 
 @Entity(tableName = "integrantes", indices = [Index("hogarId")])
-data class IntegranteEntidad(
+data class IntegranteEntity(
     @PrimaryKey val id: String,
     val hogarId: String,
     val nombre: String,
@@ -51,7 +51,7 @@ data class IntegranteEntidad(
 )
 
 @Entity(tableName = "rutinas", indices = [Index("hogarId")])
-data class RutinaEntidad(
+data class RutinaEntity(
     @PrimaryKey val id: String,
     val hogarId: String,
     val titulo: String,
@@ -62,7 +62,7 @@ data class RutinaEntidad(
 )
 
 @Entity(tableName = "registros_rutina", indices = [Index("rutinaId"), Index("fechaHora")])
-data class RegistroRutinaEntidad(
+data class RegistroRutinaEntity(
     @PrimaryKey val id: String,
     val rutinaId: String,
     val integranteId: String,
@@ -71,7 +71,7 @@ data class RegistroRutinaEntidad(
 )
 
 @Entity(tableName = "pendientes", indices = [Index("hogarId")])
-data class PendienteEntidad(
+data class PendienteEntity(
     @PrimaryKey val id: String,
     val hogarId: String,
     val tipo: TipoPendiente,
@@ -86,7 +86,7 @@ data class PendienteEntidad(
 )
 
 @Entity(tableName = "gastos", indices = [Index("hogarId")])
-data class GastoEntidad(
+data class GastoEntity(
     @PrimaryKey val id: String,
     val hogarId: String,
     val descripcion: String,
@@ -101,7 +101,7 @@ data class GastoEntidad(
 )
 
 @Entity(tableName = "pagos", indices = [Index("hogarId")])
-data class PagoEntidad(
+data class PagoEntity(
     @PrimaryKey val id: String,
     val hogarId: String,
     val deIntegranteId: String,

@@ -1,11 +1,11 @@
 package ar.edu.uade.miti.dominio.casouso.pendientes
 
 import ar.edu.uade.miti.dominio.casouso.gastos.DatosDeGasto
-import ar.edu.uade.miti.dominio.casouso.gastos.RegistrarGasto
+import ar.edu.uade.miti.dominio.casouso.gastos.RegistrarGastoUseCase
 import ar.edu.uade.miti.dominio.fakes.ANA
-import ar.edu.uade.miti.dominio.fakes.FakeGastoRepositorio
-import ar.edu.uade.miti.dominio.fakes.FakeHogarRepositorio
-import ar.edu.uade.miti.dominio.fakes.FakePendienteRepositorio
+import ar.edu.uade.miti.dominio.fakes.FakeGastoRepository
+import ar.edu.uade.miti.dominio.fakes.FakeHogarRepository
+import ar.edu.uade.miti.dominio.fakes.FakePendienteRepository
 import ar.edu.uade.miti.dominio.fakes.IdsSecuenciales
 import ar.edu.uade.miti.dominio.fakes.TOMAS
 import ar.edu.uade.miti.dominio.fakes.relojEn
@@ -21,16 +21,16 @@ import java.time.LocalDateTime
 
 class CasosDeUsoPendientesTest {
 
-    private val hogares = FakeHogarRepositorio()
-    private val pendientes = FakePendienteRepositorio()
-    private val gastos = FakeGastoRepositorio()
+    private val hogares = FakeHogarRepository()
+    private val pendientes = FakePendienteRepository()
+    private val gastos = FakeGastoRepository()
     private val ids = IdsSecuenciales()
     private val reloj = relojEn(LocalDate.of(2026, 11, 5).atTime(18, 30))
 
-    private val registrarTarea = RegistrarTarea(hogares, pendientes, ids)
-    private val registrarCompra = RegistrarCompra(hogares, pendientes, ids)
-    private val marcarEnCarrito = MarcarEnCarrito(pendientes)
-    private val terminarCompra = TerminarCompra(pendientes, RegistrarGasto(hogares, gastos, reloj, ids))
+    private val registrarTarea = RegistrarTareaUseCase(hogares, pendientes, ids)
+    private val registrarCompra = RegistrarCompraUseCase(hogares, pendientes, ids)
+    private val marcarEnCarrito = MarcarEnCarritoUseCase(pendientes)
+    private val terminarCompra = TerminarCompraUseCase(pendientes, RegistrarGastoUseCase(hogares, gastos, reloj, ids))
 
     private val juevesALas18 = LocalDateTime.of(2026, 11, 5, 18, 0)
 
@@ -40,18 +40,18 @@ class CasosDeUsoPendientesTest {
         val turno = registrarTarea("Sacar turno", ANA, juevesALas18.minusDays(1), avisar = false)
         val gas = registrarTarea("Pagar el gas", TOMAS, juevesALas18.minusHours(2), avisar = false)
 
-        assertEquals(listOf(turno, gas, abl), ObservarProximasTareas(pendientes)().first())
-        assertEquals(listOf(gas, abl), ObservarProximasTareas(pendientes)(TOMAS).first())
+        assertEquals(listOf(turno, gas, abl), ObservarProximasTareasUseCase(pendientes)().first())
+        assertEquals(listOf(gas, abl), ObservarProximasTareasUseCase(pendientes)(TOMAS).first())
     }
 
     @Test
     fun `una tarea completada deja de figurar como proxima`() = runTest {
         val abl = registrarTarea("Pagar ABL", TOMAS, juevesALas18, avisar = true)
 
-        CompletarTarea(pendientes)(abl.id)
+        CompletarTareaUseCase(pendientes)(abl.id)
 
         assertTrue(pendientes.obtenerPendiente(abl.id)!!.resuelto)
-        assertEquals(emptyList<Any>(), ObservarProximasTareas(pendientes)().first())
+        assertEquals(emptyList<Any>(), ObservarProximasTareasUseCase(pendientes)().first())
     }
 
     @Test
@@ -61,7 +61,7 @@ class CasosDeUsoPendientesTest {
 
         marcarEnCarrito(leche.id, enCarrito = true)
 
-        val lista = ObservarListaDeCompras(pendientes)().first()
+        val lista = ObservarListaDeComprasUseCase(pendientes)().first()
         assertEquals(listOf(detergente), lista.porComprar)
         assertEquals(listOf(leche.copy(enCarrito = true)), lista.enCarrito)
     }
@@ -80,7 +80,7 @@ class CasosDeUsoPendientesTest {
         val comprados = listOf(leche, detergente).map { pendientes.obtenerPendiente(it.id)!! }
         assertTrue(comprados.all { it.resuelto && !it.enCarrito && it.gastoId == gasto!!.id })
         // Lo que no estaba en el carrito sigue en la lista.
-        assertEquals(listOf(pan), ObservarListaDeCompras(pendientes)().first().porComprar)
+        assertEquals(listOf(pan), ObservarListaDeComprasUseCase(pendientes)().first().porComprar)
     }
 
     @Test
@@ -105,6 +105,6 @@ class CasosDeUsoPendientesTest {
     @Test(expected = IllegalArgumentException::class)
     fun `una compra no se completa como tarea`() = runTest {
         val leche = registrarCompra("Leche")
-        CompletarTarea(pendientes)(leche.id)
+        CompletarTareaUseCase(pendientes)(leche.id)
     }
 }

@@ -4,8 +4,8 @@ import ar.edu.uade.miti.dominio.modelo.Frecuencia
 import ar.edu.uade.miti.dominio.modelo.RegistroRutina
 import ar.edu.uade.miti.dominio.modelo.Rutina
 import ar.edu.uade.miti.dominio.repositorio.GeneradorDeIds
-import ar.edu.uade.miti.dominio.repositorio.HogarRepositorio
-import ar.edu.uade.miti.dominio.repositorio.RutinaRepositorio
+import ar.edu.uade.miti.dominio.repositorio.HogarRepository
+import ar.edu.uade.miti.dominio.repositorio.RutinaRepository
 import ar.edu.uade.miti.dominio.repositorio.requerirHogarActivo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,9 +22,9 @@ data class RutinaDelDia(val rutina: Rutina, val registros: List<RegistroRutina>)
     val completa: Boolean get() = registros.size >= rutina.vecesPorDia
 }
 
-class RegistrarRutina @Inject constructor(
-    private val hogares: HogarRepositorio,
-    private val rutinas: RutinaRepositorio,
+class RegistrarRutinaUseCase @Inject constructor(
+    private val hogares: HogarRepository,
+    private val rutinas: RutinaRepository,
     private val ids: GeneradorDeIds,
 ) {
     suspend operator fun invoke(
@@ -50,7 +50,7 @@ class RegistrarRutina @Inject constructor(
  * Rutinas que corresponden a [fecha] con su progreso. Se recalcula sola cada vez que
  * cambia una rutina o llega una marca nueva, venga de la app, del widget o de la sincronización.
  */
-class ObservarRutinasDelDia @Inject constructor(private val rutinas: RutinaRepositorio) {
+class ObservarRutinasDelDiaUseCase @Inject constructor(private val rutinas: RutinaRepository) {
     operator fun invoke(fecha: LocalDate): Flow<List<RutinaDelDia>> =
         combine(rutinas.observarRutinas(), rutinas.observarRegistrosDelDia(fecha)) { todas, registros ->
             val registrosPorRutina = registros.groupBy { it.rutinaId }
@@ -67,8 +67,8 @@ class ObservarRutinasDelDia @Inject constructor(private val rutinas: RutinaRepos
  * existentes (D08). Si la rutina ya estaba completa hoy no agrega nada y devuelve false,
  * para no repetir una tarea que ya se hizo.
  */
-class MarcarRutina @Inject constructor(
-    private val rutinas: RutinaRepositorio,
+class MarcarRutinaUseCase @Inject constructor(
+    private val rutinas: RutinaRepository,
     private val reloj: Clock,
     private val ids: GeneradorDeIds,
 ) {

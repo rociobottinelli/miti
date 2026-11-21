@@ -3,16 +3,16 @@ package ar.edu.uade.miti.datos
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import ar.edu.uade.miti.datos.local.EstadoSync
-import ar.edu.uade.miti.datos.local.HogarEntidad
-import ar.edu.uade.miti.datos.local.IntegranteEntidad
+import ar.edu.uade.miti.datos.local.HogarEntity
+import ar.edu.uade.miti.datos.local.IntegranteEntity
 import ar.edu.uade.miti.datos.local.MetadatosSync
-import ar.edu.uade.miti.datos.local.MitiDatabase
-import ar.edu.uade.miti.datos.repositorio.GastoRepositorioRoom
-import ar.edu.uade.miti.datos.repositorio.HogarRepositorioRoom
-import ar.edu.uade.miti.datos.repositorio.PendienteRepositorioRoom
-import ar.edu.uade.miti.datos.repositorio.RutinaRepositorioRoom
+import ar.edu.uade.miti.datos.local.AppDatabase
+import ar.edu.uade.miti.datos.repositorio.GastoRepositoryImpl
+import ar.edu.uade.miti.datos.repositorio.HogarRepositoryImpl
+import ar.edu.uade.miti.datos.repositorio.PendienteRepositoryImpl
+import ar.edu.uade.miti.datos.repositorio.RutinaRepositoryImpl
 import ar.edu.uade.miti.datos.sesion.HogarActivo
-import ar.edu.uade.miti.dominio.casouso.gastos.ObtenerBalanceDelMes
+import ar.edu.uade.miti.dominio.casouso.gastos.ObtenerBalanceDelMesUseCase
 import ar.edu.uade.miti.dominio.fakes.ANA
 import ar.edu.uade.miti.dominio.fakes.HOGAR
 import ar.edu.uade.miti.dominio.fakes.TOMAS
@@ -48,7 +48,7 @@ import java.time.YearMonth
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
-class RepositoriosRoomTest {
+class RepositoryImplTest {
 
     private class HogarActivoEnMemoria(inicial: String?) : HogarActivo {
         private val actual = MutableStateFlow(inicial)
@@ -56,17 +56,17 @@ class RepositoriosRoomTest {
         override suspend fun establecer(hogarId: String?) { actual.value = hogarId }
     }
 
-    private val base = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), MitiDatabase::class.java)
+    private val base = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
         .allowMainThreadQueries()
         .build()
     private val hogarActivo = HogarActivoEnMemoria(HOGAR)
     private val ahora = LocalDateTime.of(2026, 11, 5, 18, 30)
     private val reloj = relojEn(ahora)
 
-    private val hogares = HogarRepositorioRoom(base.hogarDao(), hogarActivo)
-    private val rutinas = RutinaRepositorioRoom(base.rutinaDao(), hogarActivo, reloj)
-    private val pendientes = PendienteRepositorioRoom(base.pendienteDao(), hogarActivo, reloj)
-    private val gastos = GastoRepositorioRoom(base.gastoDao(), hogarActivo, reloj)
+    private val hogares = HogarRepositoryImpl(base.hogarDao(), hogarActivo)
+    private val rutinas = RutinaRepositoryImpl(base.rutinaDao(), hogarActivo, reloj)
+    private val pendientes = PendienteRepositoryImpl(base.pendienteDao(), hogarActivo, reloj)
+    private val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj)
 
     @After
     fun cerrar() = base.close()
@@ -138,14 +138,14 @@ class RepositoriosRoomTest {
     @Test
     fun `el balance funciona de punta a punta sobre Room`() = runTest {
         val sync = MetadatosSync(updatedAt = 0, syncState = EstadoSync.SINCRONIZADO)
-        base.hogarDao().guardarHogar(HogarEntidad(HOGAR, "Casa", "ABC123", sync))
-        base.hogarDao().guardarIntegrante(IntegranteEntidad(ANA, HOGAR, "Ana", "ana@mail.com", sync))
-        base.hogarDao().guardarIntegrante(IntegranteEntidad(TOMAS, HOGAR, "Tomás", "tomas@mail.com", sync))
+        base.hogarDao().guardarHogar(HogarEntity(HOGAR, "Casa", "ABC123", sync))
+        base.hogarDao().guardarIntegrante(IntegranteEntity(ANA, HOGAR, "Ana", "ana@mail.com", sync))
+        base.hogarDao().guardarIntegrante(IntegranteEntity(TOMAS, HOGAR, "Tomás", "tomas@mail.com", sync))
         val noviembre = YearMonth.of(2026, 11)
         gastos.guardarGasto(Gasto("heladera", HOGAR, "Heladera", 3_000_000, TOMAS, Reparto.A_MEDIAS, cuotasTotales = 3, mesInicio = noviembre))
         gastos.guardarPago(Pago("p1", HOGAR, ANA, TOMAS, 200_000, LocalDate.of(2026, 11, 20)))
 
-        val balance = ObtenerBalanceDelMes(hogares, gastos)(noviembre).first()
+        val balance = ObtenerBalanceDelMesUseCase(hogares, gastos)(noviembre).first()
 
         assertEquals(Deuda(ANA, TOMAS, 300_000), balance?.resultado)
     }

@@ -4,9 +4,9 @@ import ar.edu.uade.miti.dominio.modelo.BalanceDelMes
 import ar.edu.uade.miti.dominio.modelo.Gasto
 import ar.edu.uade.miti.dominio.modelo.Pago
 import ar.edu.uade.miti.dominio.modelo.Reparto
-import ar.edu.uade.miti.dominio.repositorio.GastoRepositorio
+import ar.edu.uade.miti.dominio.repositorio.GastoRepository
 import ar.edu.uade.miti.dominio.repositorio.GeneradorDeIds
-import ar.edu.uade.miti.dominio.repositorio.HogarRepositorio
+import ar.edu.uade.miti.dominio.repositorio.HogarRepository
 import ar.edu.uade.miti.dominio.repositorio.requerirHogarActivo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -28,9 +28,9 @@ data class DatosDeGasto(
     val mesInicio: YearMonth? = null,
 )
 
-class RegistrarGasto @Inject constructor(
-    private val hogares: HogarRepositorio,
-    private val gastos: GastoRepositorio,
+class RegistrarGastoUseCase @Inject constructor(
+    private val hogares: HogarRepository,
+    private val gastos: GastoRepository,
     private val reloj: Clock,
     private val ids: GeneradorDeIds,
 ) {
@@ -53,9 +53,9 @@ class RegistrarGasto @Inject constructor(
 }
 
 /** Registra que [deIntegranteId] le pagó a [aIntegranteId], total o parcialmente. */
-class RegistrarPago @Inject constructor(
-    private val hogares: HogarRepositorio,
-    private val gastos: GastoRepositorio,
+class RegistrarPagoUseCase @Inject constructor(
+    private val hogares: HogarRepository,
+    private val gastos: GastoRepository,
     private val reloj: Clock,
     private val ids: GeneradorDeIds,
 ) {
@@ -75,9 +75,9 @@ class RegistrarPago @Inject constructor(
  * Balance de [mes], que se recalcula solo cada vez que cambia un gasto, un pago o un integrante (RF04).
  * Emite null mientras el hogar no tenga dos integrantes, porque no hay entre quiénes repartir.
  */
-class ObtenerBalanceDelMes @Inject constructor(
-    private val hogares: HogarRepositorio,
-    private val gastos: GastoRepositorio,
+class ObtenerBalanceDelMesUseCase @Inject constructor(
+    private val hogares: HogarRepository,
+    private val gastos: GastoRepository,
 ) {
     operator fun invoke(mes: YearMonth): Flow<BalanceDelMes?> =
         combine(hogares.observarIntegrantes(), gastos.observarGastos(), gastos.observarPagos()) { integrantes, todosLosGastos, todosLosPagos ->

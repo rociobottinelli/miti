@@ -4,21 +4,21 @@ import android.content.Context
 import androidx.room.Room
 import ar.edu.uade.miti.datos.local.GastoDao
 import ar.edu.uade.miti.datos.local.HogarDao
-import ar.edu.uade.miti.datos.local.MitiDatabase
+import ar.edu.uade.miti.datos.local.AppDatabase
 import ar.edu.uade.miti.datos.local.PendienteDao
 import ar.edu.uade.miti.datos.local.RutinaDao
-import ar.edu.uade.miti.datos.repositorio.GastoRepositorioRoom
+import ar.edu.uade.miti.datos.repositorio.GastoRepositoryImpl
 import ar.edu.uade.miti.datos.repositorio.GeneradorDeUuid
-import ar.edu.uade.miti.datos.repositorio.HogarRepositorioRoom
-import ar.edu.uade.miti.datos.repositorio.PendienteRepositorioRoom
-import ar.edu.uade.miti.datos.repositorio.RutinaRepositorioRoom
+import ar.edu.uade.miti.datos.repositorio.HogarRepositoryImpl
+import ar.edu.uade.miti.datos.repositorio.PendienteRepositoryImpl
+import ar.edu.uade.miti.datos.repositorio.RutinaRepositoryImpl
 import ar.edu.uade.miti.datos.sesion.HogarActivo
 import ar.edu.uade.miti.datos.sesion.HogarActivoDataStore
-import ar.edu.uade.miti.dominio.repositorio.GastoRepositorio
+import ar.edu.uade.miti.dominio.repositorio.GastoRepository
 import ar.edu.uade.miti.dominio.repositorio.GeneradorDeIds
-import ar.edu.uade.miti.dominio.repositorio.HogarRepositorio
-import ar.edu.uade.miti.dominio.repositorio.PendienteRepositorio
-import ar.edu.uade.miti.dominio.repositorio.RutinaRepositorio
+import ar.edu.uade.miti.dominio.repositorio.HogarRepository
+import ar.edu.uade.miti.dominio.repositorio.PendienteRepository
+import ar.edu.uade.miti.dominio.repositorio.RutinaRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -34,17 +34,17 @@ import javax.inject.Singleton
 /** Lo que hay que construir "a mano" (con @Provides): la base, sus DAOs y el reloj. */
 @Module
 @InstallIn(SingletonComponent::class)
-object BaseDeDatosModule {
+object DatabaseModule {
 
     @Provides
     @Singleton
-    fun baseDeDatos(@ApplicationContext context: Context): MitiDatabase =
-        Room.databaseBuilder(context, MitiDatabase::class.java, "miti.db").build()
+    fun baseDeDatos(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, "miti.db").build()
 
-    @Provides fun hogarDao(base: MitiDatabase): HogarDao = base.hogarDao()
-    @Provides fun rutinaDao(base: MitiDatabase): RutinaDao = base.rutinaDao()
-    @Provides fun pendienteDao(base: MitiDatabase): PendienteDao = base.pendienteDao()
-    @Provides fun gastoDao(base: MitiDatabase): GastoDao = base.gastoDao()
+    @Provides fun hogarDao(base: AppDatabase): HogarDao = base.hogarDao()
+    @Provides fun rutinaDao(base: AppDatabase): RutinaDao = base.rutinaDao()
+    @Provides fun pendienteDao(base: AppDatabase): PendienteDao = base.pendienteDao()
+    @Provides fun gastoDao(base: AppDatabase): GastoDao = base.gastoDao()
 
     /** La hora real. En los tests se reemplaza por un reloj fijo. */
     @Provides
@@ -55,11 +55,11 @@ object BaseDeDatosModule {
 /** "Cuando alguien pida la interfaz X, dale la implementación Y" (con @Binds). */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoriosModule {
-    @Binds abstract fun hogarRepositorio(impl: HogarRepositorioRoom): HogarRepositorio
-    @Binds abstract fun rutinaRepositorio(impl: RutinaRepositorioRoom): RutinaRepositorio
-    @Binds abstract fun pendienteRepositorio(impl: PendienteRepositorioRoom): PendienteRepositorio
-    @Binds abstract fun gastoRepositorio(impl: GastoRepositorioRoom): GastoRepositorio
+abstract class RepositoryModule {
+    @Binds abstract fun hogarRepositorio(impl: HogarRepositoryImpl): HogarRepository
+    @Binds abstract fun rutinaRepositorio(impl: RutinaRepositoryImpl): RutinaRepository
+    @Binds abstract fun pendienteRepositorio(impl: PendienteRepositoryImpl): PendienteRepository
+    @Binds abstract fun gastoRepositorio(impl: GastoRepositoryImpl): GastoRepository
     @Binds abstract fun generadorDeIds(impl: GeneradorDeUuid): GeneradorDeIds
     @Binds abstract fun hogarActivo(impl: HogarActivoDataStore): HogarActivo
 }

@@ -1,8 +1,8 @@
 package ar.edu.uade.miti.dominio.casouso.rutinas
 
 import ar.edu.uade.miti.dominio.fakes.ANA
-import ar.edu.uade.miti.dominio.fakes.FakeHogarRepositorio
-import ar.edu.uade.miti.dominio.fakes.FakeRutinaRepositorio
+import ar.edu.uade.miti.dominio.fakes.FakeHogarRepository
+import ar.edu.uade.miti.dominio.fakes.FakeRutinaRepository
 import ar.edu.uade.miti.dominio.fakes.HOGAR
 import ar.edu.uade.miti.dominio.fakes.IdsSecuenciales
 import ar.edu.uade.miti.dominio.fakes.TOMAS
@@ -25,7 +25,7 @@ class CasosDeUsoRutinasTest {
     private val jueves = LocalDate.of(2026, 11, 5)
     private val juevesALas8 = jueves.atTime(8, 15)
 
-    private val repositorio = FakeRutinaRepositorio()
+    private val repositorio = FakeRutinaRepository()
     private val pancho = Rutina("pancho", HOGAR, "Darle de comer a Pancho", Frecuencia.DIARIA, vecesPorDia = 2)
     private val basura = Rutina(
         "basura", HOGAR, "Sacar la basura", Frecuencia.DIAS_DE_LA_SEMANA, setOf(DayOfWeek.MONDAY), vecesPorDia = 1,
@@ -36,7 +36,7 @@ class CasosDeUsoRutinasTest {
 
     @Test
     fun `registrar una rutina diaria la guarda en el hogar activo sin dias`() = runTest {
-        val registrar = RegistrarRutina(FakeHogarRepositorio(), repositorio, IdsSecuenciales())
+        val registrar = RegistrarRutinaUseCase(FakeHogarRepository(), repositorio, IdsSecuenciales())
 
         val rutina = registrar(" Regar las plantas ", Frecuencia.DIARIA, setOf(DayOfWeek.MONDAY), vecesPorDia = 1)
 
@@ -48,7 +48,7 @@ class CasosDeUsoRutinasTest {
     fun `solo muestra las rutinas que corresponden al dia`() = runTest {
         repositorio.rutinas.value = listOf(pancho, basura)
 
-        val delJueves = ObservarRutinasDelDia(repositorio)(jueves).first()
+        val delJueves = ObservarRutinasDelDiaUseCase(repositorio)(jueves).first()
 
         assertEquals(listOf(pancho), delJueves.map { it.rutina })
     }
@@ -60,7 +60,7 @@ class CasosDeUsoRutinasTest {
         val deLaManana = marcar(pancho, TOMAS, juevesALas8)
         repositorio.registros.value = listOf(deLaTarde, deLaManana)
 
-        val rutina = ObservarRutinasDelDia(repositorio)(jueves).first().single()
+        val rutina = ObservarRutinasDelDiaUseCase(repositorio)(jueves).first().single()
 
         assertEquals(2, rutina.hechas)
         assertTrue(rutina.completa)
@@ -72,7 +72,7 @@ class CasosDeUsoRutinasTest {
         repositorio.rutinas.value = listOf(pancho)
         repositorio.registros.value = listOf(marcar(pancho, TOMAS, juevesALas8), marcar(pancho, ANA, jueves.atTime(20, 0)))
 
-        val viernes = ObservarRutinasDelDia(repositorio)(jueves.plusDays(1)).first().single()
+        val viernes = ObservarRutinasDelDiaUseCase(repositorio)(jueves.plusDays(1)).first().single()
 
         assertEquals(0, viernes.hechas)
         assertFalse(viernes.completa)
@@ -84,7 +84,7 @@ class CasosDeUsoRutinasTest {
         repositorio.rutinas.value = listOf(unaVez)
         repositorio.registros.value = listOf(marcar(unaVez, TOMAS, juevesALas8), marcar(unaVez, ANA, juevesALas8))
 
-        val rutina = ObservarRutinasDelDia(repositorio)(jueves).first().single()
+        val rutina = ObservarRutinasDelDiaUseCase(repositorio)(jueves).first().single()
 
         assertEquals(2, rutina.registros.size)
         assertEquals(1, rutina.hechas)
@@ -94,7 +94,7 @@ class CasosDeUsoRutinasTest {
     @Test
     fun `marcar registra quien y a que hora`() = runTest {
         repositorio.rutinas.value = listOf(pancho)
-        val marcarRutina = MarcarRutina(repositorio, relojEn(juevesALas8), IdsSecuenciales())
+        val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
 
         assertTrue(marcarRutina("pancho", TOMAS))
 
@@ -104,7 +104,7 @@ class CasosDeUsoRutinasTest {
     @Test
     fun `marcar una rutina ya completa no agrega otra marca`() = runTest {
         repositorio.rutinas.value = listOf(pancho)
-        val marcarRutina = MarcarRutina(repositorio, relojEn(juevesALas8), IdsSecuenciales())
+        val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
 
         assertTrue(marcarRutina("pancho", TOMAS))
         assertTrue(marcarRutina("pancho", ANA))

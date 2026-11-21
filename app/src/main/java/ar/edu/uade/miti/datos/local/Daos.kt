@@ -14,22 +14,22 @@ import java.time.LocalDateTime
 @Dao
 interface HogarDao {
     @Query("SELECT * FROM hogares WHERE id = :hogarId AND deleted = 0")
-    fun observarHogar(hogarId: String): Flow<HogarEntidad?>
+    fun observarHogar(hogarId: String): Flow<HogarEntity?>
 
     @Query("SELECT * FROM integrantes WHERE hogarId = :hogarId AND deleted = 0 ORDER BY nombre")
-    fun observarIntegrantes(hogarId: String): Flow<List<IntegranteEntidad>>
+    fun observarIntegrantes(hogarId: String): Flow<List<IntegranteEntity>>
 
     @Upsert
-    suspend fun guardarHogar(hogar: HogarEntidad)
+    suspend fun guardarHogar(hogar: HogarEntity)
 
     @Upsert
-    suspend fun guardarIntegrante(integrante: IntegranteEntidad)
+    suspend fun guardarIntegrante(integrante: IntegranteEntity)
 }
 
 @Dao
 interface RutinaDao {
     @Query("SELECT * FROM rutinas WHERE hogarId = :hogarId AND deleted = 0 ORDER BY titulo")
-    fun observarRutinas(hogarId: String): Flow<List<RutinaEntidad>>
+    fun observarRutinas(hogarId: String): Flow<List<RutinaEntity>>
 
     /** Marcas de las rutinas del hogar entre [desde] (incluido) y [hasta] (excluido). */
     @Query(
@@ -41,13 +41,13 @@ interface RutinaDao {
         ORDER BY registro.fechaHora
         """,
     )
-    fun observarRegistros(hogarId: String, desde: LocalDateTime, hasta: LocalDateTime): Flow<List<RegistroRutinaEntidad>>
+    fun observarRegistros(hogarId: String, desde: LocalDateTime, hasta: LocalDateTime): Flow<List<RegistroRutinaEntity>>
 
     @Upsert
-    suspend fun guardarRutina(rutina: RutinaEntidad)
+    suspend fun guardarRutina(rutina: RutinaEntity)
 
     @Upsert
-    suspend fun guardarRegistro(registro: RegistroRutinaEntidad)
+    suspend fun guardarRegistro(registro: RegistroRutinaEntity)
 
     @Query("UPDATE rutinas SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
     suspend fun marcarBorrada(id: String, ahora: Long)
@@ -56,14 +56,14 @@ interface RutinaDao {
 @Dao
 interface PendienteDao {
     @Query("SELECT * FROM pendientes WHERE hogarId = :hogarId AND deleted = 0")
-    fun observarPendientes(hogarId: String): Flow<List<PendienteEntidad>>
+    fun observarPendientes(hogarId: String): Flow<List<PendienteEntity>>
 
     @Query("SELECT * FROM pendientes WHERE id = :id AND deleted = 0")
-    suspend fun obtenerPendiente(id: String): PendienteEntidad?
+    suspend fun obtenerPendiente(id: String): PendienteEntity?
 
     /** Guarda todos juntos: si falla uno, no se guarda ninguno. */
     @Upsert
-    suspend fun guardarPendientes(pendientes: List<PendienteEntidad>)
+    suspend fun guardarPendientes(pendientes: List<PendienteEntity>)
 
     @Query("UPDATE pendientes SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
     suspend fun marcarBorrado(id: String, ahora: Long)
@@ -72,16 +72,16 @@ interface PendienteDao {
 @Dao
 interface GastoDao {
     @Query("SELECT * FROM gastos WHERE hogarId = :hogarId AND deleted = 0")
-    fun observarGastos(hogarId: String): Flow<List<GastoEntidad>>
+    fun observarGastos(hogarId: String): Flow<List<GastoEntity>>
 
     @Query("SELECT * FROM pagos WHERE hogarId = :hogarId AND deleted = 0 ORDER BY fecha")
-    fun observarPagos(hogarId: String): Flow<List<PagoEntidad>>
+    fun observarPagos(hogarId: String): Flow<List<PagoEntity>>
 
     @Upsert
-    suspend fun guardarGasto(gasto: GastoEntidad)
+    suspend fun guardarGasto(gasto: GastoEntity)
 
     @Upsert
-    suspend fun guardarPago(pago: PagoEntidad)
+    suspend fun guardarPago(pago: PagoEntity)
 
     @Query("UPDATE gastos SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
     suspend fun marcarGastoBorrado(id: String, ahora: Long)
