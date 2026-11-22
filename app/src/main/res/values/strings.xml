@@ -20,4 +20,9 @@
     <string name="hoy_rutina_hecha">Hecha</string>
     <string name="hoy_rutina_hecha_por">Hecha · %1$s</string>
     <string name="hoy_rutina_parcial">%1$d de %2$d · %3$s</string>
+    <string name="hoy_tarea_detalle">%1$s · %2$s</string>
+    <string name="hoy_tarea_hoy">Hoy %1$s</string>
+    <string name="hoy_tarea_maniana">Mañana %1$s</string>
+    <string name="hoy_tarea_atrasada">Atrasada · %1$s %2$s</string>
+    <string name="hoy_tarea_con_aviso">Con aviso</string>
 </resources>
