@@ -13,4 +13,11 @@
     <string name="cargando">Cargando</string>
     <string name="sin_sincronizar">Sin sincronizar</string>
     <string name="pendiente_de_sincronizar">Guardado en este celular, pendiente de sincronizar</string>
+
+    <!-- Hoy -->
+    <string name="hoy_progreso">%1$d de %2$d</string>
+    <string name="hoy_rutina_pendiente">Pendiente</string>
+    <string name="hoy_rutina_hecha">Hecha</string>
+    <string name="hoy_rutina_hecha_por">Hecha · %1$s</string>
+    <string name="hoy_rutina_parcial">%1$d de %2$d · %3$s</string>
 </resources>
