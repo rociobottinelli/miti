@@ -80,8 +80,11 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.retrofit.moshi)
+    implementation(libs.moshi)
+    ksp(libs.moshi.codegen)
     implementation(libs.okhttp.logging)
+    // Rutas tipadas de Navigation Compose
     implementation(libs.kotlinx.serialization.json)
 
     // Tests
