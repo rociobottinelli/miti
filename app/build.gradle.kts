@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,6 +8,13 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
 }
+
+// Datos del proyecto de Supabase. Viven en local.properties (no se commitea): ver supabase/README.md.
+// Si faltan, la app compila igual, pero la sincronización no tiene a dónde conectarse.
+val propiedadesLocales = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+fun propiedadLocal(nombre: String): String = propiedadesLocales.getProperty(nombre, "")
 
 android {
     namespace = "ar.edu.uade.miti"
@@ -22,6 +31,10 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // URL base y clave publicable de Supabase (la clave pública: los datos los protege RLS).
+        buildConfigField("String", "SUPABASE_URL", "\"${propiedadLocal("SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${propiedadLocal("SUPABASE_PUBLISHABLE_KEY")}\"")
     }
 
     buildTypes {
@@ -37,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
