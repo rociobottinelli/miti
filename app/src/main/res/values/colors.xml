@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores que necesitan los recursos XML (ícono y splash), que no leen el tema de Compose.
+         Son los mismos de presentation/theme/Color.kt. -->
+    <color name="miti_petroleo">#006972</color>
+</resources>
