@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.domain.repository
 
+import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.model.Hogar
 import ar.edu.uade.miti.domain.model.Integrante
 import kotlinx.coroutines.flow.Flow
@@ -16,5 +17,5 @@ interface HogarRepository {
 }
 
 /** Id del hogar activo, o un error si se intenta registrar algo antes de tener hogar. */
-suspend fun HogarRepository.requerirHogarActivo(): String =
-    checkNotNull(hogarActivoId()) { "No hay un hogar activo" }
+suspend fun HogarRepository.requerirHogarActivo(): Resource<String> =
+    hogarActivoId()?.let { Resource.Success(it) } ?: Resource.Error("Todavía no hay un hogar activo")

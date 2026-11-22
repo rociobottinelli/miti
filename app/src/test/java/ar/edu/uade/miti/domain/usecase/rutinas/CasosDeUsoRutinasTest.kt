@@ -1,5 +1,7 @@
 package ar.edu.uade.miti.domain.usecase.rutinas
 
+import ar.edu.uade.miti.core.Resource
+import ar.edu.uade.miti.domain.fakes.exito
 import ar.edu.uade.miti.domain.fakes.ANA
 import ar.edu.uade.miti.domain.fakes.FakeHogarRepository
 import ar.edu.uade.miti.domain.fakes.FakeRutinaRepository
@@ -41,7 +43,7 @@ class CasosDeUsoRutinasTest {
     fun `registrar una rutina diaria la guarda en el hogar activo sin dias`() = runTest {
         val registrar = RegistrarRutinaUseCase(FakeHogarRepository(), repositorio, IdsSecuenciales())
 
-        val rutina = registrar(" Regar las plantas ", Frecuencia.DIARIA, setOf(DayOfWeek.MONDAY), vecesPorDia = 1)
+        val rutina = registrar(" Regar las plantas ", Frecuencia.DIARIA, setOf(DayOfWeek.MONDAY), vecesPorDia = 1).exito()
 
         assertEquals(Rutina("id-1", HOGAR, "Regar las plantas", Frecuencia.DIARIA, emptySet(), 1), rutina)
         assertEquals(listOf(rutina), repositorio.rutinas.value)
@@ -99,7 +101,7 @@ class CasosDeUsoRutinasTest {
         repositorio.rutinas.value = listOf(pancho)
         val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
 
-        assertTrue(marcarRutina("pancho", TOMAS))
+        assertTrue(marcarRutina("pancho", TOMAS).exito())
 
         assertEquals(listOf(RegistroRutina("id-1", "pancho", TOMAS, juevesALas8)), repositorio.registros.value)
     }
@@ -109,10 +111,27 @@ class CasosDeUsoRutinasTest {
         repositorio.rutinas.value = listOf(pancho)
         val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
 
-        assertTrue(marcarRutina("pancho", TOMAS))
-        assertTrue(marcarRutina("pancho", ANA))
-        assertFalse(marcarRutina("pancho", TOMAS))
+        assertTrue(marcarRutina("pancho", TOMAS).exito())
+        assertTrue(marcarRutina("pancho", ANA).exito())
+        assertFalse(marcarRutina("pancho", TOMAS).exito())
 
         assertEquals(2, repositorio.registros.value.size)
+    }
+
+    @Test
+    fun `una rutina de 4 veces por dia nunca se guarda`() = runTest {
+        val registrar = RegistrarRutinaUseCase(FakeHogarRepository(), repositorio, IdsSecuenciales())
+
+        val resultado = registrar("Regar", Frecuencia.DIARIA, emptySet(), vecesPorDia = 4)
+
+        assertTrue(resultado is Resource.Error)
+        assertEquals(emptyList<Rutina>(), repositorio.rutinas.value)
+    }
+
+    @Test
+    fun `marcar una rutina que ya no existe devuelve error`() = runTest {
+        val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
+
+        assertTrue(marcarRutina("no-existe", TOMAS) is Resource.Error)
     }
 }

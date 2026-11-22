@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.data.repository
 
+import ar.edu.uade.miti.core.Resource
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import ar.edu.uade.miti.data.local.AppDatabase
@@ -113,9 +114,9 @@ class RepositoryImplTest {
         pendientes.guardarPendientes(listOf(tarea, compra))
 
         assertEquals(setOf(tarea, compra), pendientes.observarPendientes().first().toSet())
-        assertEquals(compra, pendientes.obtenerPendiente("c1"))
+        assertEquals(Resource.Success(compra), pendientes.obtenerPendiente("c1"))
         pendientes.eliminarPendiente("c1")
-        assertNull(pendientes.obtenerPendiente("c1"))
+        assertEquals(Resource.Success(null), pendientes.obtenerPendiente("c1"))
     }
 
     @Test

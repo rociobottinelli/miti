@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.domain.fakes
 
+import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Hogar
 import ar.edu.uade.miti.domain.model.Integrante
@@ -16,6 +17,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import org.junit.Assert.fail
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -44,38 +46,38 @@ class FakeHogarRepository(
     override fun observarIntegrantes(): Flow<List<Integrante>> = integrantes
 }
 
-class FakeRutinaRepository : RutinaRepository {
+class FakeRutinaRepository : FallaConfigurable(), RutinaRepository {
     val rutinas = MutableStateFlow<List<Rutina>>(emptyList())
     val registros = MutableStateFlow<List<RegistroRutina>>(emptyList())
 
     override fun observarRutinas(): Flow<List<Rutina>> = rutinas
     override fun observarRegistrosDelDia(fecha: LocalDate): Flow<List<RegistroRutina>> =
         registros.map { todos -> todos.filter { it.fechaHora.toLocalDate() == fecha } }
-    override suspend fun guardarRutina(rutina: Rutina) = rutinas.update { reemplazar(it, rutina) { r -> r.id } }
-    override suspend fun eliminarRutina(id: String) = rutinas.update { lista -> lista.filterNot { it.id == id } }
-    override suspend fun agregarRegistro(registro: RegistroRutina) = registros.update { it + registro }
+    override suspend fun guardarRutina(rutina: Rutina) = escribir { rutinas.update { reemplazar(it, rutina) { r -> r.id } } }
+    override suspend fun eliminarRutina(id: String) = escribir { rutinas.update { lista -> lista.filterNot { it.id == id } } }
+    override suspend fun agregarRegistro(registro: RegistroRutina) = escribir { registros.update { it + registro } }
 }
 
-class FakePendienteRepository : PendienteRepository {
+class FakePendienteRepository : FallaConfigurable(), PendienteRepository {
     val pendientes = MutableStateFlow<List<Pendiente>>(emptyList())
 
     override fun observarPendientes(): Flow<List<Pendiente>> = pendientes
-    override suspend fun obtenerPendiente(id: String) = pendientes.value.find { it.id == id }
-    override suspend fun guardarPendientes(pendientes: List<Pendiente>) =
-        this.pendientes.update { actuales -> pendientes.fold(actuales) { lista, p -> reemplazar(lista, p) { it.id } } }
-    override suspend fun eliminarPendiente(id: String) = pendientes.update { lista -> lista.filterNot { it.id == id } }
+    override suspend fun obtenerPendiente(id: String): Resource<Pendiente?> =
+        falla ?: Resource.Success(pendientes.value.find { it.id == id })
+    override suspend fun guardarPendientes(pendientes: List<Pendiente>) = escribir { this.pendientes.update { actuales -> pendientes.fold(actuales) { lista, p -> reemplazar(lista, p) { it.id } } } }
+    override suspend fun eliminarPendiente(id: String) = escribir { pendientes.update { lista -> lista.filterNot { it.id == id } } }
 }
 
-class FakeGastoRepository : GastoRepository {
+class FakeGastoRepository : FallaConfigurable(), GastoRepository {
     val gastos = MutableStateFlow<List<Gasto>>(emptyList())
     val pagos = MutableStateFlow<List<Pago>>(emptyList())
 
     override fun observarGastos(): Flow<List<Gasto>> = gastos
     override fun observarPagos(): Flow<List<Pago>> = pagos
-    override suspend fun guardarGasto(gasto: Gasto) = gastos.update { reemplazar(it, gasto) { g -> g.id } }
-    override suspend fun eliminarGasto(id: String) = gastos.update { lista -> lista.filterNot { it.id == id } }
-    override suspend fun guardarPago(pago: Pago) = pagos.update { reemplazar(it, pago) { p -> p.id } }
-    override suspend fun eliminarPago(id: String) = pagos.update { lista -> lista.filterNot { it.id == id } }
+    override suspend fun guardarGasto(gasto: Gasto) = escribir { gastos.update { reemplazar(it, gasto) { g -> g.id } } }
+    override suspend fun eliminarGasto(id: String) = escribir { gastos.update { lista -> lista.filterNot { it.id == id } } }
+    override suspend fun guardarPago(pago: Pago) = escribir { pagos.update { reemplazar(it, pago) { p -> p.id } } }
+    override suspend fun eliminarPago(id: String) = escribir { pagos.update { lista -> lista.filterNot { it.id == id } } }
 }
 
 /** Ids predecibles: "id-1", "id-2", ... */
@@ -89,3 +91,20 @@ fun relojEn(momento: LocalDateTime): Clock = Clock.fixed(momento.toInstant(ZoneO
 
 private fun <T> reemplazar(lista: List<T>, nuevo: T, id: (T) -> String): List<T> =
     lista.filterNot { id(it) == id(nuevo) } + nuevo
+
+/**
+ * Base de los fakes que escriben: si [falla] no es null, todas las escrituras la devuelven sin guardar
+ * nada. Sirve para probar qué pasa cuando la base del celular falla.
+ */
+abstract class FallaConfigurable {
+    var falla: Resource.Error? = null
+
+    protected inline fun escribir(escritura: () -> Unit): Resource<Unit> =
+        falla ?: Resource.Success(escritura())
+}
+
+/** El dato de un [Resource.Success]; si llegó un error, el test falla mostrando cuál. */
+fun <T> Resource<T>.exito(): T = when (this) {
+    is Resource.Success -> data
+    is Resource.Error -> fail("Se esperaba Success y llegó $this") as Nothing
+}

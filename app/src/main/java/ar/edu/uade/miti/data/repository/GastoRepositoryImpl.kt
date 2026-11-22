@@ -23,11 +23,11 @@ class GastoRepositoryImpl @Inject constructor(
     override fun observarPagos(): Flow<List<Pago>> =
         hogarActivo.observar(emptyList()) { id -> dao.observarPagos(id).map { lista -> lista.map { it.toDomain() } } }
 
-    override suspend fun guardarGasto(gasto: Gasto) = dao.guardarGasto(gasto.toEntity(reloj.cambioPendiente()))
+    override suspend fun guardarGasto(gasto: Gasto) = enBase(NO_SE_GUARDO) { dao.guardarGasto(gasto.toEntity(reloj.cambioPendiente())) }
 
-    override suspend fun eliminarGasto(id: String) = dao.marcarGastoBorrado(id, reloj.millis())
+    override suspend fun eliminarGasto(id: String) = enBase(NO_SE_GUARDO) { dao.marcarGastoBorrado(id, reloj.millis()) }
 
-    override suspend fun guardarPago(pago: Pago) = dao.guardarPago(pago.toEntity(reloj.cambioPendiente()))
+    override suspend fun guardarPago(pago: Pago) = enBase(NO_SE_GUARDO) { dao.guardarPago(pago.toEntity(reloj.cambioPendiente())) }
 
-    override suspend fun eliminarPago(id: String) = dao.marcarPagoBorrado(id, reloj.millis())
+    override suspend fun eliminarPago(id: String) = enBase(NO_SE_GUARDO) { dao.marcarPagoBorrado(id, reloj.millis()) }
 }
