@@ -40,6 +40,11 @@ android {
     }
 }
 
+ksp {
+    // Que Hilt verifique al compilar todas sus recetas, aunque todavía nadie las use.
+    arg("dagger.fullBindingGraphValidation", "ERROR")
+}
+
 room {
     // Los esquemas exportados quedan versionados para poder escribir migraciones.
     schemaDirectory("$projectDir/schemas")
@@ -83,6 +88,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.room.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
