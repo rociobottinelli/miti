@@ -27,6 +27,9 @@ import com.squareup.moshi.JsonEncodingException
 import com.squareup.moshi.Moshi
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import retrofit2.Response
 
 /**
@@ -46,6 +49,8 @@ class IngresoAHogarRepositoryImpl @Inject constructor(
 ) : IngresoAHogarRepository {
 
     private val adaptadorDeError = moshi.adapter(ErrorDePostgrestDto::class.java)
+
+    override fun observarSiHayHogar(): Flow<Boolean> = hogarActivo.id.map { it != null }.distinctUntilChanged()
 
     override suspend fun crearHogar(nombreHogar: String): Resource<Hogar> = entrar { autorizacion, yo ->
         api.crearHogar(autorizacion, CrearHogarDto(nombreHogar, yo.nombre))
