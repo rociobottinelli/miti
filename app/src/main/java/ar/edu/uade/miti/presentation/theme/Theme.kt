@@ -16,6 +16,8 @@ fun MitiTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) EsquemaOscuro else EsquemaClaro,
+        typography = MitiTipografia,
+        shapes = MitiFormas,
         content = content,
     )
 }
