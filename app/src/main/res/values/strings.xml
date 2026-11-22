@@ -29,4 +29,18 @@
     <string name="hoy_filtro_todas">Todo</string>
     <string name="hoy_filtro_mias">Mías</string>
     <string name="hoy_filtro_del_otro">De %1$s</string>
+    <string name="hoy_agregar">Agregar rutina o tarea</string>
+    <string name="hoy_seccion_rutinas">Rutinas de hoy</string>
+    <string name="hoy_seccion_tareas">Próximas tareas</string>
+    <string name="hoy_rutinas_hechas">%1$d de %2$d rutinas hechas</string>
+    <string name="hoy_sin_tareas">No hay tareas próximas.</string>
+    <string name="hoy_sin_tareas_mias">No tenés tareas próximas.</string>
+    <string name="hoy_sin_tareas_del_otro">%1$s no tiene tareas próximas.</string>
+    <string name="hoy_vacio_titulo">Tu hogar está listo</string>
+    <string name="hoy_vacio_descripcion">Agregá tu primera rutina o tarea para arrancar.</string>
+    <string name="hoy_vacio_accion">Agregar algo</string>
+    <string name="hoy_al_dia_titulo">Todo al día por hoy</string>
+    <string name="hoy_al_dia_descripcion">Todas las rutinas y tareas del día están cubiertas. ¡Bien!</string>
+    <string name="hoy_error_titulo">No pudimos mostrar tu día</string>
+    <string name="hoy_error_descripcion">Tus datos siguen guardados en este celular. Probá de nuevo.</string>
 </resources>
