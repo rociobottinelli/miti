@@ -25,4 +25,8 @@
     <string name="hoy_tarea_maniana">Mañana %1$s</string>
     <string name="hoy_tarea_atrasada">Atrasada · %1$s %2$s</string>
     <string name="hoy_tarea_con_aviso">Con aviso</string>
+    <string name="hoy_abrir_ajustes">Abrir ajustes</string>
+    <string name="hoy_filtro_todas">Todo</string>
+    <string name="hoy_filtro_mias">Mías</string>
+    <string name="hoy_filtro_del_otro">De %1$s</string>
 </resources>
