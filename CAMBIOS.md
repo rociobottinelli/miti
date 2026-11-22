@@ -80,3 +80,27 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
     cambios versionados, por ejemplo los de C2 (#20).
 - **Riesgo que resuelve:** el aislamiento no depende de que la app filtre bien; lo aplica Postgres para cualquier
   cliente. `supabase/tests/verificar_acceso_por_hogar.sql` lo prueba con cuatro usuarios simulados.
+
+## Cuenta y sesión con Supabase Auth (#16)
+
+- **Qué hace:** crear cuenta, ingresar y cerrar sesión con email y contraseña (preentrega, sección 8), con
+  Retrofit + Moshi contra Supabase Auth. La sesión (tokens, no la contraseña) queda en un DataStore propio, y
+  `ProveedorDeToken` la renueva un minuto antes de que venza. Lo va a usar la sincronización (#18).
+- **Decisiones:**
+  - **Validación antes de la red:** email con formato válido y contraseña de 6 caracteres o más (el mínimo de
+    Supabase). Al ingresar solo se exige que estén completos, para no revelar nada de una cuenta existente.
+  - **Errores separados** según los tres tipos de fallo de red: sin conexión ("Necesitás conexión para
+    ingresar"), error HTTP (traducido por código: "Email o contraseña incorrectos", "Ya existe una cuenta con
+    ese email"…) y respuesta rota. `JsonEncodingException` se atrapa antes que `IOException` porque hereda de
+    ella: un JSON roto no es un problema de conexión.
+  - **Cerrar sesión funciona sin conexión:** revocar el token en el servidor es lo mejor posible; en el celular
+    se borran siempre la sesión, el hogar activo y la base local (criterio del issue).
+  - Si el refresh token ya no sirve (por ejemplo, se cerró la sesión desde otro lado), se borra la sesión local
+    y se pide volver a ingresar. Sin conexión, en cambio, la sesión se conserva.
+  - El log de red (solo en debug) usa nivel `BASIC`: método, URL y código. Nunca headers (tokens) ni cuerpos
+    (contraseñas).
+- **Limitaciones conocidas:**
+  - Los tokens se guardan en DataStore sin cifrar, dentro del almacenamiento privado de la app. Para el alcance
+    del TPO alcanza; una versión real los cifraría con Android Keystore.
+  - Cerrar sesión borra la base local aunque haya cambios sin sincronizar. Cuando exista el sync (#18), conviene
+    avisar antes ("tenés N cambios sin enviar").
