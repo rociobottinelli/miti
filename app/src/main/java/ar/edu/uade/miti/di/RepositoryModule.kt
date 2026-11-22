@@ -14,11 +14,13 @@ import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
 import ar.edu.uade.miti.data.repository.GeneradorDeUuid
 import ar.edu.uade.miti.data.repository.HogarRepositoryImpl
+import ar.edu.uade.miti.data.repository.IngresoAHogarRepositoryImpl
 import ar.edu.uade.miti.data.repository.PendienteRepositoryImpl
 import ar.edu.uade.miti.data.repository.RutinaRepositoryImpl
 import ar.edu.uade.miti.domain.repository.GastoRepository
 import ar.edu.uade.miti.domain.repository.GeneradorDeIds
 import ar.edu.uade.miti.domain.repository.HogarRepository
+import ar.edu.uade.miti.domain.repository.IngresoAHogarRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
 import ar.edu.uade.miti.domain.repository.SesionRepository
@@ -32,6 +34,7 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
     @Binds abstract fun hogarRepositorio(impl: HogarRepositoryImpl): HogarRepository
+    @Binds abstract fun ingresoAHogar(impl: IngresoAHogarRepositoryImpl): IngresoAHogarRepository
     @Binds abstract fun rutinaRepositorio(impl: RutinaRepositoryImpl): RutinaRepository
     @Binds abstract fun pendienteRepositorio(impl: PendienteRepositoryImpl): PendienteRepository
     @Binds abstract fun gastoRepositorio(impl: GastoRepositoryImpl): GastoRepository
