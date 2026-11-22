@@ -4,4 +4,8 @@
     <string name="destino_hoy">Hoy</string>
     <string name="destino_compras">Compras</string>
     <string name="destino_balance">Balance</string>
+
+    <!-- Avisos compartidos -->
+    <string name="aviso_sin_conexion">Sin conexión</string>
+    <string name="aviso_sin_conexion_con_hora">Sin conexión · última sincronización %1$s</string>
 </resources>
