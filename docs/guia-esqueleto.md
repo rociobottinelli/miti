@@ -178,7 +178,7 @@ Android lo lee antes de abrir la app, para saber qué contiene.
 
 ```xml
 <application
-    android:name=".MitiApplication"     ← la clase que arranca primero
+    android:name=".MitiApp"     ← la clase que arranca primero
     android:icon="@mipmap/ic_launcher"  ← el ícono
     android:label="@string/app_name"    ← el nombre que se ve ("Miti")
     android:theme="@style/Theme.Miti">
@@ -209,7 +209,7 @@ Desde el código, un recurso se nombra como `R.string.destino_hoy` o `R.drawable
 ```
 Android lee el Manifest
    ↓
-1. Crea MitiApplication    (una sola vez, vive mientras la app esté abierta)
+1. Crea MitiApp    (una sola vez, vive mientras la app esté abierta)
    ↓
 2. Abre MainActivity       (la "ventana")
    ↓
@@ -217,10 +217,10 @@ Android lee el Manifest
    ↓
 4. MitiTheme { ... }       (aplica colores y tipografías)
    ↓
-5. MitiApp()               (barra inferior + pantalla Hoy)
+5. MitiNavHost()               (barra inferior + pantalla Hoy)
 ```
 
-#### 1. [`MitiApplication.kt`](../app/src/main/java/ar/edu/uade/miti/MitiApplication.kt)
+#### 1. [`MitiApp.kt`](../app/src/main/java/ar/edu/uade/miti/MitiApp.kt)
 
 ```kotlin
 package ar.edu.uade.miti                 // en qué "carpeta lógica" vive este código
@@ -229,7 +229,7 @@ import android.app.Application           // traigo clases de otros lados
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp                          // anotación: "Hilt, arrancá acá"
-class MitiApplication : Application()    // mi clase es un tipo de Application
+class MitiApp : Application()    // mi clase es un tipo de Application
 ```
 
 - **`package`**: la dirección del archivo; coincide con las carpetas `ar/edu/uade/miti/`.
@@ -249,7 +249,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()                                // dibujar detrás de la barra de estado
         setContent {                                      // a partir de acá, la UI es Compose
             MitiTheme {
-                MitiApp()
+                MitiNavHost()
             }
         }
     }
@@ -260,7 +260,7 @@ class MainActivity : ComponentActivity() {
 - **`override`**: reemplaza la versión de la clase padre; `super.onCreate(...)` llama primero a la original.
 - **`Bundle?`**: el `?` significa que puede ser `null` (vacío). Kotlin obliga a marcar qué puede estar vacío.
 - **`setContent { ... }`**: el puente entre Android "clásico" y Compose.
-- **`MitiTheme { MitiApp() }`**: dibujá `MitiApp` usando el tema de Miti.
+- **`MitiTheme { MitiNavHost() }`**: dibujá `MitiNavHost` usando el tema de Miti.
 
 ---
 
@@ -282,7 +282,7 @@ Es la idea de D01: cada pantalla es una función de su estado. Más adelante, el
 
 ### Las funciones `@Composable`
 
-[`HoyScreen.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/hoy/HoyScreen.kt):
+[`HoyScreen.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/hoy/HoyScreen.kt):
 
 ```kotlin
 @Composable
@@ -307,7 +307,7 @@ mostrará los estados de la sección 11: carga, contenido, vacío, error y offli
 
 ### Layouts y modifiers
 
-[`PantallaEnConstruccion.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/componentes/PantallaEnConstruccion.kt):
+[`PantallaEnConstruccion.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/components/PantallaEnConstruccion.kt):
 
 ```kotlin
 @Composable
@@ -348,7 +348,7 @@ modifier
 **Material 3:** `Text` es un componente de Material 3. `MaterialTheme.typography.headlineMedium` toma el estilo del tema
 en vez de un tamaño fijo, así toda la app es consistente.
 
-### El tema: [`Theme.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/tema/Theme.kt)
+### El tema: [`Theme.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/theme/Theme.kt)
 
 ```kotlin
 // Paleta provisoria; se reemplaza por la del Figma (miti-UI).
@@ -375,11 +375,11 @@ fun MitiTheme(
 - **Un color scheme** asigna colores a **roles** (`primary`, `secondary`...). Los componentes piden "el color primary", así que cambiar el esquema cambia toda la app.
 - **`darkTheme = isSystemInDarkTheme()`**: por defecto sigue el modo oscuro del celular.
 - **`if (...) A else B`** devuelve un valor y se puede usar directo como argumento.
-- **`content: @Composable () -> Unit`**: un parámetro que es una función (composable, sin parámetros, que no devuelve nada). Por eso se puede escribir `MitiTheme { MitiApp() }`.
+- **`content: @Composable () -> Unit`**: un parámetro que es una función (composable, sin parámetros, que no devuelve nada). Por eso se puede escribir `MitiTheme { MitiNavHost() }`.
 
 ### La navegación
 
-#### Las rutas: [`Ruta.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/navegacion/Ruta.kt)
+#### Las rutas: [`Ruta.kt`](../app/src/main/java/ar/edu/uade/miti/core/navigation/Ruta.kt)
 
 ```kotlin
 @Serializable
@@ -403,7 +403,7 @@ sealed interface Ruta {
 Es **navegación tipada**: escribir `Ruta.Hoyy` no compila, a diferencia de usar textos como `"hoy"`. Las rutas con datos
 vienen después, por ejemplo `data class DetalleGasto(val gastoId: String) : Ruta`.
 
-#### Los destinos de la barra inferior: [`MitiApp.kt`](../app/src/main/java/ar/edu/uade/miti/presentacion/MitiApp.kt)
+#### Los destinos de la barra inferior: [`MitiNavHost.kt`](../app/src/main/java/ar/edu/uade/miti/presentation/MitiNavHost.kt)
 
 ```kotlin
 enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:DrawableRes val icono: Int) {
@@ -419,11 +419,11 @@ enum class Destino(val ruta: Ruta, @param:StringRes val etiqueta: Int, @param:Dr
 
 La barra se arma recorriendo esta lista: para agregar una pestaña alcanza con sumar una línea.
 
-#### `MitiApp`
+#### `MitiNavHost`
 
 ```kotlin
 @Composable
-fun MitiApp() {
+fun MitiNavHost() {
     val navController = rememberNavController()
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
@@ -432,7 +432,7 @@ fun MitiApp() {
 
 - **El `NavController`** maneja la navegación y lleva la **pila de pantallas** (*back stack*): navegar apila, "atrás" desapila.
 - **`remember`**: como Compose re-ejecuta las funciones cada vez que algo cambia, una variable normal se crearía de nuevo cada vez. `remember...` la crea la primera vez y la recuerda.
-- **Estado y recomposición**: `currentBackStackEntryAsState()` es un estado que Compose observa. Al cambiar de pantalla, Compose re-ejecuta `MitiApp` y la barra marca la pestaña correcta. Eso es la **recomposición**.
+- **Estado y recomposición**: `currentBackStackEntryAsState()` es un estado que Compose observa. Al cambiar de pantalla, Compose re-ejecuta `MitiNavHost` y la barra marca la pestaña correcta. Eso es la **recomposición**.
 - **`by`**: delegación; permite usar `entradaActual` sin escribir `.value`.
 - **`?.`** (*safe call*): si `entradaActual` es `null` (al arrancar todavía no hay pantalla), devuelve `null` en vez de fallar.
 
@@ -514,10 +514,10 @@ BalanceScreen (Compose)  ──► solo dibuja el estado y avisa lo que toca el 
 BalanceViewModel ──► guarda el estado (StateFlow<UiState>) y llama a casos de uso
       ▲   │
       │   ▼
-ObtenerBalanceDelMes / RegistrarPago (casos de uso, dominio)
+ObtenerBalanceDelMesUseCase / RegistrarPagoUseCase (casos de uso, dominio)
       ▲   │
       │   ▼
-GastoRepositorio (interfaz del dominio) ──► implementado con Room en la capa de datos
+GastoRepository (interfaz del dominio) ──► implementado con Room en la capa de datos
 ```
 
 La pantalla pide el ViewModel a Hilt con `viewModel: BalanceViewModel = hiltViewModel()` (de `hilt-navigation-compose`).
@@ -535,16 +535,16 @@ El dominio es **qué cosas existen en el problema** (rutinas, gastos, pagos) y *
 - **D05:** el dominio define interfaces y la capa de datos las implementa. El dominio no sabe que Room existe.
 
 ```
-dominio/
-├── modelo/        ← Hogar, Integrante, Rutina, RegistroRutina, Pendiente, Gasto, Pago
-└── repositorio/   ← los contratos para leer y guardar esas cosas
+domain/
+├── model/         ← Hogar, Integrante, Rutina, RegistroRutina, Pendiente, Gasto, Pago
+└── repository/    ← los contratos para leer y guardar esas cosas
 ```
 
-Los casos de uso (`casouso/`) y la capa de datos se agregaron en la fase 1: ver [guia-fase-1.md](guia-fase-1.md).
+Los casos de uso (`usecase/`) y la capa de datos se agregaron en la fase 1: ver [guia-fase-1.md](guia-fase-1.md).
 
 ### Los modelos: `data class`
 
-[`Hogar.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Hogar.kt):
+[`Hogar.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Hogar.kt):
 
 ```kotlin
 /** Un hogar tiene 1 o 2 integrantes y es dueño de todos los ítems. */
@@ -566,7 +566,7 @@ data class Hogar(
 - **Los `id` son `String`** porque serán UUID generados en el celular (D07), para crear sin conexión sin chocar ids.
 - **Las relaciones son por id** (`Integrante.hogarId`), como en la tabla de entidades de la sección 14.
 
-### [`Rutina.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Rutina.kt)
+### [`Rutina.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Rutina.kt)
 
 ```kotlin
 enum class Frecuencia { DIARIA, DIAS_DE_LA_SEMANA }
@@ -605,7 +605,7 @@ data class RegistroRutina(
 - **No hay un campo "hecha hoy".** El progreso se **calcula** contando los registros de hoy. Al día siguiente los de ayer no cuentan, así que la rutina vuelve a estar pendiente sin que nadie la reinicie (D09).
 - **`LocalDateTime`**: fecha con hora, para mostrar "Tomás · 8:15".
 
-### [`Pendiente.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Pendiente.kt): tipos que pueden ser `null`
+### [`Pendiente.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Pendiente.kt): tipos que pueden ser `null`
 
 ```kotlin
 enum class TipoPendiente { TAREA, COMPRA }
@@ -629,7 +629,7 @@ Tareas y compras comparten entidad, diferenciadas por `tipo` (sección 14).
 - `gastoId` es el vínculo compra → gasto; queda `null` si al terminar la compra eligen no registrar el gasto (flujo 3).
 - Con los valores por defecto, crear una compra es corto: `Pendiente(id = ..., hogarId = ..., tipo = TipoPendiente.COMPRA, titulo = "Leche")`.
 
-### [`Gasto.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/modelo/Gasto.kt): plata, cuotas y pagos
+### [`Gasto.kt`](../app/src/main/java/ar/edu/uade/miti/domain/model/Gasto.kt): plata, cuotas y pagos
 
 ```kotlin
 enum class Reparto { A_MEDIAS, UNO_SOLO }
@@ -668,7 +668,7 @@ Gasto(
 )
 ```
 
-`ObtenerBalanceDelMes` calcularía para noviembre, diciembre y enero: cuota $10.000, la mitad es de Ana, "Ana le debe
+`ObtenerBalanceDelMesUseCase` calcularía para noviembre, diciembre y enero: cuota $10.000, la mitad es de Ana, "Ana le debe
 $5.000 a Tomás".
 
 ```kotlin
@@ -690,10 +690,10 @@ cargue gastos sin conexión.
 se sincroniza, no del problema del hogar. Van en las entidades de Room, en la capa de datos, y un **mapper** traduce entre
 una cosa y otra. Si cambia la estrategia de sincronización (por ejemplo, por la corrección C2), el dominio no se entera.
 
-### Los repositorios: [`Repositorios.kt`](../app/src/main/java/ar/edu/uade/miti/dominio/repositorio/Repositorios.kt)
+### Los repositorios: [`domain/repository/`](../app/src/main/java/ar/edu/uade/miti/domain/repository/)
 
 ```kotlin
-interface GastoRepositorio {
+interface GastoRepository {
     fun observarGastos(): Flow<List<Gasto>>
     fun observarPagos(): Flow<List<Pago>>
     suspend fun guardarGasto(gasto: Gasto)
@@ -701,11 +701,11 @@ interface GastoRepositorio {
 }
 ```
 
-Hay uno por cada grupo de D05: `HogarRepositorio`, `RutinaRepositorio`, `PendienteRepositorio` y `GastoRepositorio`.
+Hay uno por cada grupo de D05: `HogarRepository`, `RutinaRepository`, `PendienteRepository` y `GastoRepository`.
 
 **`interface`: un contrato sin implementación.** Dice qué se puede hacer, no cómo. Después habrá un
 `GastoRepositorioImpl` (Room + Supabase) y un `GastoRepositorioFake` para tests (una lista en memoria). El caso de uso
-recibe "algún `GastoRepositorio`": Hilt le pasa el real en la app y el test le pasa el falso. Eso es la inversión de
+recibe "algún `GastoRepository`": Hilt le pasa el real en la app y el test le pasa el falso. Eso es la inversión de
 dependencias de D05, y permite trabajar en paralelo: la UI programa contra la interfaz mientras se implementa Room.
 
 **Leer: `Flow`.** `List<Gasto>` es una lista; `Flow<...>` es **un valor que va cambiando en el tiempo**. Primero emite la
@@ -720,7 +720,7 @@ parte de las **coroutines** de Kotlin. Desde el ViewModel se llama, por ejemplo,
 DataStore como "hogar activo" (sección 14), y la implementación filtra por él. Es una decisión revisable si al
 implementar la capa de datos conviene pasarlo explícito.
 
-### El test: [`RutinaTest.kt`](../app/src/test/java/ar/edu/uade/miti/dominio/modelo/RutinaTest.kt)
+### El test: [`RutinaTest.kt`](../app/src/test/java/ar/edu/uade/miti/domain/model/RutinaTest.kt)
 
 ```kotlin
 class RutinaTest {
@@ -758,7 +758,7 @@ class RutinaTest {
 - **`@Test(expected = ...)`**: el test pasa si se lanza ese error, que es justo el que lanza `require`.
 
 Los tests importantes de RNF11 (balance con 50/50, 100/0, cuotas, pagos parciales y saldo arrastrado) serán de
-`ObtenerBalanceDelMes`, con un repositorio falso. Para probar los `Flow` está **Turbine**.
+`ObtenerBalanceDelMesUseCase`, con un repositorio falso. Para probar los `Flow` está **Turbine**.
 
 ### Siguiente paso
 

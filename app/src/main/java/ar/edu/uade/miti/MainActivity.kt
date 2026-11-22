@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import ar.edu.uade.miti.presentacion.MitiApp
-import ar.edu.uade.miti.presentacion.tema.MitiTheme
+import ar.edu.uade.miti.presentation.MitiNavHost
+import ar.edu.uade.miti.presentation.theme.MitiTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MitiTheme {
-                MitiApp()
+                MitiNavHost()
             }
         }
     }

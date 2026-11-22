@@ -19,3 +19,21 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   en `Ruta.kt`), que es lo que esa librería exige.
 - **Riesgo que resuelve:** todavía no había código de red, así que el cambio no toca lógica. Hacerlo ahora
   evita reescribir los DTOs de la sincronización (#18) más adelante.
+
+## Nombres y paquetes según las convenciones de la cátedra (#30)
+
+- **Desvío:** la preentrega (sección 13) nombra los casos de uso sin sufijo (`MarcarRutina`, `RegistrarGasto`…),
+  y la fase 1 usaba paquetes en español (`dominio/`, `datos/`, `presentacion/`) con varias clases por archivo.
+- **Problema:** la cátedra pide `…UseCase` con una clase por archivo, `…Repository` / `…RepositoryImpl`,
+  `…Entity`, `AppDatabase`, mappers `toDomain()` / `toEntity()` y la estructura `core/`, `data/`, `domain/`,
+  `presentation/`, `di/`. Con otros nombres, cada revisión obliga a traducir entre el material y el código.
+- **Qué cambió:** solo nombres y ubicación de archivos. Los identificadores del dominio siguen en español
+  (`Rutina`, `Gasto`, `guardarGasto`), así que hay un solo idioma para el problema; el inglés queda para los
+  sufijos técnicos. La Application pasa a ser `MitiApp`, el composable raíz `MitiNavHost`, y las rutas de
+  navegación van a `core/navigation`. Las funciones auxiliares de los repositorios pasaron de `private` a
+  `internal` (`data/repository/Comunes.kt`) porque ahora las usan varios archivos.
+- **Riesgo que resuelve:** el esquema de Room **no cambió** (mismo `identityHash`; solo se movió el JSON a la
+  carpeta del paquete nuevo), así que no hace falta migración. Compila y pasan los 61 tests sin tocar su lógica.
+- **Pendiente:** las columnas de Room siguen en camelCase. La cátedra prefiere `snake_case` con `@ColumnInfo`,
+  pero cambiarlo es un cambio de esquema (versión 2 + migración), así que queda para cuando haya que tocar la
+  base por otro motivo (por ejemplo, la detección de conflictos de C2, #20).
