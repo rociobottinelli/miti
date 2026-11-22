@@ -11,4 +11,6 @@
     <string name="aviso_error_de_sync">Tus cambios están guardados, pero todavía no se pudieron sincronizar</string>
     <string name="accion_reintentar">Reintentar</string>
     <string name="cargando">Cargando</string>
+    <string name="sin_sincronizar">Sin sincronizar</string>
+    <string name="pendiente_de_sincronizar">Guardado en este celular, pendiente de sincronizar</string>
 </resources>
