@@ -10,4 +10,5 @@
     <string name="aviso_sin_conexion_con_hora">Sin conexión · última sincronización %1$s</string>
     <string name="aviso_error_de_sync">Tus cambios están guardados, pero todavía no se pudieron sincronizar</string>
     <string name="accion_reintentar">Reintentar</string>
+    <string name="cargando">Cargando</string>
 </resources>
