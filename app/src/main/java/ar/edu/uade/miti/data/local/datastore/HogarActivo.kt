@@ -18,7 +18,8 @@ interface HogarActivo {
     suspend fun establecer(hogarId: String?)
 }
 
-private val Context.preferencias: DataStore<Preferences> by preferencesDataStore(name = "preferencias")
+// Internal: lo comparten HogarActivo y PreferenciasLocales (DataStore no admite dos instancias sobre el mismo archivo).
+internal val Context.preferencias: DataStore<Preferences> by preferencesDataStore(name = "preferencias")
 
 /**
  * Guarda el hogar activo en DataStore (preentrega, sección 14). La sesión, el onboarding visto y
