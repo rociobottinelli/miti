@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import ar.edu.uade.miti.R
 import ar.edu.uade.miti.core.navigation.Ruta
 import ar.edu.uade.miti.presentation.balance.BalanceScreen
+import ar.edu.uade.miti.presentation.gastos.FormularioDeGastoScreen
 import ar.edu.uade.miti.presentation.compras.ComprasScreen
 import ar.edu.uade.miti.presentation.hoy.HoyScreen
 import ar.edu.uade.miti.presentation.theme.MitiTheme
@@ -40,9 +41,12 @@ fun MitiNavHost() {
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
 
+    // La barra inferior solo en las tres pestañas: los formularios ocupan la pantalla entera.
+    val enPestania = Destino.entries.any { destinoActual?.hasRoute(it.ruta::class) == true }
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            if (enPestania) NavigationBar {
                 Destino.entries.forEach { destino ->
                     NavigationBarItem(
                         selected = destinoActual?.hasRoute(destino.ruta::class) == true,
@@ -68,7 +72,15 @@ fun MitiNavHost() {
         ) {
             composable<Ruta.Hoy> { HoyScreen() }
             composable<Ruta.Compras> { ComprasScreen() }
-            composable<Ruta.Balance> { BalanceScreen() }
+            composable<Ruta.Balance> {
+                BalanceScreen(
+                    alRegistrarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
+                    alEditarGasto = { id -> navController.navigate(Ruta.FormularioDeGasto(id)) },
+                )
+            }
+            composable<Ruta.FormularioDeGasto> {
+                FormularioDeGastoScreen(alCerrar = { navController.popBackStack() })
+            }
         }
     }
 }
