@@ -4,6 +4,13 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import ar.edu.uade.miti.presentation.agregar.PasoDeAgregar
+import ar.edu.uade.miti.presentation.agregar.NuevaTareaViewModel
+import ar.edu.uade.miti.presentation.agregar.NuevaRutinaViewModel
+import ar.edu.uade.miti.presentation.agregar.HojaDeAgregar
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -17,14 +24,33 @@ import ar.edu.uade.miti.R
  */
 @Composable
 fun HoyScreen(
-    alAgregar: () -> Unit,
+    alAgregarCompra: () -> Unit,
+    alAgregarGasto: () -> Unit,
     alAbrirAjustes: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
+    nuevaRutina: NuevaRutinaViewModel = hiltViewModel(),
+    nuevaTarea: NuevaTareaViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val recursos = LocalResources.current
+    // null: hoja cerrada. Se guarda para que girar la pantalla no cierre un formulario a medio llenar.
+    var hoja by rememberSaveable { mutableStateOf<PasoDeAgregar?>(null) }
+
+    // Al guardar, la hoja se cierra y queda el aviso: el ítem ya aparece en la lista (RF01).
+    LaunchedEffect(nuevaRutina) {
+        nuevaRutina.guardada.collect { titulo ->
+            hoja = null
+            snackbarHostState.showSnackbar(recursos.getString(R.string.rutina_agregada, titulo))
+        }
+    }
+    LaunchedEffect(nuevaTarea) {
+        nuevaTarea.guardada.collect { titulo ->
+            hoja = null
+            snackbarHostState.showSnackbar(recursos.getString(R.string.tarea_agregada, titulo))
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
@@ -40,10 +66,22 @@ fun HoyScreen(
         estado = estado,
         alMarcar = viewModel::marcar,
         alElegirFiltro = viewModel::elegirFiltro,
-        alAgregar = alAgregar,
+        alAgregar = { hoja = PasoDeAgregar.MENU },
         alAbrirAjustes = alAbrirAjustes,
         alReintentar = viewModel::reintentar,
         modifier = modifier,
         snackbarHostState = snackbarHostState,
     )
+
+    hoja?.let { paso ->
+        HojaDeAgregar(
+            paso = paso,
+            rutina = nuevaRutina,
+            tarea = nuevaTarea,
+            alCambiarPaso = { hoja = it },
+            alCerrar = { hoja = null },
+            alAgregarCompra = alAgregarCompra,
+            alAgregarGasto = alAgregarGasto,
+        )
+    }
 }
