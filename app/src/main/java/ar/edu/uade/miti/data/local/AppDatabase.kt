@@ -4,10 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import ar.edu.uade.miti.data.local.converter.Convertidores
+import ar.edu.uade.miti.data.local.dao.ConflictoGastoDao
 import ar.edu.uade.miti.data.local.dao.GastoDao
 import ar.edu.uade.miti.data.local.dao.HogarDao
 import ar.edu.uade.miti.data.local.dao.PendienteDao
 import ar.edu.uade.miti.data.local.dao.RutinaDao
+import ar.edu.uade.miti.data.local.entity.ConflictoGastoEntity
 import ar.edu.uade.miti.data.local.entity.GastoEntity
 import ar.edu.uade.miti.data.local.entity.HogarEntity
 import ar.edu.uade.miti.data.local.entity.IntegranteEntity
@@ -29,8 +31,9 @@ import ar.edu.uade.miti.data.local.entity.RutinaEntity
         PendienteEntity::class,
         GastoEntity::class,
         PagoEntity::class,
+        ConflictoGastoEntity::class,
     ],
-    version = 1,
+    version = 2,
 )
 @TypeConverters(Convertidores::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -38,4 +41,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rutinaDao(): RutinaDao
     abstract fun pendienteDao(): PendienteDao
     abstract fun gastoDao(): GastoDao
+    abstract fun conflictoGastoDao(): ConflictoGastoDao
 }

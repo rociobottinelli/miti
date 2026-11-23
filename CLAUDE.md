@@ -73,7 +73,7 @@ Navegación: barra inferior Hoy · Compras · Balance; Ajustes desde el avatar. 
 - **D05** Repositorios como interfaces en el dominio; Supabase queda encerrado en la capa de datos.
 - **D06** Sync con WorkManager: un `SyncWorker` envía lo pendiente y después descarga; reintento con backoff.
 - **D07** IDs UUID generados en el dispositivo; borrado lógico (`deleted`).
-- **D08** Marcas de rutina append-only; resto last-write-wins por `updatedAt` (**a revisar por C2**).
+- **D08** Marcas de rutina append-only; resto last-write-wins por `updatedAt`. **Gastos (C2, #20):** el servidor detecta la edición hecha sobre una versión vieja y se la avisa a quien la perdió (rehacer o descartar).
 - **D09** Datos derivados (balance, progreso de rutina) se calculan, no se guardan.
 - **D10** Avisos con AlarmManager + notificaciones locales; se reprograman al reiniciar.
 - **D11** Backend central Supabase (Auth + Postgres con RLS + API REST); los celulares no hablan entre sí.

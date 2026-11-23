@@ -147,3 +147,32 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   visible debajo del ícono en el launcher; si se quiere mostrar el lema, el lugar es el onboarding (#17).
 - **Riesgo que resuelve:** un solo splash, igual en todas las versiones, que desaparece apenas la app está
   lista, en lugar de una pantalla extra que demora la entrada.
+
+## Conflictos en gastos: avisar en vez de perder ediciones (#20, C2)
+
+- **Desvío respecto de la preentrega (D08):** la preentrega aceptaba que, si los dos editaban el mismo gasto sin
+  conexión, una edición se perdiera sin aviso. El docente lo marcó (C2) porque contradice la confianza que promete
+  la app. **Para los gastos, D08 cambia; para el resto de las tablas sigue igual.**
+- **Qué cambió:**
+  - Cada edición de un gasto guarda sobre qué versión del servidor se hizo (`baseUpdatedAt`). Si ya había una
+    edición sin subir, se conserva la base de la primera, que es la versión que vio la persona.
+  - **El servidor detecta el conflicto** (migración 4): si el gasto cambió desde esa versión, la edición no pisa.
+    Queda registrada en `conflictos_gasto`, visible solo para quien la hizo, y el gasto se marca como cambiado
+    para que los dos celulares bajen la misma versión. No depende del reloj de los celulares: gana quien
+    sincronizó primero, y quien perdió se entera.
+  - El celular baja sus conflictos y el dominio ofrece `ObservarConflictosDeGastoUseCase` (las dos versiones),
+    `RehacerMiEdicionUseCase` (vuelve a aplicar la propia sobre la actual) y `DescartarConflictoUseCase`.
+  - **Editar un gasto** (`EditarGastoUseCase`): RF04 lo pedía ("al guardar o editar un gasto") y no existía.
+    Borrar un gasto también lleva la versión base, así un borrado no pisa una edición del otro.
+- **Room pasa a la versión 2** con `Migration(1, 2)` escrita a mano: agrega una columna en gastos y la tabla
+  `conflictos_gasto`, sin tocar datos. Probada con `MigrationTestHelper`: se crea una base v1 con un gasto, se
+  migra y se verifica que el gasto sigue igual y la base valida contra el esquema v2.
+- **Cómo se probó:**
+  - 16 tests nuevos: versión base, editar, rehacer, descartar, sync y migración.
+  - El script SQL de verificación suma el caso, y pasa en el Supabase real.
+  - **Prueba real con dos celulares:** los dos editan el mismo gasto sin conexión, con el reloj de Tomás
+    adelantado una hora (con la regla vieja, la de Tomás habría pisado la de Ana sin aviso). Gana Ana, que
+    sincronizó primero; Tomás recibe el aviso con los dos montos; al rehacer, su versión le llega a Ana y el
+    aviso desaparece.
+- **Limitación:** marcar un conflicto como resuelto se guarda solo en el celular. Si se reinstala la app,
+  vuelven a aparecer los conflictos viejos.
