@@ -25,4 +25,13 @@
     <string name="rutina_guardar">Guardar rutina</string>
     <string name="rutina_agregada">Rutina agregada: %1$s</string>
     <string name="tarea_error_fecha_pasada">Elegí una fecha y hora que todavía no pasó</string>
+    <string name="tarea_nueva">Nueva tarea</string>
+    <string name="tarea_responsable">Responsable</string>
+    <string name="tarea_fecha">Fecha</string>
+    <string name="tarea_hora">Hora</string>
+    <string name="tarea_avisar">Avisar a la hora</string>
+    <string name="tarea_guardar">Guardar tarea</string>
+    <string name="tarea_agregada">Tarea agregada: %1$s</string>
+    <string name="accion_aceptar">Aceptar</string>
+    <string name="accion_cancelar_dialogo">Cancelar</string>
 </resources>
