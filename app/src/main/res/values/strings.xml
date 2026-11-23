@@ -70,4 +70,24 @@
     <string name="ingresar_titulo">Ingresar</string>
     <string name="ingresar_crear_cuenta">Crear cuenta nueva</string>
     <string name="ingresar_sin_conexion">Necesitás conexión para ingresar.</string>
+
+    <!-- Primer uso: tu hogar (#17) -->
+    <string name="tu_hogar_titulo">Tu hogar</string>
+    <string name="tu_hogar_buscando">Buscando tu hogar…</string>
+    <string name="tu_hogar_nombre_por_defecto">Nuestro hogar</string>
+    <string name="tu_hogar_crear_titulo">Crear un hogar</string>
+    <string name="tu_hogar_creado_titulo">Tu hogar está listo</string>
+    <string name="tu_hogar_crear_subtitulo">Compartí el código con quien convivís</string>
+    <string name="tu_hogar_crear_boton">Crear mi hogar</string>
+    <string name="tu_hogar_unirme_titulo">Unirme con un código</string>
+    <string name="tu_hogar_unirme_subtitulo">El código lo tiene quien ya creó el hogar</string>
+    <string name="tu_hogar_codigo_placeholder">Ingresá el código (ej. K7P2QX)</string>
+    <string name="tu_hogar_unirme_boton">Unirme</string>
+    <string name="tu_hogar_codigo_etiqueta">Código de hogar</string>
+    <string name="tu_hogar_codigo_descripcion">Código de hogar: %1$s</string>
+    <string name="tu_hogar_copiar">Copiar</string>
+    <string name="tu_hogar_compartir">Compartir</string>
+    <string name="tu_hogar_codigo_copiado">Código copiado</string>
+    <string name="tu_hogar_mensaje_compartir">Sumate a nuestro hogar en Miti con el código %1$s</string>
+    <string name="tu_hogar_continuar">Continuar</string>
 </resources>
