@@ -4,6 +4,7 @@ import ar.edu.uade.miti.BuildConfig
 import ar.edu.uade.miti.data.remote.AuthApiService
 import ar.edu.uade.miti.data.remote.ClavePublicableInterceptor
 import ar.edu.uade.miti.data.remote.ConfiguracionSupabase
+import ar.edu.uade.miti.data.remote.HogarApiService
 import ar.edu.uade.miti.data.remote.SyncApiService
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -66,4 +67,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun syncApiService(retrofit: Retrofit): SyncApiService = retrofit.create(SyncApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun hogarApiService(retrofit: Retrofit): HogarApiService = retrofit.create(HogarApiService::class.java)
 }
