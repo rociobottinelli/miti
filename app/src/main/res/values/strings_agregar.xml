@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de "Agregar" y de los formularios de rutina y tarea (#12). Van aparte de strings.xml para que
+     las ramas de cada issue no choquen al agregar textos al final del mismo archivo. -->
+<resources>
+    <string name="agregar_pregunta">¿Qué querés agregar?</string>
+    <string name="agregar_rutina">Rutina</string>
+    <string name="agregar_rutina_detalle">Se repite todos los días</string>
+    <string name="agregar_tarea">Tarea</string>
+    <string name="agregar_tarea_detalle">Una vez, con fecha y hora</string>
+    <string name="agregar_compra">Compra</string>
+    <string name="agregar_compra_detalle">Agrega a la lista</string>
+    <string name="agregar_gasto">Gasto</string>
+    <string name="agregar_gasto_detalle">Dividido entre los dos</string>
+</resources>
