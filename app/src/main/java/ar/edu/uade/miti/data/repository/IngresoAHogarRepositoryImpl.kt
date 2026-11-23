@@ -58,12 +58,12 @@ class IngresoAHogarRepositoryImpl @Inject constructor(
     override suspend fun recuperarMiHogar(): Resource<Boolean> {
         if (!configuracion.configurado) return Resource.Error(SIN_CONFIGURAR)
         val autorizacion = autorizacion().getOrElse { return it }
-        val yo = llamar { api.usuarioActual(autorizacion) }.getOrElse { return it }
-        val integrante = llamar { syncApi.buscarIntegrante(autorizacion, "eq.${yo.id}") }.getOrElse { return it }
-            .firstOrNull() ?: return Resource.Success(false)
-        hogarActivo.establecer(integrante.hogarId)
-        avisoDeCambios.huboCambios()
-        return Resource.Success(true)
+        val yo = llamar { api.usuarioActual(autorizacion) }.getOrElse { return it }.let(::Yo)
+        val hogar = hogarDelServidor(autorizacion, yo).getOrElse { return it } ?: return Resource.Success(false)
+        return when (val guardado = guardar(hogar, yo)) {
+            is Resource.Success -> Resource.Success(true)
+            is Resource.Error -> guardado
+        }
     }
 
     /** Los pasos comunes de crear y unirse: token, nombre de la persona, la llamada y guardar el hogar. */
@@ -71,8 +71,25 @@ class IngresoAHogarRepositoryImpl @Inject constructor(
         if (!configuracion.configurado) return Resource.Error(SIN_CONFIGURAR)
         val autorizacion = autorizacion().getOrElse { return it }
         val yo = llamar { api.usuarioActual(autorizacion) }.getOrElse { return it }.let(::Yo)
-        val hogar = llamar { pedido(autorizacion, yo) }.getOrElse { return it }
+        val hogar = when (val respuesta = llamar { pedido(autorizacion, yo) }) {
+            is Resource.Success -> respuesta.data
+            is Resource.Error -> {
+                // "Ya formás parte de un hogar": casi seguro un intento anterior llegó al servidor pero la
+                // respuesta no volvió (señal intermitente) o no se pudo guardar. En vez de dejar a la
+                // persona trabada en "Tu hogar", se trae ese hogar y se sigue como si hubiera salido bien.
+                if ((respuesta.cause as? ErrorDelServidor)?.codigo != "MITI1") return respuesta
+                hogarDelServidor(autorizacion, yo).getOrElse { return it } ?: return respuesta
+            }
+        }
         return guardar(hogar, yo)
+    }
+
+    /** El hogar del que la persona ya es integrante en Supabase, o null si no tiene. */
+    private suspend fun hogarDelServidor(autorizacion: String, yo: Yo): Resource<HogarDto?> {
+        val integrante = llamar { syncApi.buscarIntegrante(autorizacion, "eq.${yo.id}") }.getOrElse { return it }
+            .firstOrNull() ?: return Resource.Success(null)
+        val hogares = llamar { api.buscarHogar(autorizacion, "eq.${integrante.hogarId}") }.getOrElse { return it }
+        return Resource.Success(hogares.firstOrNull())
     }
 
     private suspend fun guardar(hogar: HogarDto, yo: Yo): Resource<Hogar> {
@@ -106,7 +123,10 @@ class IngresoAHogarRepositoryImpl @Inject constructor(
         } catch (e: JsonDataException) {
             return Resource.Error(RESPUESTA_INESPERADA, e)
         }
-        if (!respuesta.isSuccessful) return Resource.Error(mensajeDeErrorDeHogar(respuesta.code(), leerError(respuesta)))
+        if (!respuesta.isSuccessful) {
+            val error = leerError(respuesta)
+            return Resource.Error(mensajeDeErrorDeHogar(respuesta.code(), error), ErrorDelServidor(error?.code))
+        }
         return respuesta.body()?.let { Resource.Success(it) } ?: Resource.Error(RESPUESTA_INESPERADA)
     }
 
@@ -120,6 +140,9 @@ class IngresoAHogarRepositoryImpl @Inject constructor(
         } catch (_: IOException) {
             null
         }
+
+    /** Va como causa del Resource.Error para poder decidir por el código y no por el texto del mensaje. */
+    private class ErrorDelServidor(val codigo: String?) : Exception(codigo)
 
     /** Quién usa el celular. Si la cuenta no tiene nombre (no debería pasar), se usa el principio del email. */
     private class Yo(usuario: UsuarioConDatosDto) {

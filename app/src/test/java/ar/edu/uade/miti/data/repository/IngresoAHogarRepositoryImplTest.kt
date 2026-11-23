@@ -32,6 +32,7 @@ import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
+import mockwebserver3.SocketEffect
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,14 +50,19 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 @Config(sdk = [35])
 class IngresoAHogarRepositoryImplTest {
 
-    /** Responde según la ruta; guarda los pedidos para revisar qué se mandó. */
+    /**
+     * Responde según la ruta; guarda los pedidos para revisar qué se mandó. [enOrden] sirve para que la
+     * misma ruta conteste distinto en cada intento; cuando se agota, se usa [respuestas].
+     */
     private class ServidorFalso : Dispatcher() {
         val respuestas = mutableMapOf<String, MockResponse>()
+        val enOrden = mutableMapOf<String, ArrayDeque<MockResponse>>()
         val pedidos = mutableListOf<RecordedRequest>()
 
         override fun dispatch(request: RecordedRequest): MockResponse {
             pedidos += request
-            return respuestas[request.url.encodedPath] ?: MockResponse(code = 404)
+            val ruta = request.url.encodedPath
+            return enOrden[ruta]?.removeFirstOrNull() ?: respuestas[ruta] ?: MockResponse(code = 404)
         }
 
         fun cuerpoDe(ruta: String) = pedidos.single { it.url.encodedPath == ruta }.body?.utf8()
@@ -93,7 +99,8 @@ class IngresoAHogarRepositoryImplTest {
     private fun repositorio(): IngresoAHogarRepositoryImpl {
         val retrofit = Retrofit.Builder()
             .baseUrl(servidor.url("/"))
-            .client(OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
+            // Sin reintentos automáticos de OkHttp: cada intento del test tiene que ser un pedido real.
+            .client(OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).retryOnConnectionFailure(false).build())
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
         val authApi = authApiContra(servidor, moshi)
@@ -141,6 +148,8 @@ class IngresoAHogarRepositoryImplTest {
 
     @Test
     fun `los errores propios del servidor llegan con el mensaje de la preentrega`() = runTest {
+        // Sin hogar en el servidor: MITI1 no tiene nada que recuperar y llega tal cual.
+        falso.respuestas["/rest/v1/integrantes"] = MockResponse(code = 200, body = "[]")
         val casos = mapOf("MITI1" to YA_TENES_HOGAR, "MITI2" to CODIGO_INVALIDO, "MITI3" to HOGAR_COMPLETO)
         for ((codigo, mensaje) in casos) {
             falso.respuestas["/rest/v1/rpc/unirse_a_hogar"] = errorDelServidor(codigo)
@@ -172,17 +181,48 @@ class IngresoAHogarRepositoryImplTest {
         assertEquals(SESION_VENCIDA, (resultado as Resource.Error).message)
     }
 
-    @Test
-    fun `recuperar mi hogar lo activa si la persona ya tenia uno`() = runTest {
+    /** La persona ya es integrante de h1 en Supabase. */
+    private fun yaEsIntegranteEnElServidor() {
         falso.respuestas["/rest/v1/integrantes"] = MockResponse(
             code = 200,
             body = """[{"id":"u-ana","hogar_id":"h1","nombre":"Ana","email":"ana@mail.com","updated_at":$ahora}]""",
         )
+        falso.respuestas["/rest/v1/hogares"] = MockResponse(code = 200, body = "[$hogarJson]")
+    }
+
+    @Test
+    fun `si la respuesta de crear no llega el reintento recupera el hogar que el servidor ya creo`() = runTest {
+        // Primer intento: el servidor crea el hogar, pero la conexión se corta antes de la respuesta.
+        // Segundo intento: como ya es integrante, el servidor contesta MITI1.
+        falso.enOrden["/rest/v1/rpc/crear_hogar"] = ArrayDeque(
+            listOf(
+                MockResponse.Builder().onResponseStart(SocketEffect.ShutdownConnection).build(),
+                errorDelServidor("MITI1"),
+            ),
+        )
+        yaEsIntegranteEnElServidor()
+        val repositorio = repositorio()
+
+        val primero = repositorio.crearHogar("Nuestra casa")
+        assertEquals(SIN_CONEXION_HOGAR, (primero as Resource.Error).message)
+        assertNull(hogarActivo.id.first())
+
+        val reintento = repositorio.crearHogar("Nuestra casa")
+
+        assertEquals(Resource.Success(Hogar("h1", "Nuestra casa", "K7P2QX")), reintento)
+        assertEquals("h1", hogarActivo.id.first())
+        assertEquals("K7P2QX", base.hogarDao().observarHogar("h1").first()?.codigoUnion)
+    }
+
+    @Test
+    fun `recuperar mi hogar lo activa y lo guarda si la persona ya tenia uno`() = runTest {
+        yaEsIntegranteEnElServidor()
 
         val resultado = repositorio().recuperarMiHogar()
 
         assertEquals(Resource.Success(true), resultado)
         assertEquals("h1", hogarActivo.id.first())
+        assertEquals("Nuestra casa", base.hogarDao().observarHogar("h1").first()?.nombre)
         assertTrue(sincronizacionesPedidas > 0)
     }
 

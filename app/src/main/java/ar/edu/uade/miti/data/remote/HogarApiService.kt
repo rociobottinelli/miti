@@ -9,6 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 /**
  * Crear un hogar y unirse a uno. Son funciones de Postgres (supabase/migrations/…0002) y no INSERT
@@ -26,6 +27,14 @@ interface HogarApiService {
         @Header("Authorization") autorizacion: String,
         @Body datos: CrearHogarDto,
     ): Response<HogarDto>
+
+    /** El hogar con ese id (`eq.<id>`). Por RLS solo se ve si la persona es integrante. */
+    @GET("rest/v1/hogares")
+    suspend fun buscarHogar(
+        @Header("Authorization") autorizacion: String,
+        @Query("id") id: String,
+        @Query("deleted") deleted: String = "is.false",
+    ): Response<List<HogarDto>>
 
     @POST("rest/v1/rpc/unirse_a_hogar")
     suspend fun unirseAHogar(
