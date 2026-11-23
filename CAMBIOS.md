@@ -135,3 +135,15 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   (`e2e/SincronizacionDosCelularesE2ETest`, solo corre con `MITI_E2E=1`).
 - **Limitación conocida (C2, #20):** con "gana la última modificación", si los dos editan el mismo gasto sin
   conexión, una edición se pierde sin aviso. La prueba de punta a punta lo muestra a propósito.
+
+## Splash con la SplashScreen API, sin el texto del Figma (#9)
+
+- **Desvío:** el splash del Figma muestra el logo, la palabra "miti" y el lema "la casa, miti y miti".
+- **Problema:** desde Android 12 el sistema dibuja siempre su propio splash al abrir la app, con el fondo y
+  el ícono que se le indiquen. Una pantalla de splash propia con el texto se vería *después* del splash del
+  sistema (dos splash seguidos) y alargaría el arranque, que RNF04 pide que sea inmediato.
+- **Qué cambió:** se usa la SplashScreen API (`androidx.core:core-splashscreen`) con el fondo petróleo y el
+  logo del Figma. La librería emula el mismo splash en Android 8 a 11 (minSdk 26). El nombre de la app sigue
+  visible debajo del ícono en el launcher; si se quiere mostrar el lema, el lugar es el onboarding (#17).
+- **Riesgo que resuelve:** un solo splash, igual en todas las versiones, que desaparece apenas la app está
+  lista, en lugar de una pantalla extra que demora la entrada.

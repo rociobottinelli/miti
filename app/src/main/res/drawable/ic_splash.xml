@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logo completo del Figma (con el cuadrado translúcido) para el splash. Se escala para que
+     entre en el círculo de 72 dp que muestra la SplashScreen API dentro de los 108 dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.67"
+        android:scaleY="0.67"
+        android:translateX="28.97"
+        android:translateY="28.97">
+        <path
+            android:fillAlpha="0.12"
+            android:fillColor="#FFFFFF"
+            android:pathData="M56.0459,0H18.682C8.3642,0 0,8.3642 0,18.682V56.0459C0,66.3636 8.3642,74.7278 18.682,74.7278H56.0459C66.3636,74.7278 74.7278,66.3636 74.7278,56.0459V18.682C74.7278,8.3642 66.3636,0 56.0459,0Z" />
+        <path
+            android:fillAlpha="0.95"
+            android:fillColor="#FFFFFF"
+            android:pathData="M37.3639,15.2852L13.5869,33.9672H22.0787V59.4426H32.2688V45.8557H42.459V59.4426H52.6491V33.9672H61.1409L37.3639,15.2852Z" />
+        <path
+            android:fillColor="#9DF0FB"
+            android:pathData="M37.3639,46.7049C40.6468,46.7049 43.3082,44.0435 43.3082,40.7606C43.3082,37.4777 40.6468,34.8164 37.3639,34.8164C34.081,34.8164 31.4196,37.4777 31.4196,40.7606C31.4196,44.0435 34.081,46.7049 37.3639,46.7049Z" />
+        <path
+            android:fillColor="#006972"
+            android:pathData="M37.3639,43.7328C34.8163,41.1852 32.2688,42.8836 33.9672,45.4311C34.8163,46.7049 37.3639,48.4033 37.3639,48.4033C37.3639,48.4033 39.9114,46.7049 40.7606,45.4311C42.459,42.8836 39.9114,41.1852 37.3639,43.7328Z" />
+    </group>
+</vector>
