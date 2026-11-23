@@ -67,4 +67,7 @@
     <string name="cuenta_mostrar_contrasenia">Mostrar contraseña</string>
     <string name="cuenta_ocultar_contrasenia">Ocultar contraseña</string>
     <string name="cuenta_ya_tengo">Ya tengo cuenta · Ingresá</string>
+    <string name="ingresar_titulo">Ingresar</string>
+    <string name="ingresar_crear_cuenta">Crear cuenta nueva</string>
+    <string name="ingresar_sin_conexion">Necesitás conexión para ingresar.</string>
 </resources>
