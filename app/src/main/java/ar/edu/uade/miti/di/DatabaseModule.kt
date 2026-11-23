@@ -3,6 +3,7 @@ package ar.edu.uade.miti.di
 import android.content.Context
 import androidx.room.Room
 import ar.edu.uade.miti.data.local.AppDatabase
+import ar.edu.uade.miti.data.local.dao.EstadoDeSyncDao
 import ar.edu.uade.miti.data.local.dao.GastoDao
 import ar.edu.uade.miti.data.local.dao.HogarDao
 import ar.edu.uade.miti.data.local.dao.PendienteDao
@@ -32,6 +33,7 @@ object DatabaseModule {
     @Provides fun rutinaDao(base: AppDatabase): RutinaDao = base.rutinaDao()
     @Provides fun pendienteDao(base: AppDatabase): PendienteDao = base.pendienteDao()
     @Provides fun gastoDao(base: AppDatabase): GastoDao = base.gastoDao()
+    @Provides fun estadoDeSyncDao(base: AppDatabase): EstadoDeSyncDao = base.estadoDeSyncDao()
 
     /** La hora real. En los tests se reemplaza por un reloj fijo. */
     @Provides

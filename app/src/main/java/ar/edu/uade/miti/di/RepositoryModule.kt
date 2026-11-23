@@ -9,6 +9,7 @@ import ar.edu.uade.miti.data.local.datastore.HogarActivoDataStore
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
+import ar.edu.uade.miti.data.repository.SincronizacionRepositoryImpl
 import ar.edu.uade.miti.data.sync.AvisoDeCambios
 import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
@@ -22,6 +23,7 @@ import ar.edu.uade.miti.domain.repository.HogarRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
 import ar.edu.uade.miti.domain.repository.SesionRepository
+import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -42,4 +44,5 @@ abstract class RepositoryModule {
     @Binds abstract fun borradorDeDatosLocales(impl: BorradorDeDatosLocalesRoom): BorradorDeDatosLocales
     @Binds abstract fun estadoDeSync(impl: EstadoDeSyncDataStore): EstadoDeSyncLocal
     @Binds abstract fun avisoDeCambios(impl: ProgramadorDeSync): AvisoDeCambios
+    @Binds abstract fun sincronizacion(impl: SincronizacionRepositoryImpl): SincronizacionRepository
 }
