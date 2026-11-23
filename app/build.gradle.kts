@@ -52,6 +52,8 @@ android {
         compose = true
         buildConfig = true
     }
+    // Robolectric usa los recursos reales de la app (textos de las notificaciones, esquemas de Room).
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 ksp {

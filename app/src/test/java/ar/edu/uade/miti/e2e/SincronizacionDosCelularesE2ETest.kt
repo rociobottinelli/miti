@@ -92,7 +92,7 @@ class SincronizacionDosCelularesE2ETest {
         val sesion = SesionRepositoryImpl(auth, config, sesionLocal, proveedor, hogarActivo, {}, moshi)
         val sincronizador = Sincronizador(
             retrofit.create(SyncApiService::class.java), config, proveedor, sesionLocal, hogarActivo,
-            EstadoEnMemoria(), base, reloj,
+            EstadoEnMemoria(), base, reloj, {},
         )
         private val ids = GeneradorDeIds { UUID.randomUUID().toString() }
         val hogares = HogarRepositoryImpl(base.hogarDao(), hogarActivo)
