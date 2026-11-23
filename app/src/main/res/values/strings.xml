@@ -90,4 +90,10 @@
     <string name="tu_hogar_codigo_copiado">Código copiado</string>
     <string name="tu_hogar_mensaje_compartir">Sumate a nuestro hogar en Miti con el código %1$s</string>
     <string name="tu_hogar_continuar">Continuar</string>
+
+    <!-- Primer uso: permiso de notificaciones (#17) -->
+    <string name="permiso_titulo">Notificaciones</string>
+    <string name="permiso_texto">Te avisamos cuando llega la hora de una tarea tuya.</string>
+    <string name="permiso_permitir">Permitir</string>
+    <string name="permiso_ahora_no">Ahora no</string>
 </resources>
