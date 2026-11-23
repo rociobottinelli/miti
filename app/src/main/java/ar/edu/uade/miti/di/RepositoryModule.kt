@@ -6,6 +6,8 @@ import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncDataStore
 import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncLocal
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
 import ar.edu.uade.miti.data.local.datastore.HogarActivoDataStore
+import ar.edu.uade.miti.data.local.datastore.PreferenciasDataStore
+import ar.edu.uade.miti.data.local.datastore.PreferenciasLocales
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
@@ -15,11 +17,15 @@ import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
 import ar.edu.uade.miti.data.repository.GeneradorDeUuid
 import ar.edu.uade.miti.data.repository.HogarRepositoryImpl
+import ar.edu.uade.miti.data.repository.IngresoAHogarRepositoryImpl
+import ar.edu.uade.miti.data.repository.OnboardingRepositoryImpl
 import ar.edu.uade.miti.data.repository.PendienteRepositoryImpl
 import ar.edu.uade.miti.data.repository.RutinaRepositoryImpl
 import ar.edu.uade.miti.domain.repository.GastoRepository
 import ar.edu.uade.miti.domain.repository.GeneradorDeIds
 import ar.edu.uade.miti.domain.repository.HogarRepository
+import ar.edu.uade.miti.domain.repository.IngresoAHogarRepository
+import ar.edu.uade.miti.domain.repository.OnboardingRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
 import ar.edu.uade.miti.domain.repository.SesionRepository
@@ -34,6 +40,7 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
     @Binds abstract fun hogarRepositorio(impl: HogarRepositoryImpl): HogarRepository
+    @Binds abstract fun ingresoAHogar(impl: IngresoAHogarRepositoryImpl): IngresoAHogarRepository
     @Binds abstract fun rutinaRepositorio(impl: RutinaRepositoryImpl): RutinaRepository
     @Binds abstract fun pendienteRepositorio(impl: PendienteRepositoryImpl): PendienteRepository
     @Binds abstract fun gastoRepositorio(impl: GastoRepositoryImpl): GastoRepository
@@ -45,4 +52,6 @@ abstract class RepositoryModule {
     @Binds abstract fun estadoDeSync(impl: EstadoDeSyncDataStore): EstadoDeSyncLocal
     @Binds abstract fun avisoDeCambios(impl: ProgramadorDeSync): AvisoDeCambios
     @Binds abstract fun sincronizacion(impl: SincronizacionRepositoryImpl): SincronizacionRepository
+    @Binds abstract fun preferenciasLocales(impl: PreferenciasDataStore): PreferenciasLocales
+    @Binds abstract fun onboarding(impl: OnboardingRepositoryImpl): OnboardingRepository
 }
