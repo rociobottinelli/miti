@@ -45,4 +45,16 @@
     <string name="hoy_error_descripcion">Tus datos siguen guardados en este celular. Probá de nuevo.</string>
     <string name="hoy_evento_ya_completa">Esa rutina ya está hecha por hoy</string>
     <string name="hoy_evento_no_se_pudo_marcar">No se pudo marcar. Probá de nuevo.</string>
+
+    <!-- Primer uso: onboarding (#17) -->
+    <string name="onboarding_omitir">Omitir</string>
+    <string name="onboarding_siguiente">Siguiente</string>
+    <string name="onboarding_empezar">Empezar</string>
+    <string name="onboarding_paso_de">Paso %1$d de %2$d</string>
+    <string name="onboarding_rutinas_titulo">Las rutinas, a la vista</string>
+    <string name="onboarding_rutinas_texto">Marcá desde el widget lo que se repite, como darle de comer a Pancho.</string>
+    <string name="onboarding_tareas_titulo">Cada tarea a su hora</string>
+    <string name="onboarding_tareas_texto">Las tareas programadas le avisan a quien le toca.</string>
+    <string name="onboarding_balance_titulo">Cuentas claras</string>
+    <string name="onboarding_balance_texto">Los gastos se reparten solos y el balance siempre está al día.</string>
 </resources>
