@@ -11,4 +11,18 @@
     <string name="agregar_compra_detalle">Agrega a la lista</string>
     <string name="agregar_gasto">Gasto</string>
     <string name="agregar_gasto_detalle">Dividido entre los dos</string>
+
+    <!-- Formularios -->
+    <string name="formulario_nombre">Nombre</string>
+    <string name="formulario_error_nombre">Ponele un nombre</string>
+    <string name="rutina_nueva">Nueva rutina</string>
+    <string name="rutina_cada_cuanto">¿Cada cuánto?</string>
+    <string name="rutina_todos_los_dias">Todos los días</string>
+    <string name="rutina_algunos_dias">Algunos días</string>
+    <string name="rutina_error_dias">Elegí al menos un día</string>
+    <string name="rutina_veces_por_dia">Veces por día</string>
+    <string name="rutina_nota">Cualquiera de los dos la puede marcar.</string>
+    <string name="rutina_guardar">Guardar rutina</string>
+    <string name="rutina_agregada">Rutina agregada: %1$s</string>
+    <string name="tarea_error_fecha_pasada">Elegí una fecha y hora que todavía no pasó</string>
 </resources>
