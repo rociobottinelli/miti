@@ -17,4 +17,8 @@ sealed interface Ruta {
     /** Registrar un gasto, o editarlo si viene [gastoId] (#14). Se pasa el id, nunca el gasto entero. */
     @Serializable
     data class FormularioDeGasto(val gastoId: String? = null) : Ruta
+
+    /** Se abre desde el avatar de Hoy; sin barra inferior (#21). */
+    @Serializable
+    data object Ajustes : Ruta
 }

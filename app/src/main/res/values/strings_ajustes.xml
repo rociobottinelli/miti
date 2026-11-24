@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de Ajustes (#21). Aparte de strings.xml para no chocar con otras ramas. -->
+<resources>
+    <string name="ajustes_titulo">Ajustes</string>
+    <string name="ajustes_volver">Volver</string>
+    <string name="ajustes_integrantes">Integrantes del hogar</string>
+    <string name="ajustes_vos">Vos</string>
+    <string name="ajustes_invitar_titulo">Invitá a tu hogar</string>
+    <string name="ajustes_invitar_texto">Compartí este código con la persona con la que convivís.</string>
+    <string name="ajustes_codigo_descripcion">Código del hogar: %1$s</string>
+    <string name="ajustes_copiar">Copiar</string>
+    <string name="ajustes_compartir">Compartir código</string>
+    <string name="ajustes_codigo_copiado">Código copiado</string>
+    <string name="ajustes_notificaciones">Notificaciones</string>
+    <string name="ajustes_notificaciones_detalle">Recordatorios y tareas asignadas</string>
+    <string name="ajustes_notificaciones_apagadas">Apagadas: tocá para prenderlas en Android</string>
+    <string name="ajustes_cerrar_sesion">Cerrar sesión</string>
+    <string name="ajustes_cerrar_titulo">¿Cerrar sesión?</string>
+    <string name="ajustes_cerrar_texto">Tus datos compartidos van a seguir guardados en el hogar.</string>
+    <string name="ajustes_cancelar">Cancelar</string>
+    <string name="ajustes_error">No pudimos mostrar los ajustes</string>
+    <string name="ajustes_error_detalle">Volvé a Hoy y probá de nuevo.</string>
+    <string name="codigo_del_hogar">Código del hogar</string>
+    <string name="codigo_del_hogar_mensaje">Sumate a nuestro hogar en Miti con el código %1$s</string>
+</resources>
