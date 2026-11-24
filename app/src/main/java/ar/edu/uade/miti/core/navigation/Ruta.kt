@@ -14,9 +14,13 @@ sealed interface Ruta {
     @Serializable
     data object Balance : Ruta
 
-    /** Registrar un gasto, o editarlo si viene [gastoId] (#14). Se pasa el id, nunca el gasto entero. */
+    /**
+     * Registrar un gasto, o editarlo si viene [gastoId] (#14). Se pasa el id, nunca el gasto entero.
+     * Con [deCompra], el gasto es el de la compra que se está terminando (flujo 3): al guardarlo se cierra
+     * la compra y los ítems del carrito quedan vinculados a él.
+     */
     @Serializable
-    data class FormularioDeGasto(val gastoId: String? = null) : Ruta
+    data class FormularioDeGasto(val gastoId: String? = null, val deCompra: Boolean = false) : Ruta
 
     /** Se abre desde el avatar de Hoy; sin barra inferior (#21). */
     @Serializable

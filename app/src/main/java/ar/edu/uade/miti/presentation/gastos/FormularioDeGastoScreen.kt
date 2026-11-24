@@ -126,7 +126,12 @@ fun FormularioDeGastoContenido(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(stringResource(if (estado.editando) R.string.gasto_titulo_editar else R.string.gasto_titulo_registrar))
+                    val titulo = when {
+                        estado.editando -> R.string.gasto_titulo_editar
+                        estado.deCompra -> R.string.gasto_titulo_compra
+                        else -> R.string.gasto_titulo_registrar
+                    }
+                    Text(stringResource(titulo))
                 },
                 navigationIcon = {
                     IconButton(onClick = alCerrar) {
