@@ -13,4 +13,8 @@ sealed interface Ruta {
 
     @Serializable
     data object Balance : Ruta
+
+    /** Se abre desde el avatar de Hoy; sin barra inferior (#21). */
+    @Serializable
+    data object Ajustes : Ruta
 }

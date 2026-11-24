@@ -23,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ar.edu.uade.miti.R
 import ar.edu.uade.miti.core.navigation.Ruta
+import ar.edu.uade.miti.presentation.ajustes.AjustesScreen
 import ar.edu.uade.miti.presentation.balance.BalanceScreen
 import ar.edu.uade.miti.presentation.compras.ComprasScreen
 import ar.edu.uade.miti.presentation.hoy.HoyScreen
@@ -68,12 +69,12 @@ fun MitiNavHost() {
                     alAgregarCompra = { irAPestania(navController, Ruta.Compras) },
                     // Cuando entre el formulario de gasto (#14) esto abre ese formulario directo.
                     alAgregarGasto = { irAPestania(navController, Ruta.Balance) },
-                    // Ajustes (#21) todavía no tiene pantalla.
-                    alAbrirAjustes = {},
+                    alAbrirAjustes = { navController.navigate(Ruta.Ajustes) { launchSingleTop = true } },
                 )
             }
             composable<Ruta.Compras> { ComprasScreen() }
             composable<Ruta.Balance> { BalanceScreen() }
+            composable<Ruta.Ajustes> { AjustesScreen(alVolver = { navController.popBackStack() }) }
         }
     }
 }
