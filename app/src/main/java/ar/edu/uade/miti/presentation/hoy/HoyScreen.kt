@@ -70,6 +70,9 @@ fun HoyScreen(
         alAbrirAjustes = alAbrirAjustes,
         alReintentar = viewModel::reintentar,
         modifier = modifier,
+        alSincronizar = viewModel::sincronizar,
+        alConfirmarMarca = viewModel::confirmarMarca,
+        alCancelarMarca = viewModel::cancelarMarca,
         snackbarHostState = snackbarHostState,
     )
 

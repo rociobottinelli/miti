@@ -1,6 +1,8 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 /**
@@ -27,8 +29,8 @@ sealed interface HoyUiState {
         val filtro: FiltroDeTareas,
         val rutinas: List<RutinaDeHoy>,
         val tareas: List<TareaDeHoy>,
-        /** Lo completa #19 cuando haya detección de red; mientras tanto es null. */
-        val sinConexion: SinConexion? = null,
+        /** Datos desactualizados y la persona tocó una rutina: se le pregunta antes de marcar (C1). */
+        val confirmarMarca: ConfirmacionDeMarca? = null,
     ) : HoyUiState {
         val rutinasCompletas: Int get() = rutinas.count { it.completa }
     }
@@ -41,6 +43,8 @@ data class Encabezado(
     val yo: IntegranteEnPantalla?,
     /** La otra persona del hogar, o null si todavía no se unió. Sin ella no tiene sentido filtrar. */
     val otro: IntegranteEnPantalla?,
+    /** Qué tan al día está este celular; null si está todo bien (C1, #19). */
+    val aviso: AvisoDeSync? = null,
 )
 
 /** [posicion] decide el color (ver `ColoresMiti`). */
@@ -55,6 +59,8 @@ data class RutinaDeHoy(
     val vecesPorDia: Int,
     /** La marca más reciente, para mostrar quién la hizo y cuándo (RF03). */
     val ultimaMarca: Marca?,
+    /** Tiene una marca o un cambio que todavía no llegó al otro celular (RNF09). */
+    val pendienteDeSync: Boolean = false,
 ) {
     val completa: Boolean get() = hechas >= vecesPorDia
 }
@@ -68,9 +74,17 @@ data class TareaDeHoy(
     val cuando: CuandoVence,
     val responsable: IntegranteEnPantalla?,
     val conAviso: Boolean,
+    val pendienteDeSync: Boolean = false,
 )
 
-data class SinConexion(val ultimaSincronizacion: LocalTime?)
+/** "Puede que Tomás ya la haya hecho": se pide confirmar antes de marcar con datos viejos (C1). */
+data class ConfirmacionDeMarca(
+    val rutinaId: String,
+    val titulo: String,
+    /** Quien pudo haberla hecho; null si la persona está sola en el hogar. */
+    val otro: String?,
+    val ultimaSincronizacion: LocalDateTime?,
+)
 
 /** Mensajes que se muestran una sola vez (snackbar), no son parte del estado. */
 enum class EventoDeHoy { RUTINA_YA_COMPLETA, NO_SE_PUDO_MARCAR }

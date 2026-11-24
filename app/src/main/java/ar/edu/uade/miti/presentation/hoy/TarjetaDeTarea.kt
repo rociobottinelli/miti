@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
+import ar.edu.uade.miti.presentation.components.IndicadorPendienteDeSync
 import ar.edu.uade.miti.presentation.components.AvatarDeIntegrante
 import ar.edu.uade.miti.presentation.theme.MitiTheme
 import java.time.DayOfWeek
@@ -86,6 +87,7 @@ fun TarjetaDeTarea(tarea: TareaDeHoy, modifier: Modifier = Modifier) {
                         style = MaterialTheme.typography.bodySmall,
                         color = color,
                     )
+                    if (tarea.pendienteDeSync) IndicadorPendienteDeSync()
                 }
             }
             tarea.responsable?.let { AvatarDeIntegrante(nombre = it.nombre, posicion = it.posicion) }

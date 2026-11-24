@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import ar.edu.uade.miti.core.Resource
@@ -17,6 +18,11 @@ import ar.edu.uade.miti.domain.model.Rutina
 import ar.edu.uade.miti.domain.model.TipoPendiente
 import ar.edu.uade.miti.domain.model.Usuario
 import ar.edu.uade.miti.domain.repository.SesionRepository
+import ar.edu.uade.miti.domain.usecase.sincronizacion.SincronizarAhoraUseCase
+import ar.edu.uade.miti.domain.usecase.sincronizacion.ObservarItemsSinEnviarUseCase
+import ar.edu.uade.miti.domain.usecase.sincronizacion.ObservarEstadoDeSincronizacionUseCase
+import ar.edu.uade.miti.domain.repository.SituacionDeSincronizacion
+import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
@@ -56,6 +62,7 @@ class HoyViewModelTest {
     private val pendientes = FakePendienteRepository()
     private val hogar = FakeHogarRepository()
     private val sesion = FakeSesion(Usuario(ANA, "ana@mail.com"))
+    private val sync = SyncFalso(miercoles.atTime(9, 25).toInstant(ZoneOffset.UTC))
 
     private val pancho = Rutina("pancho", HOGAR, "Darle de comer a Pancho", Frecuencia.DIARIA, vecesPorDia = 2)
     private val basura = Rutina("basura", HOGAR, "Sacar la basura", Frecuencia.DIARIA, vecesPorDia = 1)
@@ -89,6 +96,9 @@ class HoyViewModelTest {
             observarIntegrantes = ObservarIntegrantesUseCase(hogar),
             observarUsuario = ObservarUsuarioUseCase(sesion),
             marcarRutina = MarcarRutinaUseCase(rutinas, reloj, IdsSecuenciales()),
+            observarEstadoDeSincronizacion = ObservarEstadoDeSincronizacionUseCase(sync, reloj),
+            observarItemsSinEnviar = ObservarItemsSinEnviarUseCase(sync),
+            sincronizarAhora = SincronizarAhoraUseCase(sync),
             reloj = reloj,
         )
     }
@@ -235,6 +245,9 @@ class HoyViewModelTest {
             ObservarIntegrantesUseCase(hogar),
             ObservarUsuarioUseCase(sesion),
             MarcarRutinaUseCase(rutinasQueFallan, reloj, IdsSecuenciales()),
+            ObservarEstadoDeSincronizacionUseCase(sync, reloj),
+            ObservarItemsSinEnviarUseCase(sync),
+            SincronizarAhoraUseCase(sync),
             reloj,
         )
 
@@ -246,6 +259,96 @@ class HoyViewModelTest {
 
             assertTrue(awaitItem() is HoyUiState.Contenido)
         }
+    }
+
+    // Avisos de sincronización (C1, #19)
+
+    @Test
+    fun `sin conexion muestra el aviso con la hora de la ultima sincronizacion`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        sync.situacion.value = sync.situacion.value.copy(conConexion = false)
+
+        viewModel().uiState.test {
+            val estado = primerEstado() as HoyUiState.Contenido
+            assertEquals(AvisoDeSync.SinConexion(miercoles.atTime(9, 25)), estado.encabezado.aviso)
+        }
+    }
+
+    @Test
+    fun `con todo al dia no hay aviso y un error al sincronizar se avisa con reintentar`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(null, (primerEstado() as HoyUiState.Contenido).encabezado.aviso)
+
+            sync.situacion.value = sync.situacion.value.copy(reintentando = true)
+
+            assertEquals(AvisoDeSync.NoSePudoSincronizar, (expectMostRecentItem() as HoyUiState.Contenido).encabezado.aviso)
+            vm.sincronizar()
+            assertEquals(1, sync.pedidosDeSincronizar)
+        }
+    }
+
+    @Test
+    fun `con datos desactualizados pide confirmar antes de marcar y no marca si cancela`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        // La última sincronización fue hace más de 30 minutos.
+        sync.situacion.value = sync.situacion.value.copy(ultimaSincronizacion = miercoles.atTime(8, 15).toInstant(ZoneOffset.UTC))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val antes = primerEstado() as HoyUiState.Contenido
+            assertEquals(AvisoDeSync.Desactualizado(miercoles.atTime(8, 15)), antes.encabezado.aviso)
+
+            vm.marcar("pancho")
+
+            val confirmacion = (expectMostRecentItem() as HoyUiState.Contenido).confirmarMarca
+            assertEquals(ConfirmacionDeMarca("pancho", "Darle de comer a Pancho", "Tomás", miercoles.atTime(8, 15)), confirmacion)
+            assertTrue(rutinas.registros.value.isEmpty())
+
+            vm.cancelarMarca()
+
+            assertEquals(null, (expectMostRecentItem() as HoyUiState.Contenido).confirmarMarca)
+            assertTrue(rutinas.registros.value.isEmpty())
+        }
+    }
+
+    @Test
+    fun `al confirmar con datos desactualizados se marca igual`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        sync.situacion.value = sync.situacion.value.copy(ultimaSincronizacion = null)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            primerEstado()
+            vm.marcar("pancho")
+            vm.confirmarMarca()
+
+            assertEquals(1, (expectMostRecentItem() as HoyUiState.Contenido).rutinas.single().hechas)
+            assertEquals(1, rutinas.registros.value.size)
+        }
+    }
+
+    @Test
+    fun `marca como pendiente de sincronizar lo que todavia no llego al otro celular`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho, basura)
+        pendientes.pendientes.value = listOf(abl)
+        sync.situacion.value = sync.situacion.value.copy(idsSinEnviar = setOf("pancho", "abl"))
+
+        viewModel().uiState.test {
+            val estado = primerEstado() as HoyUiState.Contenido
+            assertEquals(mapOf("pancho" to true, "basura" to false), estado.rutinas.associate { it.id to it.pendienteDeSync })
+            assertTrue(estado.tareas.single().pendienteDeSync)
+        }
+    }
+
+    /** Sincronización falsa: por defecto con conexión y sincronizada hace 5 minutos. */
+    private class SyncFalso(ultima: Instant) : SincronizacionRepository {
+        val situacion = MutableStateFlow(SituacionDeSincronizacion(ultima, conConexion = true, sincronizando = false, reintentando = false, idsSinEnviar = emptySet()))
+        var pedidosDeSincronizar = 0
+        override fun observar(): Flow<SituacionDeSincronizacion> = situacion
+        override suspend fun sincronizarAhora() { pedidosDeSincronizar++ }
     }
 
     /** El estado inicial es Cargando hasta que responden los datos; los tests miran lo que viene después. */

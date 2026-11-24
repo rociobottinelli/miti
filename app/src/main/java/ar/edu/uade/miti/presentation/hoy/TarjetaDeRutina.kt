@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
+import ar.edu.uade.miti.presentation.components.IndicadorPendienteDeSync
 import ar.edu.uade.miti.presentation.theme.Espaciado
 import ar.edu.uade.miti.presentation.theme.MitiTheme
 import java.time.LocalTime
@@ -93,13 +94,20 @@ fun TarjetaDeRutina(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = detalle,
-                    style = MaterialTheme.typography.bodySmall,
-                    // onSurfaceVariant y no outline como en el Figma: llega a 4,5:1 de contraste (RNF08, #9).
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Row(
                     modifier = Modifier.padding(top = 2.dp),
-                )
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = detalle,
+                        style = MaterialTheme.typography.bodySmall,
+                        // onSurfaceVariant y no outline como en el Figma: llega a 4,5:1 de contraste (RNF08, #9).
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    // La marca está en este celular pero todavía no llegó al otro (RNF09).
+                    if (rutina.pendienteDeSync) IndicadorPendienteDeSync()
+                }
             }
         }
     }
@@ -151,7 +159,7 @@ private fun CasillaDeProgreso(hechas: Int, completa: Boolean, modifier: Modifier
 }
 
 private val ejemplos = listOf(
-    RutinaDeHoy("1", "Darle de comer a Pancho", hechas = 1, vecesPorDia = 2, Marca("Tomás", LocalTime.of(8, 15))),
+    RutinaDeHoy("1", "Darle de comer a Pancho", hechas = 1, vecesPorDia = 2, Marca("Tomás", LocalTime.of(8, 15)), pendienteDeSync = true),
     RutinaDeHoy("2", "Regar las plantas", hechas = 0, vecesPorDia = 1, ultimaMarca = null),
     RutinaDeHoy("3", "Sacar la basura", hechas = 1, vecesPorDia = 1, Marca("Ana", LocalTime.of(21, 3))),
 )
