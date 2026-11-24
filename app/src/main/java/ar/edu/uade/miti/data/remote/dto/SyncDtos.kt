@@ -86,6 +86,8 @@ data class GastoDto(
     @Json(name = "updated_at") val updatedAt: Long,
     val deleted: Boolean = false,
     @Json(name = "server_updated_at") val serverUpdatedAt: String? = null,
+    /** Versión sobre la que se editó (C2): el servidor la usa para detectar conflictos. Solo se sube. */
+    @Json(name = "base_updated_at") val baseUpdatedAt: Long? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -97,6 +99,18 @@ data class PagoDto(
     @Json(name = "monto_centavos") val montoCentavos: Long,
     /** "2026-11-20". */
     val fecha: String,
+    @Json(name = "updated_at") val updatedAt: Long,
+    val deleted: Boolean = false,
+    @Json(name = "server_updated_at") val serverUpdatedAt: String? = null,
+)
+
+/** Una edición de gasto propia que el servidor no aceptó porque el otro lo cambió antes (C2, #20). */
+@JsonClass(generateAdapter = true)
+data class ConflictoGastoDto(
+    val id: String,
+    @Json(name = "gasto_id") val gastoId: String,
+    /** La fila del gasto tal como la quiso dejar esta persona. */
+    @Json(name = "version_rechazada") val versionRechazada: GastoDto,
     @Json(name = "updated_at") val updatedAt: Long,
     val deleted: Boolean = false,
     @Json(name = "server_updated_at") val serverUpdatedAt: String? = null,

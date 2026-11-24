@@ -25,6 +25,7 @@ import ar.edu.uade.miti.R
 import ar.edu.uade.miti.core.navigation.Ruta
 import ar.edu.uade.miti.presentation.ajustes.AjustesScreen
 import ar.edu.uade.miti.presentation.balance.BalanceScreen
+import ar.edu.uade.miti.presentation.gastos.FormularioDeGastoScreen
 import ar.edu.uade.miti.presentation.compras.ComprasScreen
 import ar.edu.uade.miti.presentation.hoy.HoyScreen
 import ar.edu.uade.miti.presentation.theme.MitiTheme
@@ -42,9 +43,12 @@ fun MitiNavHost() {
     val entradaActual by navController.currentBackStackEntryAsState()
     val destinoActual = entradaActual?.destination
 
+    // La barra inferior solo en las tres pestañas: los formularios ocupan la pantalla entera.
+    val enPestania = Destino.entries.any { destinoActual?.hasRoute(it.ruta::class) == true }
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            if (enPestania) NavigationBar {
                 Destino.entries.forEach { destino ->
                     NavigationBarItem(
                         selected = destinoActual?.hasRoute(destino.ruta::class) == true,
@@ -65,15 +69,22 @@ fun MitiNavHost() {
         ) {
             composable<Ruta.Hoy> {
                 HoyScreen(
-                    // Compra y Gasto se agregan en sus pantallas: se va a esa pestaña.
+                    // La compra se agrega en su pestaña; el gasto abre su formulario (#14).
                     alAgregarCompra = { irAPestania(navController, Ruta.Compras) },
-                    // Cuando entre el formulario de gasto (#14) esto abre ese formulario directo.
-                    alAgregarGasto = { irAPestania(navController, Ruta.Balance) },
+                    alAgregarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
                     alAbrirAjustes = { navController.navigate(Ruta.Ajustes) { launchSingleTop = true } },
                 )
             }
             composable<Ruta.Compras> { ComprasScreen() }
-            composable<Ruta.Balance> { BalanceScreen() }
+            composable<Ruta.Balance> {
+                BalanceScreen(
+                    alRegistrarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
+                    alEditarGasto = { id -> navController.navigate(Ruta.FormularioDeGasto(id)) },
+                )
+            }
+            composable<Ruta.FormularioDeGasto> {
+                FormularioDeGastoScreen(alCerrar = { navController.popBackStack() })
+            }
             composable<Ruta.Ajustes> { AjustesScreen(alVolver = { navController.popBackStack() }) }
         }
     }
