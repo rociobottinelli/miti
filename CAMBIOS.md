@@ -254,3 +254,30 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   - Previews de cada estado.
 - **Pendiente:** migrar `hiltViewModel` al paquete nuevo (`androidx.hilt.lifecycle.viewmodel.compose`) en todas las
   pantallas a la vez (Hoy también lo usa).
+
+## "Tu hogar": el código aparece después de crear el hogar (#17)
+
+- **Desvío:** el Figma (37:780) muestra la tarjeta "Crear un hogar" con el código ya generado y los botones
+  Copiar y Compartir, al lado de "Unirme con un código".
+- **Problema:** el código lo genera el servidor al crear el hogar (`crear_hogar`, #10). Para mostrarlo antes
+  habría que crear el hogar apenas se entra a la pantalla, y entonces quien viene a unirse con el código de
+  su conviviente ya tendría un hogar propio y el servidor le diría "Ya formás parte de un hogar".
+- **Qué cambió:** la tarjeta "Crear un hogar" tiene un botón **Crear mi hogar**. Al tocarlo se crea el hogar y
+  la pantalla pasa a mostrar el código grande con Copiar y Compartir (como en el Figma) y un botón
+  **Continuar**. Unirse sigue igual. El hogar se crea con el nombre "Nuestro hogar", porque el diseño no lo
+  pide. Por ahora no se puede cambiar: el nombre no se muestra en ninguna pantalla.
+- **Además:** al entrar, "Tu hogar" primero busca si la persona ya tenía uno (cambió de celular o reinstaló).
+  Si lo encuentra, sigue directo sin pedirle nada.
+- **Riesgo que resuelve:** que la persona que se une quede trabada con un hogar vacío creado sin querer.
+
+## Arranque del primer uso decidido por el estado, no por la navegación (#17)
+
+- **Qué hace:** una sola regla del dominio (`ObservarInicioUseCase`, con tests) decide dónde arranca la app:
+  onboarding la primera vez, cuenta sin sesión, "Tu hogar" con sesión y sin hogar, y Hoy con las dos cosas.
+  `RaizViewModel` la observa y cambia de pantalla solo: al crear la cuenta, al tener hogar o al cerrar sesión.
+- **Por qué así:** las pantallas no tienen que saber a dónde ir después de cada acción, y no puede pasar que
+  alguien con sesión vea el onboarding o que al cerrar sesión quede adentro. El splash del sistema se queda
+  hasta saber el destino, así no hay pantallazos.
+- **Permiso de notificaciones:** se pide una vez, al terminar el primer uso, con una pantalla que explica para
+  qué es antes del diálogo de Android (13 o más; en versiones anteriores no hace falta). Sin permiso la app
+  funciona igual; solo no suenan los avisos de tareas.

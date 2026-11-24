@@ -120,4 +120,55 @@
     <string name="hoy_error_descripcion">Tus datos siguen guardados en este celular. Probá de nuevo.</string>
     <string name="hoy_evento_ya_completa">Esa rutina ya está hecha por hoy</string>
     <string name="hoy_evento_no_se_pudo_marcar">No se pudo marcar. Probá de nuevo.</string>
+
+    <!-- Primer uso: onboarding (#17) -->
+    <string name="onboarding_omitir">Omitir</string>
+    <string name="onboarding_siguiente">Siguiente</string>
+    <string name="onboarding_empezar">Empezar</string>
+    <string name="onboarding_paso_de">Paso %1$d de %2$d</string>
+    <string name="onboarding_rutinas_titulo">Las rutinas, a la vista</string>
+    <string name="onboarding_rutinas_texto">Marcá desde el widget lo que se repite, como darle de comer a Pancho.</string>
+    <string name="onboarding_tareas_titulo">Cada tarea a su hora</string>
+    <string name="onboarding_tareas_texto">Las tareas programadas le avisan a quien le toca.</string>
+    <string name="onboarding_balance_titulo">Cuentas claras</string>
+    <string name="onboarding_balance_texto">Los gastos se reparten solos y el balance siempre está al día.</string>
+    <string name="cuenta_volver">Volver</string>
+
+    <!-- Primer uso: cuenta (#17) -->
+    <string name="cuenta_crear_titulo">Crear cuenta</string>
+    <string name="cuenta_nombre">Nombre</string>
+    <string name="cuenta_email">Email</string>
+    <string name="cuenta_contrasenia">Contraseña</string>
+    <string name="cuenta_mostrar_contrasenia">Mostrar contraseña</string>
+    <string name="cuenta_ocultar_contrasenia">Ocultar contraseña</string>
+    <string name="cuenta_ya_tengo">Ya tengo cuenta · Ingresá</string>
+    <string name="ingresar_titulo">Ingresar</string>
+    <string name="ingresar_crear_cuenta">Crear cuenta nueva</string>
+    <string name="ingresar_sin_conexion">Necesitás conexión para ingresar.</string>
+
+    <!-- Primer uso: tu hogar (#17) -->
+    <string name="tu_hogar_titulo">Tu hogar</string>
+    <string name="tu_hogar_buscando">Buscando tu hogar…</string>
+    <string name="tu_hogar_nombre_por_defecto">Nuestro hogar</string>
+    <string name="tu_hogar_crear_titulo">Crear un hogar</string>
+    <string name="tu_hogar_creado_titulo">Tu hogar está listo</string>
+    <string name="tu_hogar_crear_subtitulo">Compartí el código con quien convivís</string>
+    <string name="tu_hogar_crear_boton">Crear mi hogar</string>
+    <string name="tu_hogar_unirme_titulo">Unirme con un código</string>
+    <string name="tu_hogar_unirme_subtitulo">El código lo tiene quien ya creó el hogar</string>
+    <string name="tu_hogar_codigo_placeholder">Ingresá el código (ej. K7P2QX)</string>
+    <string name="tu_hogar_unirme_boton">Unirme</string>
+    <string name="tu_hogar_codigo_etiqueta">Código de hogar</string>
+    <string name="tu_hogar_codigo_descripcion">Código de hogar: %1$s</string>
+    <string name="tu_hogar_copiar">Copiar</string>
+    <string name="tu_hogar_compartir">Compartir</string>
+    <string name="tu_hogar_codigo_copiado">Código copiado</string>
+    <string name="tu_hogar_mensaje_compartir">Sumate a nuestro hogar en Miti con el código %1$s</string>
+    <string name="tu_hogar_continuar">Continuar</string>
+
+    <!-- Primer uso: permiso de notificaciones (#17) -->
+    <string name="permiso_titulo">Notificaciones</string>
+    <string name="permiso_texto">Te avisamos cuando llega la hora de una tarea tuya.</string>
+    <string name="permiso_permitir">Permitir</string>
+    <string name="permiso_ahora_no">Ahora no</string>
 </resources>

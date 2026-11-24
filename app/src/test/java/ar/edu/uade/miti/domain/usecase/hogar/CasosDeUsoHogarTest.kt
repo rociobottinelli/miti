@@ -13,6 +13,7 @@ class CasosDeUsoHogarTest {
     /** Anota qué le llegó; responde siempre que salió bien. */
     private class FakeIngreso : IngresoAHogarRepository {
         val pedidos = mutableListOf<String>()
+        override fun observarSiHayHogar() = kotlinx.coroutines.flow.flowOf(false)
         override suspend fun crearHogar(nombreHogar: String): Resource<Hogar> {
             pedidos += "crear:$nombreHogar"
             return Resource.Success(Hogar("h1", nombreHogar, "K7P2QX"))

@@ -36,6 +36,7 @@ import mockwebserver3.SocketEffect
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -127,6 +128,7 @@ class IngresoAHogarRepositoryImplTest {
 
         assertEquals(Resource.Success(Hogar("h1", "Nuestra casa", "K7P2QX")), resultado)
         assertEquals("h1", hogarActivo.id.first())
+        assertTrue(repositorio().observarSiHayHogar().first())
         assertEquals("K7P2QX", base.hogarDao().observarHogar("h1").first()?.codigoUnion)
         val yo = base.hogarDao().observarIntegrantes("h1").first().single()
         assertEquals("Ana", yo.nombre)
@@ -159,6 +161,7 @@ class IngresoAHogarRepositoryImplTest {
             assertEquals(mensaje, (resultado as Resource.Error).message)
         }
         assertNull(hogarActivo.id.first())
+        assertFalse(repositorio().observarSiHayHogar().first())
         assertEquals(0, sincronizacionesPedidas)
     }
 
