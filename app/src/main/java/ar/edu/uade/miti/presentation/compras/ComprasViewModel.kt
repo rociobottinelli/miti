@@ -33,8 +33,8 @@ import kotlinx.coroutines.launch
  * ViewModel de Compras (D01). La lista sale de Room (D04): funciona igual sin conexión (RNF01) y lo que
  * agrega o tacha la otra persona aparece solo cuando llega por la sincronización.
  *
- * "Terminé la compra" cierra la compra sin gasto. El pop up "¿Registrar el gasto?" se suma cuando esté
- * el formulario de gasto (#44); el caso de uso ya lo admite.
+ * "Terminé la compra" pregunta "¿Registrar el gasto?" (flujo 3). [terminar] es el "Ahora no": cierra la
+ * compra sin gasto. Con "Registrar gasto" la cierra el formulario de gasto al guardarlo, con el gasto vinculado.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel

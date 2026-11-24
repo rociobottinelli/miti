@@ -13,6 +13,7 @@ import ar.edu.uade.miti.domain.usecase.gastos.EliminarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObtenerGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.TerminarCompraUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
 import ar.edu.uade.miti.presentation.components.leerMontoEnCentavos
 import ar.edu.uade.miti.presentation.components.montoEditable
@@ -29,7 +30,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Registrar o editar un gasto (#14, RF04). Si la ruta trae un gastoId, edita ese gasto. Las validaciones
+ * Registrar o editar un gasto (#14, RF04). Si la ruta trae un gastoId, edita ese gasto; si trae deCompra,
+ * es el gasto de la compra que se está terminando y guardarlo también la cierra (flujo 3). Las validaciones
  * de los campos se hacen acá para mostrarlas al lado de cada campo; las reglas de negocio las vuelve a
  * aplicar el dominio al guardar.
  */
@@ -40,14 +42,16 @@ class FormularioDeGastoViewModel @Inject constructor(
     private val editarGasto: EditarGastoUseCase,
     private val obtenerGasto: ObtenerGastoUseCase,
     private val eliminarGasto: EliminarGastoUseCase,
+    private val terminarCompra: TerminarCompraUseCase,
     private val observarIntegrantes: ObservarIntegrantesUseCase,
     private val observarUsuario: ObservarUsuarioUseCase,
 ) : ViewModel() {
 
-    /** Mismo nombre que la propiedad de Ruta.FormularioDeGasto. */
+    /** Mismos nombres que las propiedades de Ruta.FormularioDeGasto. */
     private val gastoId: String? = estadoGuardado.get<String>("gastoId")
+    private val deCompra: Boolean = estadoGuardado.get<Boolean>("deCompra") ?: false
 
-    private val _uiState = MutableStateFlow(FormularioDeGastoUiState(editando = gastoId != null))
+    private val _uiState = MutableStateFlow(FormularioDeGastoUiState(editando = gastoId != null, deCompra = deCompra))
     val uiState: StateFlow<FormularioDeGastoUiState> = _uiState.asStateFlow()
 
     private val _eventos = MutableSharedFlow<EventoDeFormulario>()
@@ -122,7 +126,12 @@ class FormularioDeGastoViewModel @Inject constructor(
         )
         _uiState.update { it.copy(guardando = true) }
         viewModelScope.launch {
-            val resultado = if (gastoId == null) registrarGasto(datos) else editarGasto(gastoId, datos)
+            val resultado = when {
+                gastoId != null -> editarGasto(gastoId, datos)
+                // El caso de uso crea el gasto y cierra la compra; si falla, la compra queda abierta.
+                deCompra -> terminarCompra(datos)
+                else -> registrarGasto(datos)
+            }
             _uiState.update { it.copy(guardando = false) }
             // "Guardado" recién después de escribir (AGENTS.md §5).
             when (resultado) {

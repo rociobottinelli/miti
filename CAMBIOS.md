@@ -296,7 +296,7 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   desactualizados es lo que lo advierte.
 - **Desvío temporal:** la preentrega (flujo 3) ofrece registrar el gasto al terminar la compra. Hasta que esté
   el formulario de gasto (#44), "Terminé la compra" la cierra sin gasto. `TerminarCompraUseCase` ya recibe el
-  gasto opcional, así que sumar el pop up no cambia el dominio.
+  gasto opcional, así que sumar el pop up no cambia el dominio. **Resuelto:** ver "Terminar la compra ofrece registrar el gasto".
 
 
 ## Widgets de rutinas: cómo se mantienen al día y qué quedó afuera (#22)
@@ -318,3 +318,18 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   - El Figma muestra un ícono por rutina (huella, planta, tacho); el modelo `Rutina` de la preentrega no tiene
     ícono, así que el widget no lo muestra.
   - En Android 11 o anterior las esquinas del widget son rectas (Glance solo redondea desde Android 12).
+
+## Terminar la compra ofrece registrar el gasto (flujo 3)
+
+- **Problema:** "Terminé la compra" cerraba la compra sin gasto, así que el flujo 3 de la preentrega
+  (compra → gasto → balance) se cortaba en el medio y había que cargar el gasto aparte desde Balance.
+- **Qué cambió:** "Terminé la compra" abre el pop up "¿Registrar el gasto?". "Ahora no" la cierra sin gasto,
+  como antes. "Registrar gasto" abre el mismo formulario de gasto (`Ruta.FormularioDeGasto(deCompra = true)`,
+  título "Gasto de la compra"), y guardarlo llama a `TerminarCompraUseCase` con los datos: crea el gasto y
+  deja los ítems del carrito comprados y vinculados a él. Tocar afuera del pop up o cerrar el formulario
+  deja la compra abierta.
+- **Qué riesgo resuelve:** que el gasto del súper quede sin cargar y el balance no refleje lo que se gastó.
+  Si mientras se completa el formulario la otra persona termina la compra, el carrito queda vacío y el
+  formulario avisa "No hay nada en el carrito" sin registrar un gasto suelto.
+- **Cómo se probó:** tests del ViewModel del formulario (cierra la compra y vincula solo lo del carrito,
+  carrito vacío, falla al guardar con la compra todavía abierta).

@@ -7,18 +7,22 @@ import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.fakes.ANA
 import ar.edu.uade.miti.domain.fakes.FakeGastoRepository
 import ar.edu.uade.miti.domain.fakes.FakeHogarRepository
+import ar.edu.uade.miti.domain.fakes.FakePendienteRepository
 import ar.edu.uade.miti.domain.fakes.FakeSesionRepository
 import ar.edu.uade.miti.domain.fakes.HOGAR
 import ar.edu.uade.miti.domain.fakes.IdsSecuenciales
 import ar.edu.uade.miti.domain.fakes.TOMAS
 import ar.edu.uade.miti.domain.fakes.relojEn
 import ar.edu.uade.miti.domain.model.Gasto
+import ar.edu.uade.miti.domain.model.Pendiente
 import ar.edu.uade.miti.domain.model.Reparto
+import ar.edu.uade.miti.domain.model.TipoPendiente
 import ar.edu.uade.miti.domain.usecase.gastos.EditarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.EliminarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObtenerGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.TerminarCompraUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
 import ar.edu.uade.miti.presentation.MainDispatcherRule
 import java.time.LocalDateTime
@@ -37,17 +41,25 @@ class FormularioDeGastoViewModelTest {
 
     private val hogares = FakeHogarRepository()
     private val gastos = FakeGastoRepository()
+    private val pendientes = FakePendienteRepository()
     private val reloj = relojEn(LocalDateTime.of(2026, 11, 23, 12, 0))
 
-    private fun viewModel(gastoId: String? = null) = FormularioDeGastoViewModel(
-        SavedStateHandle(mapOf("gastoId" to gastoId)),
-        RegistrarGastoUseCase(hogares, gastos, reloj, IdsSecuenciales()),
-        EditarGastoUseCase(gastos),
-        ObtenerGastoUseCase(gastos),
-        EliminarGastoUseCase(gastos),
-        ObservarIntegrantesUseCase(hogares),
-        ObservarUsuarioUseCase(FakeSesionRepository()),
-    )
+    private fun viewModel(gastoId: String? = null, deCompra: Boolean = false): FormularioDeGastoViewModel {
+        val registrar = RegistrarGastoUseCase(hogares, gastos, reloj, IdsSecuenciales())
+        return FormularioDeGastoViewModel(
+            SavedStateHandle(mapOf("gastoId" to gastoId, "deCompra" to deCompra)),
+            registrar,
+            EditarGastoUseCase(gastos),
+            ObtenerGastoUseCase(gastos),
+            EliminarGastoUseCase(gastos),
+            TerminarCompraUseCase(pendientes, registrar),
+            ObservarIntegrantesUseCase(hogares),
+            ObservarUsuarioUseCase(FakeSesionRepository()),
+        )
+    }
+
+    private fun compra(id: String, titulo: String, enCarrito: Boolean) =
+        Pendiente(id, HOGAR, TipoPendiente.COMPRA, titulo, enCarrito = enCarrito)
 
     @Test
     fun `al abrir carga los integrantes y propone que pago quien usa el celular`() {
@@ -167,5 +179,61 @@ class FormularioDeGastoViewModelTest {
             assertEquals(EventoDeFormulario.Borrado, awaitItem())
         }
         assertTrue(gastos.gastos.value.isEmpty())
+    }
+
+    // --- Gasto de la compra (flujo 3) ---
+
+    @Test
+    fun `el gasto de una compra la cierra y vincula lo que estaba en el carrito`() = runTest {
+        pendientes.pendientes.value = listOf(compra("p1", "Leche", enCarrito = true), compra("p2", "Pan", enCarrito = false))
+        val vm = viewModel(deCompra = true)
+        assertTrue(vm.uiState.value.deCompra)
+        vm.onMontoChange("24000")
+        vm.onDescripcionChange("Supermercado")
+
+        vm.eventos.test {
+            vm.onGuardarClick()
+            assertEquals(EventoDeFormulario.Guardado, awaitItem())
+        }
+        val gasto = gastos.gastos.value.single()
+        val leche = pendientes.pendientes.value.single { it.id == "p1" }
+        val pan = pendientes.pendientes.value.single { it.id == "p2" }
+        assertTrue(leche.resuelto)
+        assertEquals(gasto.id, leche.gastoId)
+        // Lo que no estaba en el carrito sigue en la lista, sin gasto.
+        assertFalse(pan.resuelto)
+        assertNull(pan.gastoId)
+    }
+
+    @Test
+    fun `si el carrito ya se vacio no registra el gasto y lo avisa`() = runTest {
+        // Por ejemplo, la otra persona terminó la compra mientras se completaba el formulario.
+        val vm = viewModel(deCompra = true)
+        vm.onMontoChange("24000")
+        vm.onDescripcionChange("Supermercado")
+
+        vm.eventos.test {
+            vm.onGuardarClick()
+            assertEquals(EventoDeFormulario.NoSePudo("No hay nada en el carrito"), awaitItem())
+        }
+        assertTrue(gastos.gastos.value.isEmpty())
+        assertFalse(vm.uiState.value.guardando)
+    }
+
+    @Test
+    fun `si no se puede guardar el gasto la compra queda abierta`() = runTest {
+        pendientes.pendientes.value = listOf(compra("p1", "Leche", enCarrito = true))
+        gastos.falla = Resource.Error("No se pudo guardar en el celular.")
+        val vm = viewModel(deCompra = true)
+        vm.onMontoChange("24000")
+        vm.onDescripcionChange("Supermercado")
+
+        vm.eventos.test {
+            vm.onGuardarClick()
+            assertEquals(EventoDeFormulario.NoSePudo("No se pudo guardar en el celular."), awaitItem())
+        }
+        val leche = pendientes.pendientes.value.single()
+        assertTrue(leche.enCarrito)
+        assertFalse(leche.resuelto)
     }
 }
