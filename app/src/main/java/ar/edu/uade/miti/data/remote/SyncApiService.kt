@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.data.remote
 
+import ar.edu.uade.miti.data.remote.dto.ConflictoGastoDto
 import ar.edu.uade.miti.data.remote.dto.GastoDto
 import ar.edu.uade.miti.data.remote.dto.HogarDto
 import ar.edu.uade.miti.data.remote.dto.IntegranteDto
@@ -116,7 +117,7 @@ interface SyncApiService {
         @Header("Authorization") autorizacion: String,
         @Body filas: List<GastoDto>,
         @Query("columns") columnas: String =
-            "id,hogar_id,descripcion,monto_total_centavos,pagador_id,reparto,beneficiario_id,cuotas_totales,cuota_inicial,mes_inicio,updated_at,deleted",
+            "id,hogar_id,descripcion,monto_total_centavos,pagador_id,reparto,beneficiario_id,cuotas_totales,cuota_inicial,mes_inicio,updated_at,deleted,base_updated_at",
         @Header("Prefer") preferencia: String = UPSERT,
     ): Response<Unit>
 
@@ -137,6 +138,16 @@ interface SyncApiService {
             "id,hogar_id,de_integrante_id,a_integrante_id,monto_centavos,fecha,updated_at,deleted",
         @Header("Prefer") preferencia: String = UPSERT,
     ): Response<Unit>
+
+    /** Solo trae los conflictos propios: la regla RLS filtra por la persona logueada. */
+    @GET("rest/v1/conflictos_gasto")
+    suspend fun descargarConflictos(
+        @Header("Authorization") autorizacion: String,
+        @Query("server_updated_at") desde: String,
+        @Query("limit") limite: Int,
+        @Query("offset") offset: Int,
+        @Query("order") orden: String = ORDEN,
+    ): Response<List<ConflictoGastoDto>>
 
     companion object {
         /** Orden estable para paginar: por hora del servidor y, si empatan, por id. */

@@ -1,6 +1,7 @@
 package ar.edu.uade.miti.domain.fakes
 
 import ar.edu.uade.miti.core.Resource
+import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Hogar
 import ar.edu.uade.miti.domain.model.Integrante
@@ -8,11 +9,13 @@ import ar.edu.uade.miti.domain.model.Pago
 import ar.edu.uade.miti.domain.model.Pendiente
 import ar.edu.uade.miti.domain.model.RegistroRutina
 import ar.edu.uade.miti.domain.model.Rutina
+import ar.edu.uade.miti.domain.model.Usuario
 import ar.edu.uade.miti.domain.repository.GastoRepository
 import ar.edu.uade.miti.domain.repository.GeneradorDeIds
 import ar.edu.uade.miti.domain.repository.HogarRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
+import ar.edu.uade.miti.domain.repository.SesionRepository
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -78,6 +81,11 @@ class FakeGastoRepository : FallaConfigurable(), GastoRepository {
     override suspend fun eliminarGasto(id: String) = escribir { gastos.update { lista -> lista.filterNot { it.id == id } } }
     override suspend fun guardarPago(pago: Pago) = escribir { pagos.update { reemplazar(it, pago) { p -> p.id } } }
     override suspend fun eliminarPago(id: String) = escribir { pagos.update { lista -> lista.filterNot { it.id == id } } }
+
+    val conflictos = MutableStateFlow<List<ConflictoDeGasto>>(emptyList())
+    override suspend fun obtenerGasto(id: String): Resource<Gasto?> = falla ?: Resource.Success(gastos.value.find { it.id == id })
+    override fun observarConflictos(): Flow<List<ConflictoDeGasto>> = conflictos
+    override suspend fun resolverConflicto(id: String) = escribir { conflictos.update { lista -> lista.filterNot { it.id == id } } }
 }
 
 /** Ids predecibles: "id-1", "id-2", ... */
@@ -107,4 +115,13 @@ abstract class FallaConfigurable {
 fun <T> Resource<T>.exito(): T = when (this) {
     is Resource.Success -> data
     is Resource.Error -> fail("Se esperaba Success y llegó $this") as Nothing
+}
+
+/** Sesión en memoria: por defecto, Ana logueada. */
+class FakeSesionRepository(usuario: Usuario? = Usuario(ANA, "ana@mail.com")) : SesionRepository {
+    val usuario = MutableStateFlow(usuario)
+    override fun observarUsuario(): Flow<Usuario?> = usuario
+    override suspend fun crearCuenta(nombre: String, email: String, contrasenia: String): Resource<Usuario> = Resource.Error("No disponible")
+    override suspend fun iniciarSesion(email: String, contrasenia: String): Resource<Usuario> = Resource.Error("No disponible")
+    override suspend fun cerrarSesion(): Resource<Unit> = Resource.Success(Unit).also { usuario.value = null }
 }

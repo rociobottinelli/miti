@@ -12,8 +12,8 @@ Integrantes: Rocío Bottinelli (UI/UX y presentación) · Juan Cruz Bautista Ser
 | [docs/consigna-tpo-2026.pdf](docs/consigna-tpo-2026.pdf) | Consigna oficial del TPO: requisitos de la preentrega y de la entrega final, criterios de evaluación, uso de IA. |
 | [docs/preentrega-miti.pdf](docs/preentrega-miti.pdf) | Nuestra preentrega (Etapa 1): problema, usuarios, alcance, RF/RNF, pantallas, arquitectura (D01–D11), persistencia, offline first, tecnologías. **Es la especificación de lo que se implementa.** |
 | [docs/correcciones-preentrega.md](docs/correcciones-preentrega.md) | Devolución docente de la preentrega, transcripta, con puntos accionables C1–C7 (captura original en `docs/correcciones-preentrega.jpg`). |
-| [Figma: archivo de diseño](https://www.figma.com/design/sWFMJHbqIjYUaBmoOeMcj5/miti-UI?node-id=0-1) | **Referencia visual de la app.** Páginas "Wireframe (Pre entrega)" (todas las pantallas con sus estados: carga, contenido, vacío, error, sin conexión) y "High Fidelity" (diseño final). |
-| [Figma: prototipo](https://www.figma.com/proto/sWFMJHbqIjYUaBmoOeMcj5/miti-UI?node-id=22-13360&page-id=0%3A1&starting-point-node-id=22%3A13374) | Prototipo navegable del wireframe. |
+| [Figma: archivo de diseño](https://www.figma.com/design/EpZYKO9x3cyX49FyRoIwMt/miti-UI--Copy-?node-id=0-1) | **Referencia visual de la app.** Páginas "Wireframe (Pre entrega)" (todas las pantallas con sus estados: carga, contenido, vacío, error, sin conexión) y "High Fidelity" (diseño final). |
+| [Figma: prototipo](https://www.figma.com/proto/EpZYKO9x3cyX49FyRoIwMt/miti-UI--Copy-?node-id=22-13360&page-id=0%3A1&starting-point-node-id=22%3A13374) | Prototipo navegable del wireframe. |
 
 Si algo de lo que se implementa se aparta de la preentrega, hay que poder justificarlo (la consigna lo exige)
 y conviene registrarlo para el README final.
@@ -73,7 +73,7 @@ Navegación: barra inferior Hoy · Compras · Balance; Ajustes desde el avatar. 
 - **D05** Repositorios como interfaces en el dominio; Supabase queda encerrado en la capa de datos.
 - **D06** Sync con WorkManager: un `SyncWorker` envía lo pendiente y después descarga; reintento con backoff.
 - **D07** IDs UUID generados en el dispositivo; borrado lógico (`deleted`).
-- **D08** Marcas de rutina append-only; resto last-write-wins por `updatedAt` (**a revisar por C2**).
+- **D08** Marcas de rutina append-only; resto last-write-wins por `updatedAt`. **Gastos (C2, #20):** el servidor detecta la edición hecha sobre una versión vieja y se la avisa a quien la perdió (rehacer o descartar).
 - **D09** Datos derivados (balance, progreso de rutina) se calculan, no se guardan.
 - **D10** Avisos con AlarmManager + notificaciones locales; se reprograman al reiniciar.
 - **D11** Backend central Supabase (Auth + Postgres con RLS + API REST); los celulares no hablan entre sí.
