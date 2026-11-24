@@ -30,6 +30,19 @@
         </activity>
 
         <!-- WorkManager se inicializa desde MitiApp (con la fábrica de Hilt), no automáticamente. -->
+        <!-- Widgets de rutinas (#22). No se exportan acciones propias: solo las del sistema para widgets. -->
+        <receiver
+            android:name=".presentation.widget.ReceptorWidgetDeRutinas"
+            android:exported="true"
+            android:label="@string/widget_rutinas_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_rutinas" />
+        </receiver>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
