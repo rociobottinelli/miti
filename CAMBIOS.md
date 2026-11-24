@@ -170,6 +170,118 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   - Si los datos están desactualizados, al marcar una rutina: avisar que la otra persona pudo haberla hecho ya.
   - Todo desaparece solo al sincronizar, porque se calcula de Room y DataStore.
 - Sin cambio de esquema de Room (solo una consulta nueva).
+## Avisos de tareas con alarmas locales (#23) y aviso de tareas nuevas (#24)
+
+- **Qué hace (D10):** las tareas con aviso suenan en el celular de su responsable a la hora fijada, sin conexión
+  y sin servidor de push. La notificación tiene la acción **"Marcar como hecha"**, que usa el mismo
+  `CompletarTareaUseCase` que la app (D03). Cuando la sincronización baja una tarea nueva asignada a quien usa
+  el celular, avisa "Te asignaron una tarea" (#24).
+- **Decisiones:**
+  - **Qué suena lo decide una regla del dominio** (`TareasConAviso`, con tests): con aviso, sin resolver, del
+    usuario de este celular y todavía no vencida. Todo lo demás se cancela.
+  - **Un único punto que pone las alarmas al día** (`ReprogramarAvisosUseCase`, corrido por `AvisosWorker`).
+    Siempre parte de Room, así que llamarlo de más no hace daño. Se dispara después de cada cambio local, al
+    terminar una sincronización que bajó algo, al abrir la app, al cerrar sesión (cancela todo) y al reiniciar
+    el teléfono o cambiar la hora (`ReceptorDeReinicio`), porque Android borra las alarmas al apagarse.
+  - **Alarma exacta si el sistema lo permite y aproximada si no** (D10). Android 12+ puede negar las exactas: la
+    alarma suena igual, pero sin garantizar los ±5 min de RNF06. `ConsultarPermisosDeAvisosUseCase` le dice a
+    Hoy si faltan los permisos de notificaciones o de alarmas exactas, para mostrar el aviso de la preentrega.
+  - Al sonar, se vuelve a mirar Room: si la tarea ya se resolvió (por ejemplo, la otra persona y llegó con la
+    sincronización), no se avisa.
+  - #24 no avisa en la primera descarga (al ingresar se baja todo el hogar; no son tareas "nuevas"), ni dos veces
+    la misma tarea (solo cuenta si no estaba en el celular).
+- **Cómo se probó:**
+  - Tests de la regla y de la reprogramación.
+  - Alarmas reales de Android con Robolectric: exacta y aproximada, cancelar sin tocar las demás, reprogramar sin
+    duplicar.
+  - Notificación con su acción, sin permiso, tareas nuevas agrupadas.
+  - #24 en el sync: solo las propias, nada en la primera descarga ni dos veces.
+- **Pendiente de probar en un celular:** RNF06 en modo avión con un reinicio intermedio. Se hace a mano en un
+  dispositivo y se anota en las pruebas de #25.
+## Conflictos en gastos: avisar en vez de perder ediciones (#20, C2)
+
+- **Desvío respecto de la preentrega (D08):** la preentrega aceptaba que, si los dos editaban el mismo gasto sin
+  conexión, una edición se perdiera sin aviso. El docente lo marcó (C2) porque contradice la confianza que promete
+  la app. **Para los gastos, D08 cambia; para el resto de las tablas sigue igual.**
+- **Qué cambió:**
+  - Cada edición de un gasto guarda sobre qué versión del servidor se hizo (`baseUpdatedAt`). Si ya había una
+    edición sin subir, se conserva la base de la primera, que es la versión que vio la persona.
+  - **El servidor detecta el conflicto** (migración 4): si el gasto cambió desde esa versión, la edición no pisa.
+    Queda registrada en `conflictos_gasto`, visible solo para quien la hizo, y el gasto se marca como cambiado
+    para que los dos celulares bajen la misma versión. No depende del reloj de los celulares: gana quien
+    sincronizó primero, y quien perdió se entera.
+  - El celular baja sus conflictos y el dominio ofrece `ObservarConflictosDeGastoUseCase` (las dos versiones),
+    `RehacerMiEdicionUseCase` (vuelve a aplicar la propia sobre la actual) y `DescartarConflictoUseCase`.
+  - **Editar un gasto** (`EditarGastoUseCase`): RF04 lo pedía ("al guardar o editar un gasto") y no existía.
+    Borrar un gasto también lleva la versión base, así un borrado no pisa una edición del otro.
+- **Room pasa a la versión 2** con `Migration(1, 2)` escrita a mano: agrega una columna en gastos y la tabla
+  `conflictos_gasto`, sin tocar datos. Probada con `MigrationTestHelper`: se crea una base v1 con un gasto, se
+  migra y se verifica que el gasto sigue igual y la base valida contra el esquema v2.
+- **Cómo se probó:**
+  - 16 tests nuevos: versión base, editar, rehacer, descartar, sync y migración.
+  - El script SQL de verificación suma el caso, y pasa en el Supabase real.
+  - **Prueba real con dos celulares:** los dos editan el mismo gasto sin conexión, con el reloj de Tomás
+    adelantado una hora (con la regla vieja, la de Tomás habría pisado la de Ana sin aviso). Gana Ana, que
+    sincronizó primero; Tomás recibe el aviso con los dos montos; al rehacer, su versión le llega a Ana y el
+    aviso desaparece.
+- **Limitación:** marcar un conflicto como resuelto se guarda solo en el celular. Si se reinstala la app,
+  vuelven a aparecer los conflictos viejos.
+
+## Pantalla Balance y formulario de gasto (#14, #15)
+
+- **Qué hace (RF04):**
+  - **Balance:** selector de mes (no deja ir al futuro), la tarjeta "Ana le debe $ X a Tomás" / "Están a mano"
+    con Registrar pago y lo que puso cada uno, el saldo de meses anteriores, los movimientos del mes (cada gasto
+    con la cuota que cae en el mes, "A medias" / "Solo Ana" y "Cuota 2 de 6", y los pagos) y los estados de carga,
+    vacío, sin la otra persona y error con Reintentar.
+  - **Formulario de gasto** para registrar y editar: monto grande con error al lado, descripción, quién pagó,
+    cómo se reparte, cuotas iguales y borrar (con confirmación).
+  - **Hoja de pago:** dirección, monto (propone saldar la deuda entera) y fecha.
+  - **Avisos de conflicto (C2)** arriba de todo: "Tu cambio en «Heladera» no se guardó. Vos pusiste $ X y quedó
+    $ Y", con "Usar mi cambio" o "Dejar como está".
+- **Desvíos respecto del Figma:**
+  - **Sin íconos por categoría** en los movimientos: el Figma muestra supermercado, auto, gas, etc., pero las
+    categorías están fuera del alcance de la preentrega (sección 8). Todos usan un ícono genérico de comprobante.
+  - **El formulario de gasto es una pantalla y no una hoja inferior.** Como destino de navegación tiene su propio
+    ViewModel, sobrevive a la rotación y a la muerte del proceso (`SavedStateHandle`), y lo pueden abrir Balance y,
+    más adelante, Compras al terminar una compra. Se ve igual (cierre con X arriba a la izquierda).
+  - Los chips "Estado demo" del Figma son controles del prototipo; no van en la app.
+- **Cómo se probó:**
+  - Tests de los dos ViewModels (AGENTS.md §14): carga inicial, validación, una solicitud inválida nunca guarda,
+    guardado, error de escritura, editar, borrar, deuda y totales por persona, cuotas del mes, pago propuesto y
+    validado, cambiar dirección, conflictos y meses.
+  - Tests del formato de dinero ("$ 18.750", "18.750,5").
+  - Previews de cada estado.
+- **Pendiente:** migrar `hiltViewModel` al paquete nuevo (`androidx.hilt.lifecycle.viewmodel.compose`) en todas las
+  pantallas a la vez (Hoy también lo usa).
+
+## "Tu hogar": el código aparece después de crear el hogar (#17)
+
+- **Desvío:** el Figma (37:780) muestra la tarjeta "Crear un hogar" con el código ya generado y los botones
+  Copiar y Compartir, al lado de "Unirme con un código".
+- **Problema:** el código lo genera el servidor al crear el hogar (`crear_hogar`, #10). Para mostrarlo antes
+  habría que crear el hogar apenas se entra a la pantalla, y entonces quien viene a unirse con el código de
+  su conviviente ya tendría un hogar propio y el servidor le diría "Ya formás parte de un hogar".
+- **Qué cambió:** la tarjeta "Crear un hogar" tiene un botón **Crear mi hogar**. Al tocarlo se crea el hogar y
+  la pantalla pasa a mostrar el código grande con Copiar y Compartir (como en el Figma) y un botón
+  **Continuar**. Unirse sigue igual. El hogar se crea con el nombre "Nuestro hogar", porque el diseño no lo
+  pide. Por ahora no se puede cambiar: el nombre no se muestra en ninguna pantalla.
+- **Además:** al entrar, "Tu hogar" primero busca si la persona ya tenía uno (cambió de celular o reinstaló).
+  Si lo encuentra, sigue directo sin pedirle nada.
+- **Riesgo que resuelve:** que la persona que se une quede trabada con un hogar vacío creado sin querer.
+
+## Arranque del primer uso decidido por el estado, no por la navegación (#17)
+
+- **Qué hace:** una sola regla del dominio (`ObservarInicioUseCase`, con tests) decide dónde arranca la app:
+  onboarding la primera vez, cuenta sin sesión, "Tu hogar" con sesión y sin hogar, y Hoy con las dos cosas.
+  `RaizViewModel` la observa y cambia de pantalla solo: al crear la cuenta, al tener hogar o al cerrar sesión.
+- **Por qué así:** las pantallas no tienen que saber a dónde ir después de cada acción, y no puede pasar que
+  alguien con sesión vea el onboarding o que al cerrar sesión quede adentro. El splash del sistema se queda
+  hasta saber el destino, así no hay pantallazos.
+- **Permiso de notificaciones:** se pide una vez, al terminar el primer uso, con una pantalla que explica para
+  qué es antes del diálogo de Android (13 o más; en versiones anteriores no hace falta). Sin permiso la app
+  funciona igual; solo no suenan los avisos de tareas.
+
 
 ## Compras: no repetir ítems y terminar la compra sin el pop up por ahora (#13)
 

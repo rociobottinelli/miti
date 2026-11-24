@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import ar.edu.uade.miti.data.avisos.ProgramadorDeAvisos
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -16,9 +17,15 @@ class SyncWorker @AssistedInject constructor(
     @Assisted contexto: Context,
     @Assisted parametros: WorkerParameters,
     private val sincronizador: Sincronizador,
+    private val avisos: ProgramadorDeAvisos,
 ) : CoroutineWorker(contexto, parametros) {
 
-    override suspend fun doWork(): Result = resultadoPara(sincronizador.sincronizar(), runAttemptCount)
+    override suspend fun doWork(): Result {
+        val resultado = sincronizador.sincronizar()
+        // Lo que bajó puede traer tareas con aviso nuevas, resueltas o reasignadas (#23).
+        if (resultado is ResultadoDeSync.Completa && resultado.descargadas > 0) avisos.pedir()
+        return resultadoPara(resultado, runAttemptCount)
+    }
 
     companion object {
         /** Después de tantos intentos fallidos se deja: lo pendiente sigue en Room y sube con el próximo disparo. */
