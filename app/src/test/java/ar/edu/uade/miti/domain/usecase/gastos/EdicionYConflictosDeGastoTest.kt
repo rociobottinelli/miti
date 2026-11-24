@@ -6,6 +6,7 @@ import ar.edu.uade.miti.domain.fakes.FakeGastoRepository
 import ar.edu.uade.miti.domain.fakes.HOGAR
 import ar.edu.uade.miti.domain.fakes.TOMAS
 import ar.edu.uade.miti.domain.fakes.exito
+import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.DatosDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
@@ -97,5 +98,45 @@ class EdicionYConflictosDeGastoTest {
 
         assertEquals(Resource.Error("No se pudo guardar"), RehacerMiEdicionUseCase(gastos)(conflicto))
         assertEquals(listOf(conflicto), gastos.conflictos.value)
+    }
+
+    // --- Qué campos cambiaron (#51) ---
+
+    @Test
+    fun `un conflicto por quien pago no dice que cambio el monto`() {
+        val conflicto = ConflictoDeGasto("c1", heladera.copy(pagadorId = ANA), heladera, eraBorrado = false)
+
+        assertEquals(listOf(CampoDeGasto.PAGADOR), conflicto.camposDistintos)
+    }
+
+    @Test
+    fun `pasar de a medias a uno solo es un cambio de reparto`() {
+        val mia = heladera.copy(reparto = Reparto.UNO_SOLO, beneficiarioId = TOMAS)
+
+        assertEquals(listOf(CampoDeGasto.REPARTO), ConflictoDeGasto("c1", heladera, mia, eraBorrado = false).camposDistintos)
+    }
+
+    @Test
+    fun `cambiar de quien es un gasto de uno solo tambien es un cambio de reparto`() {
+        val deTomas = heladera.copy(reparto = Reparto.UNO_SOLO, beneficiarioId = TOMAS)
+        val deAna = deTomas.copy(beneficiarioId = ANA)
+
+        assertEquals(listOf(CampoDeGasto.REPARTO), ConflictoDeGasto("c1", deAna, deTomas, eraBorrado = false).camposDistintos)
+    }
+
+    @Test
+    fun `varios campos distintos salen en el orden del formulario`() {
+        val mia = heladera.copy(descripcion = "Heladera nueva", montoTotalCentavos = 2_900_000, cuotaInicial = 2)
+        val conflicto = ConflictoDeGasto("c1", heladera.copy(pagadorId = ANA), mia, eraBorrado = false)
+
+        assertEquals(
+            listOf(CampoDeGasto.DESCRIPCION, CampoDeGasto.MONTO, CampoDeGasto.PAGADOR, CampoDeGasto.CUOTAS),
+            conflicto.camposDistintos,
+        )
+    }
+
+    @Test
+    fun `si el gasto ya no esta no hay campos para comparar`() {
+        assertTrue(ConflictoDeGasto("c1", actual = null, miVersion = heladera, eraBorrado = false).camposDistintos.isEmpty())
     }
 }

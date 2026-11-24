@@ -1,6 +1,7 @@
 package ar.edu.uade.miti.presentation.balance
 
 import androidx.annotation.StringRes
+import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import java.time.LocalDate
 import java.time.YearMonth
@@ -79,7 +80,24 @@ data class ConflictoEnPantalla(
     val miMontoCentavos: Long,
     /** Null si el gasto ya no está (lo borró la otra persona). */
     val montoActualCentavos: Long?,
+    /** Qué campos difieren entre lo que puso esta persona y lo que quedó (#51). Vacío si ya no está. */
+    val diferencias: List<DiferenciaDeGasto> = emptyList(),
 )
+
+/** Un campo del gasto con el valor que puso esta persona y el que quedó. */
+data class DiferenciaDeGasto(val campo: CampoDeGasto, val mio: ValorDeCampo, val quedo: ValorDeCampo)
+
+/** El valor de un campo, sin texto armado: la pantalla lo escribe con sus recursos. */
+sealed interface ValorDeCampo {
+    data class Texto(val texto: String) : ValorDeCampo
+    data class Pesos(val centavos: Long) : ValorDeCampo
+    data class Persona(val nombre: String) : ValorDeCampo
+    data object AMedias : ValorDeCampo
+    data class SoloDe(val nombre: String) : ValorDeCampo
+
+    /** [total] 1 = sin cuotas. */
+    data class Cuotas(val actual: Int, val total: Int) : ValorDeCampo
+}
 
 /** Lo que se está escribiendo en "Registrar pago". */
 data class PagoEnCurso(

@@ -9,6 +9,7 @@ import ar.edu.uade.miti.domain.fakes.HOGAR
 import ar.edu.uade.miti.domain.fakes.IdsSecuenciales
 import ar.edu.uade.miti.domain.fakes.TOMAS
 import ar.edu.uade.miti.domain.fakes.relojEn
+import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Integrante
@@ -160,11 +161,56 @@ class BalanceViewModelTest {
         val enPantalla = vm.contenido().conflictos.single()
         assertEquals(2_900_000L, enPantalla.miMontoCentavos)
         assertEquals(3_100_000L, enPantalla.montoActualCentavos)
+        assertEquals(
+            listOf(DiferenciaDeGasto(CampoDeGasto.MONTO, ValorDeCampo.Pesos(2_900_000), ValorDeCampo.Pesos(3_100_000))),
+            enPantalla.diferencias,
+        )
 
         vm.rehacer(conflicto)
 
         val estado = vm.uiState.first { (it as? BalanceUiState.Contenido)?.conflictos?.isEmpty() == true } as BalanceUiState.Contenido
         assertTrue(estado.conflictos.isEmpty())
         assertEquals(2_900_000L, gastos.gastos.value.single().montoTotalCentavos)
+    }
+
+    @Test
+    fun `un conflicto por quien pago muestra los dos pagadores y no el monto`() = runTest {
+        val actual = Gasto("g1", HOGAR, "Heladera", 3_100_000, ANA, Reparto.A_MEDIAS, mesInicio = noviembre)
+        gastos.gastos.value = listOf(actual)
+        gastos.conflictos.value = listOf(ConflictoDeGasto("c1", actual, actual.copy(pagadorId = TOMAS), false))
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        assertEquals(
+            listOf(DiferenciaDeGasto(CampoDeGasto.PAGADOR, ValorDeCampo.Persona("Tomás"), ValorDeCampo.Persona("Ana"))),
+            vm.contenido().conflictos.single().diferencias,
+        )
+    }
+
+    @Test
+    fun `un conflicto por reparto muestra de quien era el gasto en cada version`() = runTest {
+        val actual = Gasto("g1", HOGAR, "Heladera", 3_100_000, ANA, Reparto.A_MEDIAS, mesInicio = noviembre)
+        gastos.gastos.value = listOf(actual)
+        val mia = actual.copy(reparto = Reparto.UNO_SOLO, beneficiarioId = TOMAS)
+        gastos.conflictos.value = listOf(ConflictoDeGasto("c1", actual, mia, false))
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        assertEquals(
+            listOf(DiferenciaDeGasto(CampoDeGasto.REPARTO, ValorDeCampo.SoloDe("Tomás"), ValorDeCampo.AMedias)),
+            vm.contenido().conflictos.single().diferencias,
+        )
+    }
+
+    @Test
+    fun `si el gasto ya no esta no hay diferencias que mostrar`() = runTest {
+        val mia = Gasto("g1", HOGAR, "Heladera", 2_900_000, ANA, Reparto.A_MEDIAS, mesInicio = noviembre)
+        gastos.conflictos.value = listOf(ConflictoDeGasto("c1", actual = null, miVersion = mia, eraBorrado = false))
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        val enPantalla = vm.contenido().conflictos.single()
+        assertEquals(null, enPantalla.montoActualCentavos)
+        assertTrue(enPantalla.diferencias.isEmpty())
     }
 }

@@ -333,3 +333,13 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   formulario avisa "No hay nada en el carrito" sin registrar un gasto suelto.
 - **Cómo se probó:** tests del ViewModel del formulario (cierra la compra y vincula solo lo del carrito,
   carrito vacío, falla al guardar con la compra todavía abierta).
+
+## La tarjeta de conflicto dice qué campo cambió (#51, C2)
+
+- **Problema:** la tarjeta comparaba solo montos. Si el conflicto era por quién pagó o por el reparto, decía
+  "Vos pusiste $ 31.000 y quedó $ 31.000" y no se entendía qué se perdía.
+- **Qué cambió:** `ConflictoDeGasto.camposDistintos` compara las dos versiones (descripción, monto, quién pagó,
+  reparto, cuotas) y la tarjeta muestra una línea por cada campo distinto: "Quién pagó: vos pusiste Tomás y quedó Ana."
+- **Qué riesgo resuelve:** que alguien elija "Usar mi cambio" o "Dejar como está" sin saber qué está eligiendo.
+- **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
+  pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.

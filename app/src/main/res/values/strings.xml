@@ -73,7 +73,16 @@
     <string name="pago_error_monto">Ingresá un monto mayor a cero</string>
     <string name="pago_registrado">Pago registrado</string>
     <string name="conflicto_titulo">Tu cambio en «%1$s» no se guardó</string>
-    <string name="conflicto_dos_versiones">La otra persona lo cambió antes. Vos pusiste %1$s y quedó %2$s.</string>
+    <string name="conflicto_cambio_antes">La otra persona lo cambió antes.</string>
+    <!-- Una línea por campo que cambió (#51): "Quién pagó: vos pusiste Tomás y quedó Ana." -->
+    <string name="conflicto_diferencia">%1$s: vos pusiste %2$s y quedó %3$s.</string>
+    <string name="conflicto_campo_descripcion">Descripción</string>
+    <string name="conflicto_campo_monto">Monto</string>
+    <string name="conflicto_campo_pagador">Quién pagó</string>
+    <string name="conflicto_campo_reparto">Reparto</string>
+    <string name="conflicto_campo_cuotas">Cuotas</string>
+    <string name="conflicto_valor_texto">«%1$s»</string>
+    <string name="conflicto_sin_cuotas">sin cuotas</string>
     <string name="conflicto_ya_no_esta">La otra persona lo borró antes. Vos pusiste %1$s.</string>
     <string name="conflicto_era_borrado">Lo borraste, pero la otra persona lo había cambiado antes y sigue en el balance.</string>
     <string name="conflicto_rehacer">Usar mi cambio</string>
