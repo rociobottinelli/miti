@@ -43,6 +43,18 @@
                 android:resource="@xml/widget_rutinas" />
         </receiver>
 
+        <receiver
+            android:name=".presentation.widget.ReceptorWidgetCompacto"
+            android:exported="true"
+            android:label="@string/widget_compacto_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_compacto" />
+        </receiver>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

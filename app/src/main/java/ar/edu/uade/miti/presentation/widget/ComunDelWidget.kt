@@ -44,9 +44,10 @@ import java.time.LocalDate
 /** La paleta de la app también en los widgets: claro u oscuro según el sistema, sin Material You. */
 internal val coloresDelWidget = ColorProviders(light = EsquemaClaro, dark = EsquemaOscuro)
 
-/** Actualiza los widgets. Si no hay ninguno en la pantalla de inicio, no hace nada. */
+/** Actualiza los dos widgets. Si no hay ninguno en la pantalla de inicio, no hace nada. */
 suspend fun actualizarWidgets(context: Context) {
     WidgetDeRutinas().updateAll(context)
+    WidgetCompacto().updateAll(context)
 }
 
 /** El fondo redondeado de los dos widgets (en Android 11 o anterior las esquinas quedan rectas). */
