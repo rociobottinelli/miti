@@ -6,6 +6,13 @@
     <!-- Avisos de tareas (#23); se pide en la pantalla de permiso del primer uso (#17). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Saber si hay conexión para el banner "Sin conexión" (#19). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Avisos de tareas (D10, #23): notificaciones (Android 13+), alarmas exactas (Android 12+) y
+         volver a programarlas después de reiniciar el teléfono. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".MitiApp"
@@ -28,6 +35,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".data.avisos.ReceptorDeAlarma"
+            android:exported="false" />
+        <receiver
+            android:name=".data.avisos.ReceptorDeCompletarTarea"
+            android:exported="false" />
+        <!-- Solo el sistema puede mandar estas acciones; exported es necesario para recibirlas. -->
+        <receiver
+            android:name=".data.avisos.ReceptorDeReinicio"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
         <!-- WorkManager se inicializa desde MitiApp (con la fábrica de Hilt), no automáticamente. -->
         <provider

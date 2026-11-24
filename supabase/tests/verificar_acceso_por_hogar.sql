@@ -1,4 +1,4 @@
--- Miti · verificación de las reglas de acceso (issue #10, RNF10) y de "gana la última modificación" (#18, D08).
+-- Miti · verificación de las reglas de acceso (issue #10, RNF10) y de "gana la última modificación" (#18, D08) y de conflictos en gastos (#20, C2).
 --
 -- Cómo usarlo: pegarlo entero en el SQL Editor de Supabase y ejecutarlo.
 -- Todo corre en una transacción que termina en ROLLBACK: no deja usuarios ni datos.
@@ -238,6 +238,61 @@ begin
     update public.rutinas set titulo = 'Versión más nueva', updated_at = 200 where id = '10000000-0000-4000-a000-000000000001';
     if (select titulo from public.rutinas where id = '10000000-0000-4000-a000-000000000001') <> 'Versión más nueva' then
         raise exception 'FALLÓ: una versión más nueva no se guardó';
+    end if;
+end $$;
+
+-- 9. Conflictos en gastos (migración 4, C2): una edición hecha sobre una versión vieja no pisa la nueva,
+--    queda registrada para quien la perdió y el gasto queda igual en los dos celulares.
+reset role;
+select pg_temp.como('00000000-0000-4000-a000-00000000000a', 'ana@prueba.miti');
+set local role authenticated;
+do $$
+declare
+    hogar uuid := current_setting('prueba.hogar_ana')::uuid;
+    gasto uuid := '20000000-0000-4000-a000-000000000009';
+begin
+    insert into public.gastos (id, hogar_id, descripcion, monto_total_centavos, pagador_id, reparto, mes_inicio, updated_at)
+    values (gasto, hogar, 'Heladera', 3000000, '00000000-0000-4000-a000-00000000000a', 'A_MEDIAS', '2026-11', 1000);
+    -- Ana edita sobre la versión 1000: entra.
+    update public.gastos set monto_total_centavos = 3100000, updated_at = 2000, base_updated_at = 1000 where id = gasto;
+    if (select monto_total_centavos from public.gastos where id = gasto) <> 3100000 then
+        raise exception 'FALLÓ: una edición sobre la última versión no entró';
+    end if;
+end $$;
+
+reset role;
+select pg_temp.como('00000000-0000-4000-a000-00000000000b', 'tomas@prueba.miti');
+set local role authenticated;
+do $$
+declare
+    gasto uuid := '20000000-0000-4000-a000-000000000009';
+begin
+    -- Tomás había editado sin conexión sobre la versión 1000 (no vio la de Ana), con un reloj más nuevo.
+    insert into public.gastos (id, hogar_id, descripcion, monto_total_centavos, pagador_id, reparto, mes_inicio, updated_at, base_updated_at)
+    values (gasto, current_setting('prueba.hogar_ana')::uuid, 'Heladera', 2900000,
+            '00000000-0000-4000-a000-00000000000a', 'A_MEDIAS', '2026-11', 5000, 1000)
+    on conflict (id) do update set monto_total_centavos = excluded.monto_total_centavos,
+        updated_at = excluded.updated_at, base_updated_at = excluded.base_updated_at;
+
+    if (select monto_total_centavos from public.gastos where id = gasto) <> 3100000 then
+        raise exception 'FALLÓ: una edición en conflicto pisó la de Ana';
+    end if;
+    if (select updated_at from public.gastos where id = gasto) <= 5000 then
+        raise exception 'FALLÓ: el gasto no quedó marcado como cambiado para que Tomás lo vuelva a bajar';
+    end if;
+    if (select count(*) from public.conflictos_gasto where gasto_id = gasto
+            and (version_rechazada ->> 'monto_total_centavos')::bigint = 2900000) <> 1 then
+        raise exception 'FALLÓ: Tomás no ve el conflicto con su edición';
+    end if;
+end $$;
+
+reset role;
+select pg_temp.como('00000000-0000-4000-a000-00000000000a', 'ana@prueba.miti');
+set local role authenticated;
+do $$
+begin
+    if exists (select 1 from public.conflictos_gasto) then
+        raise exception 'FALLÓ: Ana ve un conflicto que es de Tomás';
     end if;
 end $$;
 

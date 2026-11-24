@@ -14,6 +14,81 @@
     <string name="sin_sincronizar">Sin sincronizar</string>
     <string name="pendiente_de_sincronizar">Guardado en este celular, pendiente de sincronizar</string>
 
+    <!-- Acciones comunes -->
+    <string name="accion_cerrar">Cerrar</string>
+    <string name="accion_cancelar">Cancelar</string>
+    <string name="accion_volver">Volver</string>
+
+    <!-- Formulario de gasto (#14) -->
+    <string name="gasto_titulo_registrar">Registrar gasto</string>
+    <string name="gasto_titulo_editar">Editar gasto</string>
+    <string name="gasto_monto">Monto del gasto</string>
+    <string name="gasto_descripcion">Descripción</string>
+    <string name="gasto_quien_pago">¿Quién pagó?</string>
+    <string name="gasto_como_se_reparte">¿Cómo se reparte?</string>
+    <string name="gasto_a_medias">A medias</string>
+    <string name="gasto_solo">Solo %1$s</string>
+    <string name="gasto_en_cuotas">En cuotas</string>
+    <string name="gasto_cuotas_totales">Cantidad de cuotas</string>
+    <string name="gasto_cuota_actual">Cuota de este mes</string>
+    <string name="gasto_cuotas_ayuda">Cuotas iguales. Cada mes el balance suma solo la cuota que corresponde.</string>
+    <string name="gasto_guardar">Guardar gasto</string>
+    <string name="gasto_borrar">Borrar gasto</string>
+    <string name="gasto_borrar_titulo">¿Borrar este gasto?</string>
+    <string name="gasto_borrar_texto">Sale del balance en los dos celulares.</string>
+    <string name="gasto_error_monto">Ingresá un monto</string>
+    <string name="gasto_error_descripcion">Ingresá una descripción</string>
+    <string name="gasto_error_cuotas_total">Tienen que ser 2 cuotas o más</string>
+    <string name="gasto_error_cuota_actual">La cuota de este mes no puede ser mayor al total</string>
+    <string name="gasto_error_ya_no_existe">Este gasto ya no existe</string>
+    <string name="gasto_error_ya_no_existe_detalle">Puede que lo haya borrado la otra persona.</string>
+
+    <!-- Balance (#15) -->
+    <string name="accion_aceptar">Aceptar</string>
+    <string name="balance_titulo_tarjeta">Balance · %1$s</string>
+    <string name="balance_a_mano">Están a mano</string>
+    <string name="balance_le_debe_antes">%1$s le debe\u0020</string>
+    <string name="balance_le_debe_despues">\u0020a %1$s</string>
+    <string name="balance_pago">%1$s pagó</string>
+    <string name="balance_pago_quien">Pagó %1$s</string>
+    <string name="balance_pago_de_a">Pago de %1$s a %2$s</string>
+    <string name="balance_cuota">Cuota %1$d de %2$d</string>
+    <string name="balance_saldo_anterior">De meses anteriores: %1$s le debía %2$s a %3$s</string>
+    <string name="balance_movimientos">Movimientos del mes</string>
+    <string name="balance_mes_anterior">Mes anterior</string>
+    <string name="balance_mes_siguiente">Mes siguiente</string>
+    <string name="balance_vacio_titulo">Todavía no hay gastos este mes</string>
+    <string name="balance_vacio_texto">Cuando registren un gasto, acá van a ver quién le debe a quién.</string>
+    <string name="balance_error_titulo">No se pudo cargar el balance</string>
+    <string name="balance_error_texto">Los datos siguen guardados en el celular. Probá de nuevo.</string>
+    <string name="balance_sin_otra_persona_titulo">Falta la otra persona</string>
+    <string name="balance_sin_otra_persona_texto">Cuando se una al hogar con el código, acá van a ver el balance entre los dos.</string>
+    <string name="pago_registrar">Registrar pago</string>
+    <string name="pago_direccion">Dirección del pago</string>
+    <string name="pago_le_pago">%1$s le pagó a %2$s</string>
+    <string name="pago_monto">Monto</string>
+    <string name="pago_fecha">Fecha: %1$s</string>
+    <string name="pago_confirmar">Registrar</string>
+    <string name="pago_error_monto">Ingresá un monto mayor a cero</string>
+    <string name="pago_registrado">Pago registrado</string>
+    <string name="conflicto_titulo">Tu cambio en «%1$s» no se guardó</string>
+    <string name="conflicto_dos_versiones">La otra persona lo cambió antes. Vos pusiste %1$s y quedó %2$s.</string>
+    <string name="conflicto_ya_no_esta">La otra persona lo borró antes. Vos pusiste %1$s.</string>
+    <string name="conflicto_era_borrado">Lo borraste, pero la otra persona lo había cambiado antes y sigue en el balance.</string>
+    <string name="conflicto_rehacer">Usar mi cambio</string>
+    <string name="conflicto_descartar">Dejar como está</string>
+    <string name="conflicto_rehecho">Se aplicó tu cambio</string>
+    <!-- Avisos de tareas (#23, #24) -->
+    <string name="canal_avisos">Avisos de tareas</string>
+    <string name="canal_avisos_descripcion">Suenan a la hora de cada tarea con aviso que te toca</string>
+    <string name="canal_tareas_nuevas">Tareas nuevas</string>
+    <string name="canal_tareas_nuevas_descripcion">Cuando te asignan una tarea desde el otro celular</string>
+    <string name="aviso_tarea_texto">Es la hora de esta tarea</string>
+    <string name="accion_marcar_hecha">Marcar como hecha</string>
+    <plurals name="tareas_nuevas_titulo">
+        <item quantity="one">Te asignaron una tarea</item>
+        <item quantity="other">Te asignaron %1$d tareas</item>
+    </plurals>
     <!-- Hoy -->
     <string name="hoy_progreso">%1$d de %2$d</string>
     <string name="hoy_rutina_pendiente">Pendiente</string>
