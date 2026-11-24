@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -51,12 +52,7 @@ fun MitiNavHost() {
                     NavigationBarItem(
                         selected = destinoActual?.hasRoute(destino.ruta::class) == true,
                         onClick = {
-                            navController.navigate(destino.ruta) {
-                                // Cambiar de pestaña no apila pantallas y conserva el estado de cada una.
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            irAPestania(navController, destino.ruta)
                         },
                         icon = { Icon(painterResource(destino.icono), contentDescription = null) },
                         label = { Text(stringResource(destino.etiqueta)) },
@@ -71,8 +67,13 @@ fun MitiNavHost() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable<Ruta.Hoy> {
-                // Agregar (#12) y Ajustes (#21) todavía no tienen pantalla; se conectan en esas issues.
-                HoyScreen(alAgregar = {}, alAbrirAjustes = {})
+                HoyScreen(
+                    // La compra se agrega en su pestaña; el gasto abre su formulario (#14).
+                    alAgregarCompra = { irAPestania(navController, Ruta.Compras) },
+                    alAgregarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
+                    // Ajustes (#21) todavía no tiene pantalla.
+                    alAbrirAjustes = {},
+                )
             }
             composable<Ruta.Compras> { ComprasScreen() }
             composable<Ruta.Balance> {
@@ -93,5 +94,14 @@ fun MitiNavHost() {
 private fun MitiAppPreview() {
     MitiTheme {
         MitiNavHost()
+    }
+}
+
+/** Cambiar de pestaña no apila pantallas y conserva el estado de cada una. */
+private fun irAPestania(navController: NavHostController, ruta: Ruta) {
+    navController.navigate(ruta) {
+        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
