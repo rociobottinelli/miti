@@ -281,3 +281,19 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Permiso de notificaciones:** se pide una vez, al terminar el primer uso, con una pantalla que explica para
   qué es antes del diálogo de Android (13 o más; en versiones anteriores no hace falta). Sin permiso la app
   funciona igual; solo no suenan los avisos de tareas.
+
+
+## Compras: no repetir ítems y terminar la compra sin el pop up por ahora (#13)
+
+- **Problema:** con la lista compartida, los dos pueden agregar "Leche" casi a la vez; es la versión de
+  Compras de "si la información llega tarde, pueden repetir tareas" (corrección C1).
+- **Qué cambió:** `RegistrarCompraUseCase` no agrega un ítem si ya hay uno sin comprar con el mismo nombre
+  (sin importar mayúsculas ni espacios de más) y avisa "Ya está en la lista". Lo ya comprado no cuenta: se
+  puede volver a pedir. La pantalla muestra además los avisos de sincronización de Hoy (sin conexión, error,
+  datos desactualizados) y el ícono de pendiente en cada ítem.
+- **Qué riesgo resuelve:** ítems repetidos cuando los dos celulares están al día. **Limitación:** si los dos
+  agregan el mismo ítem sin conexión, cada celular no ve el del otro y quedan dos; el aviso de datos
+  desactualizados es lo que lo advierte.
+- **Desvío temporal:** la preentrega (flujo 3) ofrece registrar el gasto al terminar la compra. Hasta que esté
+  el formulario de gasto (#44), "Terminé la compra" la cierra sin gasto. `TerminarCompraUseCase` ya recibe el
+  gasto opcional, así que sumar el pop up no cambia el dominio.
