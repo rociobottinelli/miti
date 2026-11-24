@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de Compras (#13). Aparte de strings.xml para no chocar con otras ramas. -->
+<resources>
+    <string name="compras_agregar">Agregar ítem</string>
+    <string name="compras_agregar_boton">Agregar a la lista</string>
+    <string name="compras_progreso_descripcion">%1$d de %2$d en el carrito</string>
+    <plurals name="compras_en_el_carrito">
+        <item quantity="one">En el carrito · %1$d</item>
+        <item quantity="other">En el carrito · %1$d</item>
+    </plurals>
+    <string name="compras_terminar">Terminé la compra</string>
+    <string name="compras_terminada">Compra terminada</string>
+    <string name="compras_vacio_titulo">No falta nada</string>
+    <string name="compras_vacio_descripcion">Agregá ítems abajo para armar la lista.</string>
+    <string name="compras_error_titulo">No pudimos cargar la lista</string>
+    <string name="compras_error_descripcion">Intentá de nuevo en unos segundos.</string>
+</resources>

@@ -2,6 +2,7 @@ package ar.edu.uade.miti.domain.repository
 
 import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.model.Hogar
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Entrar a un hogar: crearlo, unirse con el código o recuperar el que ya se tenía (por ejemplo, al
@@ -10,6 +11,12 @@ import ar.edu.uade.miti.domain.model.Hogar
  * queda como hogar activo en el celular.
  */
 interface IngresoAHogarRepository {
+    /**
+     * Si el celular ya tiene un hogar activo. Cambia apenas se crea, se une o se recupera, aunque los
+     * datos del hogar todavía no hayan bajado: por eso no alcanza con observar el hogar en Room.
+     */
+    fun observarSiHayHogar(): Flow<Boolean>
+
     suspend fun crearHogar(nombreHogar: String): Resource<Hogar>
     suspend fun unirseAHogar(codigo: String): Resource<Hogar>
 

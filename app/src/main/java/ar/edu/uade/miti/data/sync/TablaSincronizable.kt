@@ -23,6 +23,8 @@ class TablaSincronizable<E, D>(
     val descargar: suspend (autorizacion: String, desde: String, limite: Int, offset: Int) -> Response<List<D>>,
     /** Null si la tabla solo se descarga (hogares e integrantes se crean en el servidor). */
     val subida: Subida<E, D>? = null,
+    /** Filas que no estaban en el celular, después de guardarlas. [primeraVez]: la tabla nunca se había bajado. */
+    val alBajarNuevas: (suspend (nuevas: List<E>, primeraVez: Boolean) -> Unit)? = null,
 ) {
     class Subida<E, D>(
         val porSubir: suspend () -> List<E>,

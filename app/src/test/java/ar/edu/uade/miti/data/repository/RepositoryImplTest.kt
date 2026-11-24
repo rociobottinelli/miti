@@ -66,7 +66,7 @@ class RepositoryImplTest {
     private val avisoDeCambios = AvisoDeCambios { avisos++ }
     private val rutinas = RutinaRepositoryImpl(base.rutinaDao(), hogarActivo, reloj, avisoDeCambios)
     private val pendientes = PendienteRepositoryImpl(base.pendienteDao(), hogarActivo, reloj, avisoDeCambios)
-    private val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj, avisoDeCambios)
+    private val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj, avisoDeCambios, base.conflictoGastoDao())
 
     @After
     fun cerrar() = base.close()

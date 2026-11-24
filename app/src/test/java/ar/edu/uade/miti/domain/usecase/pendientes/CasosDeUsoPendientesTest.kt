@@ -148,4 +148,21 @@ class CasosDeUsoPendientesTest {
 
         assertEquals(Resource.Error("No se pudo guardar"), marcarEnCarrito(leche.id, true))
     }
+
+    @Test
+    fun `no se agrega dos veces el mismo item a la lista`() = runTest {
+        val leche = registrarCompra("Leche").exito()
+
+        assertEquals(Resource.Error(RegistrarCompraUseCase.YA_ESTA_EN_LA_LISTA), registrarCompra("  leche "))
+        assertEquals(listOf(leche), pendientes.pendientes.value)
+    }
+
+    @Test
+    fun `un item ya comprado se puede volver a agregar`() = runTest {
+        val leche = registrarCompra("Leche").exito()
+        marcarEnCarrito(leche.id, true)
+        terminarCompra(gasto = null)
+
+        assertTrue(registrarCompra("Leche") is Resource.Success)
+    }
 }

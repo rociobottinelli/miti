@@ -2,6 +2,7 @@ package ar.edu.uade.miti.data.sync
 
 import androidx.room.withTransaction
 import ar.edu.uade.miti.core.Resource
+import ar.edu.uade.miti.data.avisos.AvisoDeTareasNuevas
 import ar.edu.uade.miti.data.local.AppDatabase
 import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncLocal
 import ar.edu.uade.miti.data.local.datastore.HogarActivo
@@ -12,6 +13,7 @@ import ar.edu.uade.miti.data.remote.ConfiguracionSupabase
 import ar.edu.uade.miti.data.remote.ProveedorDeToken
 import ar.edu.uade.miti.data.remote.SESION_VENCIDA
 import ar.edu.uade.miti.data.remote.SyncApiService
+import ar.edu.uade.miti.domain.model.TipoPendiente
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
 import java.io.IOException
@@ -54,11 +56,15 @@ class Sincronizador @Inject constructor(
     private val estado: EstadoDeSyncLocal,
     private val base: AppDatabase,
     private val reloj: Clock,
+    private val avisoDeTareasNuevas: AvisoDeTareasNuevas,
 ) {
     /** Filas por pedido. Un hogar tiene pocas; con esto casi siempre alcanza un pedido por tabla. */
     internal var limite = 500
 
     private val mutex = Mutex()
+
+    /** Quién usa el celular en esta sincronización (para saber qué tareas nuevas son suyas, #24). */
+    private var usuarioId: String? = null
 
     /** Orden de subida: primero lo que otras filas referencian (un pendiente apunta a su gasto). */
     private val tablas: List<TablaSincronizable<*, *>> by lazy { tablas() }
@@ -72,6 +78,7 @@ class Sincronizador @Inject constructor(
                 return@withLock if (t.message == SESION_VENCIDA) ResultadoDeSync.SinSesion else ResultadoDeSync.Reintentar(t.message)
         }
         val autorizacion = "Bearer $token"
+        usuarioId = usuario.usuarioId
 
         try {
             if (hogarActivo.id.first() == null) {
@@ -152,10 +159,12 @@ class Sincronizador @Inject constructor(
             val filas = respuesta.body() ?: throw FalloDeSync("Respuesta vacía al descargar ${tabla.nombre}")
 
             val aGuardar = mutableListOf<E>()
+            val nuevas = mutableListOf<E>()
             base.withTransaction {
                 for (dto in filas) {
                     val remota = tabla.aEntidad(dto)
                     val local = tabla.obtenerLocal(tabla.id(remota))
+                    if (local == null) nuevas += remota
                     // D08: la remota solo pisa a la local si es igual o más nueva. Si la local es más nueva,
                     // es un cambio PENDIENTE que todavía no subió (o que el servidor va a aceptar).
                     if (local == null || tabla.metadatos(remota).updatedAt >= tabla.metadatos(local).updatedAt) {
@@ -165,6 +174,7 @@ class Sincronizador @Inject constructor(
                 if (aGuardar.isNotEmpty()) tabla.guardarDescargadas(aGuardar)
             }
             aplicadas += aGuardar.size
+            if (nuevas.isNotEmpty()) tabla.alBajarNuevas?.invoke(nuevas, cursor == null)
             filas.mapNotNull(tabla.horaDelServidor).maxOrNull()?.let { nuevoCursor = maximo(nuevoCursor, it) }
 
             if (filas.size < limite) break
@@ -200,6 +210,7 @@ class Sincronizador @Inject constructor(
         val rutinas = base.rutinaDao()
         val gastos = base.gastoDao()
         val pendientes = base.pendienteDao()
+        val conflictos = base.conflictoGastoDao()
         return listOf(
             TablaSincronizable(
                 nombre = "hogares", aDto = { error("Los hogares no se suben") }, aEntidad = { it.toEntity() },
@@ -228,6 +239,13 @@ class Sincronizador @Inject constructor(
                 subida = TablaSincronizable.Subida(gastos::gastosPorSubir, gastos::marcarGastoSincronizado, api::subirGastos),
             ),
             TablaSincronizable(
+                nombre = "conflictos_gasto", aDto = { error("Los conflictos los crea el servidor") },
+                aEntidad = { it.toEntity() }, id = { it.id }, metadatos = { it.sync },
+                horaDelServidor = { it.serverUpdatedAt },
+                obtenerLocal = conflictos::conflictosParaSync, guardarDescargadas = conflictos::guardarConflictosDescargados,
+                descargar = api::descargarConflictos,
+            ),
+            TablaSincronizable(
                 nombre = "pagos", aDto = { it.toDto() }, aEntidad = { it.toEntity() },
                 id = { it.id }, metadatos = { it.sync }, horaDelServidor = { it.serverUpdatedAt },
                 obtenerLocal = gastos::pagosParaSync, guardarDescargadas = gastos::guardarPagosDescargados,
@@ -242,6 +260,14 @@ class Sincronizador @Inject constructor(
                 subida = TablaSincronizable.Subida(
                     pendientes::pendientesPorSubir, pendientes::marcarPendienteSincronizado, api::subirPendientes,
                 ),
+                alBajarNuevas = { nuevas, primeraVez ->
+                    // #24: solo tareas nuevas para esta persona. En la primera descarga (recién ingresó) se baja
+                    // todo el hogar de una vez y no se avisa nada: no son "nuevas" para ella.
+                    val mias = nuevas.filter {
+                        it.tipo == TipoPendiente.TAREA && it.responsableId == usuarioId && !it.resuelto && !it.sync.deleted
+                    }
+                    if (!primeraVez && mias.isNotEmpty()) avisoDeTareasNuevas.avisar(mias.map { it.titulo })
+                },
             ),
             TablaSincronizable(
                 nombre = "registros_rutina", aDto = { it.toDto() }, aEntidad = { it.toEntity() },

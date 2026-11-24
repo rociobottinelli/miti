@@ -4,6 +4,8 @@ import ar.edu.uade.miti.presentation.widget.ActualizadorDeWidgets
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import ar.edu.uade.miti.data.avisos.Notificaciones
+import ar.edu.uade.miti.data.avisos.ProgramadorDeAvisos
 import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -16,6 +18,8 @@ class MitiApp : Application(), Configuration.Provider {
 
     @Inject lateinit var programadorDeSync: ProgramadorDeSync
 
+    @Inject lateinit var programadorDeAvisos: ProgramadorDeAvisos
+
     @Inject lateinit var actualizadorDeWidgets: ActualizadorDeWidgets
 
     override val workManagerConfiguration: Configuration
@@ -25,7 +29,10 @@ class MitiApp : Application(), Configuration.Provider {
         super.onCreate()
         // Solo encola un trabajo (no hace red ni disco acá): la sincronización periódica cada 15 minutos.
         programadorDeSync.programarPeriodica()
-        // Tampoco bloquea: escucha Room en segundo plano para que los widgets reflejen cada cambio (RNF05).
+        // Avisos de tareas (D10): los canales de notificación y las alarmas al día (también tras actualizar la app).
+        Notificaciones.crearCanales(this)
+        programadorDeAvisos.pedir()
+        // Widgets (#22): escucha Room en segundo plano, sin bloquear, para reflejar cada cambio (RNF05).
         actualizadorDeWidgets.empezar()
     }
 }
