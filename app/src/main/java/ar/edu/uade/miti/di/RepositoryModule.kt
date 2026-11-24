@@ -11,6 +11,7 @@ import ar.edu.uade.miti.data.local.datastore.PreferenciasLocales
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
+import ar.edu.uade.miti.data.repository.SincronizacionRepositoryImpl
 import ar.edu.uade.miti.data.sync.AvisoDeCambios
 import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
@@ -28,6 +29,7 @@ import ar.edu.uade.miti.domain.repository.OnboardingRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
 import ar.edu.uade.miti.domain.repository.SesionRepository
+import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -49,6 +51,7 @@ abstract class RepositoryModule {
     @Binds abstract fun borradorDeDatosLocales(impl: BorradorDeDatosLocalesRoom): BorradorDeDatosLocales
     @Binds abstract fun estadoDeSync(impl: EstadoDeSyncDataStore): EstadoDeSyncLocal
     @Binds abstract fun avisoDeCambios(impl: ProgramadorDeSync): AvisoDeCambios
+    @Binds abstract fun sincronizacion(impl: SincronizacionRepositoryImpl): SincronizacionRepository
     @Binds abstract fun preferenciasLocales(impl: PreferenciasDataStore): PreferenciasLocales
     @Binds abstract fun onboarding(impl: OnboardingRepositoryImpl): OnboardingRepository
 }
