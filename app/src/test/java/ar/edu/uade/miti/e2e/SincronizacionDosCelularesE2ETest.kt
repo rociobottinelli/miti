@@ -24,7 +24,9 @@ import ar.edu.uade.miti.domain.model.DatosDeGasto
 import ar.edu.uade.miti.domain.model.Frecuencia
 import ar.edu.uade.miti.domain.model.Reparto
 import ar.edu.uade.miti.domain.repository.GeneradorDeIds
+import ar.edu.uade.miti.domain.usecase.gastos.EditarGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarGastoUseCase
+import ar.edu.uade.miti.domain.usecase.gastos.RehacerMiEdicionUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.RegistrarCompraUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.RegistrarRutinaUseCase
@@ -98,11 +100,13 @@ class SincronizacionDosCelularesE2ETest {
         val hogares = HogarRepositoryImpl(base.hogarDao(), hogarActivo)
         val rutinas = RutinaRepositoryImpl(base.rutinaDao(), hogarActivo, reloj) {}
         val pendientes = PendienteRepositoryImpl(base.pendienteDao(), hogarActivo, reloj) {}
-        val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj) {}
+        val gastos = GastoRepositoryImpl(base.gastoDao(), hogarActivo, reloj, {}, base.conflictoGastoDao())
         val registrarRutina = RegistrarRutinaUseCase(hogares, rutinas, ids)
         val marcarRutina = MarcarRutinaUseCase(rutinas, reloj, ids)
         val registrarCompra = RegistrarCompraUseCase(hogares, pendientes, ids)
         val registrarGasto = RegistrarGastoUseCase(hogares, gastos, reloj, ids)
+        val editarGasto = EditarGastoUseCase(gastos)
+        val rehacer = RehacerMiEdicionUseCase(gastos)
         val email = email
 
         suspend fun ingresar() = assertTrue(sesion.iniciarSesion(email, contrasenia) is Resource.Success)
@@ -192,5 +196,46 @@ class SincronizacionDosCelularesE2ETest {
         // La de Tomás gana en los dos. (La de Ana se pierde sin aviso: es lo que corrige C2 para gastos, #20.)
         assertEquals("Edición de Tomás", tomas.rutinas.observarRutinas().first().single { it.id == rutina.id }.titulo)
         assertEquals("Edición de Tomás", ana.rutinas.observarRutinas().first().single { it.id == rutina.id }.titulo)
+    }
+
+    @Test
+    fun `si los dos editan el mismo gasto sin conexion, quien perdio recibe el aviso (C2)`() = runBlocking {
+        assumeTrue("Prueba contra el servidor real: correr con MITI_E2E=1", System.getenv("MITI_E2E") == "1")
+        val ana = celular("ana.prueba@miti.test", "PRUEBA_ANA_PASSWORD")
+        // El reloj de Tomás adelanta: con "gana la última modificación" su edición habría pisado la de Ana.
+        val tomas = celular("tomas.prueba@miti.test", "PRUEBA_TOMAS_PASSWORD", Clock.offset(Clock.systemUTC(), Duration.ofHours(1)))
+        ana.ingresar()
+        tomas.ingresar()
+        ana.sincronizar()
+        tomas.sincronizar()
+
+        val descripcion = "Heladera ${UUID.randomUUID().toString().take(8)}"
+        val gasto = (ana.registrarGasto(DatosDeGasto(descripcion, 3_000_000, ana.usuarioId(), Reparto.A_MEDIAS)) as Resource.Success).data
+        ana.sincronizar()
+        tomas.sincronizar()
+
+        // Sin conexión, cada uno corrige el monto a su manera.
+        ana.editarGasto(gasto.id, DatosDeGasto(descripcion, 3_100_000, ana.usuarioId(), Reparto.A_MEDIAS))
+        tomas.editarGasto(gasto.id, DatosDeGasto(descripcion, 2_900_000, ana.usuarioId(), Reparto.A_MEDIAS))
+        ana.sincronizar()
+        tomas.sincronizar()
+        ana.sincronizar()
+
+        // Gana Ana (sincronizó primero) en los dos celulares, y Tomás tiene el aviso con su versión.
+        suspend fun monto(c: Celular) = c.gastos.observarGastos().first().single { it.id == gasto.id }.montoTotalCentavos
+        assertEquals(3_100_000L, monto(ana))
+        assertEquals(3_100_000L, monto(tomas))
+        val conflicto = tomas.gastos.observarConflictos().first().single { it.miVersion.id == gasto.id }
+        assertEquals(2_900_000L, conflicto.miVersion.montoTotalCentavos)
+        assertEquals(3_100_000L, conflicto.actual?.montoTotalCentavos)
+        assertTrue(ana.gastos.observarConflictos().first().none { it.miVersion.id == gasto.id })
+
+        // Tomás elige su versión: le llega a Ana y el aviso desaparece.
+        assertEquals(Resource.Success(Unit), tomas.rehacer(conflicto))
+        tomas.sincronizar()
+        ana.sincronizar()
+        assertEquals(2_900_000L, monto(ana))
+        assertEquals(2_900_000L, monto(tomas))
+        assertTrue(tomas.gastos.observarConflictos().first().none { it.miVersion.id == gasto.id })
     }
 }

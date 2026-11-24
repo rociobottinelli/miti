@@ -52,6 +52,10 @@ android {
         compose = true
         buildConfig = true
     }
+    // Los tests de migraciones crean bases de versiones viejas a partir de los esquemas exportados. Con
+    // Robolectric los assets salen de la variante debug (son dos JSON chicos; release no los lleva).
+    sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 ksp {

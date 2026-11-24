@@ -322,4 +322,38 @@ class SincronizadorTest {
             SyncWorker.resultadoPara(ResultadoDeSync.Reintentar("x"), SyncWorker.MAXIMO_DE_INTENTOS),
         )
     }
+
+    @Test
+    fun `sube la version base de un gasto editado`() = runTest {
+        base.gastoDao().guardarGasto(
+            ar.edu.uade.miti.data.local.entity.GastoEntity(
+                "g1", "h1", "Heladera", 100, "u-ana", ar.edu.uade.miti.domain.model.Reparto.A_MEDIAS, null, 1, 1,
+                java.time.YearMonth.of(2026, 11), MetadatosSync(900, false, EstadoSync.PENDIENTE), baseUpdatedAt = 500,
+            ),
+        )
+
+        sincronizador.sincronizar()
+
+        val post = falso.posts("gastos").single()
+        assertTrue(post.body!!.utf8().contains("\"base_updated_at\":500"))
+        assertTrue(post.url.queryParameter("columns")!!.endsWith(",base_updated_at"))
+    }
+
+    @Test
+    fun `baja los conflictos propios y uno resuelto no se reabre al volver a bajarlo`() = runTest {
+        val conflicto = """[{"id":"c1","gasto_id":"g1","updated_at":800,"deleted":false,"server_updated_at":"2026-11-23T12:00:00Z",""" +
+            """"version_rechazada":{"id":"g1","hogar_id":"h1","descripcion":"Heladera","monto_total_centavos":2900000,""" +
+            """"pagador_id":"u-ana","reparto":"A_MEDIAS","beneficiario_id":null,"cuotas_totales":1,"cuota_inicial":1,""" +
+            """"mes_inicio":"2026-11","updated_at":5000,"deleted":false}}]"""
+        falso.cuandoPidan("conflictos_gasto", MockResponse(code = 200, body = conflicto), MockResponse(code = 200, body = conflicto))
+
+        sincronizador.sincronizar()
+        val guardado = base.conflictoGastoDao().conflictosParaSync("c1")!!
+        assertEquals(2_900_000L, guardado.montoTotalCentavos)
+
+        base.conflictoGastoDao().marcarResuelto("c1", ahora)
+        sincronizador.sincronizar()
+
+        assertTrue(base.conflictoGastoDao().conflictosParaSync("c1")!!.resuelto)
+    }
 }

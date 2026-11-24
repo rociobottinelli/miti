@@ -1,6 +1,7 @@
 package ar.edu.uade.miti.domain.fakes
 
 import ar.edu.uade.miti.core.Resource
+import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Hogar
 import ar.edu.uade.miti.domain.model.Integrante
@@ -78,6 +79,11 @@ class FakeGastoRepository : FallaConfigurable(), GastoRepository {
     override suspend fun eliminarGasto(id: String) = escribir { gastos.update { lista -> lista.filterNot { it.id == id } } }
     override suspend fun guardarPago(pago: Pago) = escribir { pagos.update { reemplazar(it, pago) { p -> p.id } } }
     override suspend fun eliminarPago(id: String) = escribir { pagos.update { lista -> lista.filterNot { it.id == id } } }
+
+    val conflictos = MutableStateFlow<List<ConflictoDeGasto>>(emptyList())
+    override suspend fun obtenerGasto(id: String): Resource<Gasto?> = falla ?: Resource.Success(gastos.value.find { it.id == id })
+    override fun observarConflictos(): Flow<List<ConflictoDeGasto>> = conflictos
+    override suspend fun resolverConflicto(id: String) = escribir { conflictos.update { lista -> lista.filterNot { it.id == id } } }
 }
 
 /** Ids predecibles: "id-1", "id-2", ... */
