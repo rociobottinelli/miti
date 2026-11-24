@@ -20,4 +20,10 @@ data class GastoEntity(
     val cuotaInicial: Int,
     val mesInicio: YearMonth,
     @Embedded val sync: MetadatosSync,
+    /**
+     * Versión del servidor sobre la que se hizo la edición local que todavía no subió (C2, #20). El servidor
+     * la compara con la que tiene para detectar si el otro editó el mismo gasto en el medio. Null si no hay
+     * edición local pendiente (o si el gasto es nuevo).
+     */
+    val baseUpdatedAt: Long? = null,
 )

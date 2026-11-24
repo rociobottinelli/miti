@@ -170,3 +170,59 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   - Si los datos están desactualizados, al marcar una rutina: avisar que la otra persona pudo haberla hecho ya.
   - Todo desaparece solo al sincronizar, porque se calcula de Room y DataStore.
 - Sin cambio de esquema de Room (solo una consulta nueva).
+## Avisos de tareas con alarmas locales (#23) y aviso de tareas nuevas (#24)
+
+- **Qué hace (D10):** las tareas con aviso suenan en el celular de su responsable a la hora fijada, sin conexión
+  y sin servidor de push. La notificación tiene la acción **"Marcar como hecha"**, que usa el mismo
+  `CompletarTareaUseCase` que la app (D03). Cuando la sincronización baja una tarea nueva asignada a quien usa
+  el celular, avisa "Te asignaron una tarea" (#24).
+- **Decisiones:**
+  - **Qué suena lo decide una regla del dominio** (`TareasConAviso`, con tests): con aviso, sin resolver, del
+    usuario de este celular y todavía no vencida. Todo lo demás se cancela.
+  - **Un único punto que pone las alarmas al día** (`ReprogramarAvisosUseCase`, corrido por `AvisosWorker`).
+    Siempre parte de Room, así que llamarlo de más no hace daño. Se dispara después de cada cambio local, al
+    terminar una sincronización que bajó algo, al abrir la app, al cerrar sesión (cancela todo) y al reiniciar
+    el teléfono o cambiar la hora (`ReceptorDeReinicio`), porque Android borra las alarmas al apagarse.
+  - **Alarma exacta si el sistema lo permite y aproximada si no** (D10). Android 12+ puede negar las exactas: la
+    alarma suena igual, pero sin garantizar los ±5 min de RNF06. `ConsultarPermisosDeAvisosUseCase` le dice a
+    Hoy si faltan los permisos de notificaciones o de alarmas exactas, para mostrar el aviso de la preentrega.
+  - Al sonar, se vuelve a mirar Room: si la tarea ya se resolvió (por ejemplo, la otra persona y llegó con la
+    sincronización), no se avisa.
+  - #24 no avisa en la primera descarga (al ingresar se baja todo el hogar; no son tareas "nuevas"), ni dos veces
+    la misma tarea (solo cuenta si no estaba en el celular).
+- **Cómo se probó:**
+  - Tests de la regla y de la reprogramación.
+  - Alarmas reales de Android con Robolectric: exacta y aproximada, cancelar sin tocar las demás, reprogramar sin
+    duplicar.
+  - Notificación con su acción, sin permiso, tareas nuevas agrupadas.
+  - #24 en el sync: solo las propias, nada en la primera descarga ni dos veces.
+- **Pendiente de probar en un celular:** RNF06 en modo avión con un reinicio intermedio. Se hace a mano en un
+  dispositivo y se anota en las pruebas de #25.
+## Conflictos en gastos: avisar en vez de perder ediciones (#20, C2)
+
+- **Desvío respecto de la preentrega (D08):** la preentrega aceptaba que, si los dos editaban el mismo gasto sin
+  conexión, una edición se perdiera sin aviso. El docente lo marcó (C2) porque contradice la confianza que promete
+  la app. **Para los gastos, D08 cambia; para el resto de las tablas sigue igual.**
+- **Qué cambió:**
+  - Cada edición de un gasto guarda sobre qué versión del servidor se hizo (`baseUpdatedAt`). Si ya había una
+    edición sin subir, se conserva la base de la primera, que es la versión que vio la persona.
+  - **El servidor detecta el conflicto** (migración 4): si el gasto cambió desde esa versión, la edición no pisa.
+    Queda registrada en `conflictos_gasto`, visible solo para quien la hizo, y el gasto se marca como cambiado
+    para que los dos celulares bajen la misma versión. No depende del reloj de los celulares: gana quien
+    sincronizó primero, y quien perdió se entera.
+  - El celular baja sus conflictos y el dominio ofrece `ObservarConflictosDeGastoUseCase` (las dos versiones),
+    `RehacerMiEdicionUseCase` (vuelve a aplicar la propia sobre la actual) y `DescartarConflictoUseCase`.
+  - **Editar un gasto** (`EditarGastoUseCase`): RF04 lo pedía ("al guardar o editar un gasto") y no existía.
+    Borrar un gasto también lleva la versión base, así un borrado no pisa una edición del otro.
+- **Room pasa a la versión 2** con `Migration(1, 2)` escrita a mano: agrega una columna en gastos y la tabla
+  `conflictos_gasto`, sin tocar datos. Probada con `MigrationTestHelper`: se crea una base v1 con un gasto, se
+  migra y se verifica que el gasto sigue igual y la base valida contra el esquema v2.
+- **Cómo se probó:**
+  - 16 tests nuevos: versión base, editar, rehacer, descartar, sync y migración.
+  - El script SQL de verificación suma el caso, y pasa en el Supabase real.
+  - **Prueba real con dos celulares:** los dos editan el mismo gasto sin conexión, con el reloj de Tomás
+    adelantado una hora (con la regla vieja, la de Tomás habría pisado la de Ana sin aviso). Gana Ana, que
+    sincronizó primero; Tomás recibe el aviso con los dos montos; al rehacer, su versión le llega a Ana y el
+    aviso desaparece.
+- **Limitación:** marcar un conflicto como resuelto se guarda solo en el celular. Si se reinstala la app,
+  vuelven a aparecer los conflictos viejos.

@@ -89,6 +89,7 @@ class SincronizadorTest {
     private val hogarActivo = FakeHogarActivo("h1")
     private val estado = FakeEstadoDeSync()
     private lateinit var sincronizador: Sincronizador
+    private val avisadas = mutableListOf<String>()
 
     @Before
     fun arrancar() {
@@ -108,7 +109,7 @@ class SincronizadorTest {
             .create(SyncApiService::class.java)
         val config = ConfiguracionSupabase(servidor.url("/").toString(), CLAVE_DE_PRUEBA)
         val proveedor = ProveedorDeToken(authApiContra(servidor), sesion, reloj)
-        sincronizador = Sincronizador(api, config, proveedor, sesion, hogarActivo, estado, base, reloj)
+        sincronizador = Sincronizador(api, config, proveedor, sesion, hogarActivo, estado, base, reloj) { avisadas += it }
     }
 
     @After
@@ -321,5 +322,72 @@ class SincronizadorTest {
             androidx.work.ListenableWorker.Result.failure(),
             SyncWorker.resultadoPara(ResultadoDeSync.Reintentar("x"), SyncWorker.MAXIMO_DE_INTENTOS),
         )
+    }
+
+    @Test
+    fun `sube la version base de un gasto editado`() = runTest {
+        base.gastoDao().guardarGasto(
+            ar.edu.uade.miti.data.local.entity.GastoEntity(
+                "g1", "h1", "Heladera", 100, "u-ana", ar.edu.uade.miti.domain.model.Reparto.A_MEDIAS, null, 1, 1,
+                java.time.YearMonth.of(2026, 11), MetadatosSync(900, false, EstadoSync.PENDIENTE), baseUpdatedAt = 500,
+            ),
+        )
+
+        sincronizador.sincronizar()
+
+        val post = falso.posts("gastos").single()
+        assertTrue(post.body!!.utf8().contains("\"base_updated_at\":500"))
+        assertTrue(post.url.queryParameter("columns")!!.endsWith(",base_updated_at"))
+    }
+
+    @Test
+    fun `baja los conflictos propios y uno resuelto no se reabre al volver a bajarlo`() = runTest {
+        val conflicto = """[{"id":"c1","gasto_id":"g1","updated_at":800,"deleted":false,"server_updated_at":"2026-11-23T12:00:00Z",""" +
+            """"version_rechazada":{"id":"g1","hogar_id":"h1","descripcion":"Heladera","monto_total_centavos":2900000,""" +
+            """"pagador_id":"u-ana","reparto":"A_MEDIAS","beneficiario_id":null,"cuotas_totales":1,"cuota_inicial":1,""" +
+            """"mes_inicio":"2026-11","updated_at":5000,"deleted":false}}]"""
+        falso.cuandoPidan("conflictos_gasto", MockResponse(code = 200, body = conflicto), MockResponse(code = 200, body = conflicto))
+
+        sincronizador.sincronizar()
+        val guardado = base.conflictoGastoDao().conflictosParaSync("c1")!!
+        assertEquals(2_900_000L, guardado.montoTotalCentavos)
+
+        base.conflictoGastoDao().marcarResuelto("c1", ahora)
+        sincronizador.sincronizar()
+
+        assertTrue(base.conflictoGastoDao().conflictosParaSync("c1")!!.resuelto)
+    }
+
+    private fun tareaJson(id: String, titulo: String, responsable: String, server: String) =
+        """{"id":"$id","hogar_id":"h1","tipo":"TAREA","titulo":"$titulo","responsable_id":"$responsable",""" +
+            """"fecha_hora":"2026-12-01T18:00:00","avisar":true,"en_carrito":false,"resuelto":false,"gasto_id":null,""" +
+            """"updated_at":1,"deleted":false,"server_updated_at":"$server"}"""
+
+    @Test
+    fun `avisa las tareas nuevas asignadas a quien usa el celular (24)`() = runTest {
+        estado.cursores["pendientes"] = "2026-11-21T19:00:00Z"
+        falso.cuandoPidan(
+            "pendientes",
+            MockResponse(
+                code = 200,
+                body = "[" + tareaJson("t1", "Pagar ABL", "u-ana", "2026-11-21T20:00:00Z") + "," +
+                    tareaJson("t2", "Sacar turno", "u-tomas", "2026-11-21T20:00:01Z") + "]",
+            ),
+        )
+
+        sincronizador.sincronizar()
+
+        assertEquals(listOf("Pagar ABL"), avisadas)
+    }
+
+    @Test
+    fun `no avisa en la primera descarga ni dos veces la misma tarea`() = runTest {
+        val tarea = MockResponse(code = 200, body = "[" + tareaJson("t1", "Pagar ABL", "u-ana", "2026-11-21T20:00:00Z") + "]")
+        falso.cuandoPidan("pendientes", tarea, tarea)
+
+        sincronizador.sincronizar()   // primera vez: baja todo el hogar, no avisa
+        sincronizador.sincronizar()   // la misma tarea vuelve por el margen: ya estaba, no avisa
+
+        assertTrue(avisadas.isEmpty())
     }
 }
