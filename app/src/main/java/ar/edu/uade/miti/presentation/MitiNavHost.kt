@@ -70,7 +70,10 @@ fun MitiNavHost() {
             startDestination = Ruta.Hoy,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable<Ruta.Hoy> { HoyScreen() }
+            composable<Ruta.Hoy> {
+                // Agregar (#12) y Ajustes (#21) todavía no tienen pantalla; se conectan en esas issues.
+                HoyScreen(alAgregar = {}, alAbrirAjustes = {})
+            }
             composable<Ruta.Compras> { ComprasScreen() }
             composable<Ruta.Balance> {
                 BalanceScreen(

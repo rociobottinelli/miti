@@ -78,4 +78,46 @@
     <string name="conflicto_rehacer">Usar mi cambio</string>
     <string name="conflicto_descartar">Dejar como está</string>
     <string name="conflicto_rehecho">Se aplicó tu cambio</string>
+    <!-- Avisos de tareas (#23, #24) -->
+    <string name="canal_avisos">Avisos de tareas</string>
+    <string name="canal_avisos_descripcion">Suenan a la hora de cada tarea con aviso que te toca</string>
+    <string name="canal_tareas_nuevas">Tareas nuevas</string>
+    <string name="canal_tareas_nuevas_descripcion">Cuando te asignan una tarea desde el otro celular</string>
+    <string name="aviso_tarea_texto">Es la hora de esta tarea</string>
+    <string name="accion_marcar_hecha">Marcar como hecha</string>
+    <plurals name="tareas_nuevas_titulo">
+        <item quantity="one">Te asignaron una tarea</item>
+        <item quantity="other">Te asignaron %1$d tareas</item>
+    </plurals>
+    <!-- Hoy -->
+    <string name="hoy_progreso">%1$d de %2$d</string>
+    <string name="hoy_rutina_pendiente">Pendiente</string>
+    <string name="hoy_rutina_hecha">Hecha</string>
+    <string name="hoy_rutina_hecha_por">Hecha · %1$s</string>
+    <string name="hoy_rutina_parcial">%1$d de %2$d · %3$s</string>
+    <string name="hoy_tarea_detalle">%1$s · %2$s</string>
+    <string name="hoy_tarea_hoy">Hoy %1$s</string>
+    <string name="hoy_tarea_maniana">Mañana %1$s</string>
+    <string name="hoy_tarea_atrasada">Atrasada · %1$s %2$s</string>
+    <string name="hoy_tarea_con_aviso">Con aviso</string>
+    <string name="hoy_abrir_ajustes">Abrir ajustes</string>
+    <string name="hoy_filtro_todas">Todo</string>
+    <string name="hoy_filtro_mias">Mías</string>
+    <string name="hoy_filtro_del_otro">De %1$s</string>
+    <string name="hoy_agregar">Agregar rutina o tarea</string>
+    <string name="hoy_seccion_rutinas">Rutinas de hoy</string>
+    <string name="hoy_seccion_tareas">Próximas tareas</string>
+    <string name="hoy_rutinas_hechas">%1$d de %2$d rutinas hechas</string>
+    <string name="hoy_sin_tareas">No hay tareas próximas.</string>
+    <string name="hoy_sin_tareas_mias">No tenés tareas próximas.</string>
+    <string name="hoy_sin_tareas_del_otro">%1$s no tiene tareas próximas.</string>
+    <string name="hoy_vacio_titulo">Tu hogar está listo</string>
+    <string name="hoy_vacio_descripcion">Agregá tu primera rutina o tarea para arrancar.</string>
+    <string name="hoy_vacio_accion">Agregar algo</string>
+    <string name="hoy_al_dia_titulo">Todo al día por hoy</string>
+    <string name="hoy_al_dia_descripcion">Todas las rutinas y tareas del día están cubiertas. ¡Bien!</string>
+    <string name="hoy_error_titulo">No pudimos mostrar tu día</string>
+    <string name="hoy_error_descripcion">Tus datos siguen guardados en este celular. Probá de nuevo.</string>
+    <string name="hoy_evento_ya_completa">Esa rutina ya está hecha por hoy</string>
+    <string name="hoy_evento_no_se_pudo_marcar">No se pudo marcar. Probá de nuevo.</string>
 </resources>

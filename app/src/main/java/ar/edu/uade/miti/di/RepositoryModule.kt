@@ -11,8 +11,11 @@ import ar.edu.uade.miti.data.local.datastore.PreferenciasLocales
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
+import ar.edu.uade.miti.data.avisos.AlarmasDeTareasAndroid
+import ar.edu.uade.miti.data.avisos.AvisoDeCambiosLocales
+import ar.edu.uade.miti.data.avisos.AvisoDeTareasNuevas
+import ar.edu.uade.miti.data.avisos.AvisoDeTareasNuevasAndroid
 import ar.edu.uade.miti.data.sync.AvisoDeCambios
-import ar.edu.uade.miti.data.sync.ProgramadorDeSync
 import ar.edu.uade.miti.data.repository.GastoRepositoryImpl
 import ar.edu.uade.miti.data.repository.GeneradorDeUuid
 import ar.edu.uade.miti.data.repository.HogarRepositoryImpl
@@ -20,6 +23,7 @@ import ar.edu.uade.miti.data.repository.IngresoAHogarRepositoryImpl
 import ar.edu.uade.miti.data.repository.OnboardingRepositoryImpl
 import ar.edu.uade.miti.data.repository.PendienteRepositoryImpl
 import ar.edu.uade.miti.data.repository.RutinaRepositoryImpl
+import ar.edu.uade.miti.domain.repository.AlarmasDeTareas
 import ar.edu.uade.miti.domain.repository.GastoRepository
 import ar.edu.uade.miti.domain.repository.GeneradorDeIds
 import ar.edu.uade.miti.domain.repository.HogarRepository
@@ -48,7 +52,9 @@ abstract class RepositoryModule {
     @Binds abstract fun sesionLocal(impl: SesionLocalDataStore): SesionLocal
     @Binds abstract fun borradorDeDatosLocales(impl: BorradorDeDatosLocalesRoom): BorradorDeDatosLocales
     @Binds abstract fun estadoDeSync(impl: EstadoDeSyncDataStore): EstadoDeSyncLocal
-    @Binds abstract fun avisoDeCambios(impl: ProgramadorDeSync): AvisoDeCambios
+    @Binds abstract fun avisoDeCambios(impl: AvisoDeCambiosLocales): AvisoDeCambios
+    @Binds abstract fun alarmasDeTareas(impl: AlarmasDeTareasAndroid): AlarmasDeTareas
+    @Binds abstract fun avisoDeTareasNuevas(impl: AvisoDeTareasNuevasAndroid): AvisoDeTareasNuevas
     @Binds abstract fun preferenciasLocales(impl: PreferenciasDataStore): PreferenciasLocales
     @Binds abstract fun onboarding(impl: OnboardingRepositoryImpl): OnboardingRepository
 }
