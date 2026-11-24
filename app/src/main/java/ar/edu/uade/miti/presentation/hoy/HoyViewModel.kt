@@ -2,6 +2,7 @@ package ar.edu.uade.miti.presentation.hoy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.usecase.sincronizacion.SincronizarAhoraUseCase
 import ar.edu.uade.miti.domain.usecase.sincronizacion.ObservarItemsSinEnviarUseCase
@@ -170,7 +171,7 @@ class HoyViewModel @Inject constructor(
         ) { rutinas, todasLasTareas, tareas, hayItems, c ->
             val p = c.personas
             val f = c.filtro
-            val encabezado = Encabezado(hoy, p.yo, p.otro, avisoDe(c.sync))
+            val encabezado = Encabezado(hoy, p.yo, p.otro, AvisoDeSync.segun(c.sync, reloj.zone))
             when {
                 !hayItems -> HoyUiState.Vacio(encabezado)
                 // Se decide con todas las tareas, no las filtradas: si no, "Mías" sin tareas propias
@@ -199,14 +200,6 @@ class HoyViewModel @Inject constructor(
         val sinEnviar: Set<String>,
         val porConfirmar: String?,
     )
-
-    /** De más a menos grave: sin conexión, error al sincronizar, datos viejos. Si todo está bien, nada. */
-    private fun avisoDe(sync: EstadoDeSincronizacion): AvisoDeSync? = when {
-        !sync.conConexion -> AvisoDeSync.SinConexion(aHoraLocal(sync.ultimaSincronizacion))
-        sync.reintentando -> AvisoDeSync.NoSePudoSincronizar
-        sync.desactualizado && !sync.sincronizando -> AvisoDeSync.Desactualizado(aHoraLocal(sync.ultimaSincronizacion))
-        else -> null
-    }
 
     private fun aHoraLocal(instante: Instant?): LocalDateTime? = instante?.let { LocalDateTime.ofInstant(it, reloj.zone) }
 

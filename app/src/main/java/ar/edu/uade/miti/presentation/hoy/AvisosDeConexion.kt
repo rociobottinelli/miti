@@ -2,8 +2,6 @@ package ar.edu.uade.miti.presentation.hoy
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -12,14 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import ar.edu.uade.miti.R
-import ar.edu.uade.miti.presentation.components.AvisoErrorDeSync
-import ar.edu.uade.miti.presentation.components.AvisoMiti
-import ar.edu.uade.miti.presentation.components.BannerSinConexion
-import ar.edu.uade.miti.presentation.components.TipoDeAviso
+import ar.edu.uade.miti.presentation.components.AvisoDeSincronizacion
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
+import ar.edu.uade.miti.presentation.components.cuando
 import ar.edu.uade.miti.presentation.theme.Espaciado
 import ar.edu.uade.miti.presentation.theme.MitiTheme
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 /** El encabezado de Hoy y, debajo, el aviso de sincronización si hay alguno (C1, Figma 37:2589). */
 @Composable
@@ -36,36 +32,6 @@ internal fun EncabezadoConAviso(encabezado: Encabezado, alAbrirAjustes: () -> Un
             )
         }
     }
-}
-
-@Composable
-private fun AvisoDeSincronizacion(
-    aviso: AvisoDeSync,
-    hoy: LocalDate,
-    otro: String?,
-    alSincronizar: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    when (aviso) {
-        // Sin conexión no hay nada que forzar: la sincronización arranca sola cuando vuelve la red.
-        is AvisoDeSync.SinConexion -> BannerSinConexion(aviso.ultimaSincronizacion?.let { cuando(it, hoy) }, modifier)
-        AvisoDeSync.NoSePudoSincronizar -> AvisoErrorDeSync(alReintentar = alSincronizar, modifier = modifier)
-        is AvisoDeSync.Desactualizado -> AvisoMiti(
-            texto = textoDesactualizado(otro, aviso.ultimaSincronizacion, hoy),
-            icono = Icons.Outlined.History,
-            tipo = TipoDeAviso.ADVERTENCIA,
-            accion = stringResource(R.string.sync_actualizar),
-            alTocarAccion = alSincronizar,
-            modifier = modifier,
-        )
-    }
-}
-
-/** "Puede que no veas lo último de Tomás · última sincronización 14:32". */
-@Composable
-private fun textoDesactualizado(otro: String?, ultima: LocalDateTime?, hoy: LocalDate): String {
-    val quien = otro?.let { stringResource(R.string.sync_desactualizado_de, it) } ?: stringResource(R.string.sync_desactualizado)
-    return ultima?.let { stringResource(R.string.sync_con_hora, quien, cuando(it, hoy)) } ?: quien
 }
 
 /**
@@ -85,10 +51,6 @@ internal fun DialogoConfirmarMarca(confirmacion: ConfirmacionDeMarca, hoy: Local
         dismissButton = { TextButton(onClick = alCancelar) { Text(stringResource(R.string.sync_confirmar_cancelar)) } },
     )
 }
-
-/** "14:32" si fue hoy; si no, "20/11 14:32". */
-private fun cuando(momento: LocalDateTime, hoy: LocalDate): String =
-    if (momento.toLocalDate() == hoy) momento.toLocalTime().comoHora() else "${momento.toLocalDate().comoFechaCorta()} ${momento.toLocalTime().comoHora()}"
 
 private val hoyDeEjemplo = LocalDate.of(2026, 9, 30)
 private val encabezadoDeEjemplo = Encabezado(hoyDeEjemplo, IntegranteEnPantalla("a", "Ana", 0), IntegranteEnPantalla("t", "Tomás", 1))

@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

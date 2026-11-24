@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import ar.edu.uade.miti.core.Resource

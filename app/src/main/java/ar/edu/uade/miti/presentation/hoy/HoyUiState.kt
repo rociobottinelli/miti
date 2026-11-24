@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -75,20 +76,6 @@ data class TareaDeHoy(
     val conAviso: Boolean,
     val pendienteDeSync: Boolean = false,
 )
-
-/**
- * Lo que se le dice a la persona sobre la sincronización, de más a menos grave. [ultimaSincronizacion]
- * es null si este celular nunca sincronizó.
- */
-sealed interface AvisoDeSync {
-    data class SinConexion(val ultimaSincronizacion: LocalDateTime?) : AvisoDeSync
-
-    /** Hay conexión, pero el último intento falló; se reintenta solo y se puede forzar. */
-    data object NoSePudoSincronizar : AvisoDeSync
-
-    /** Hay conexión pero hace rato que no se sincroniza: lo que se ve puede no incluir lo del otro. */
-    data class Desactualizado(val ultimaSincronizacion: LocalDateTime?) : AvisoDeSync
-}
 
 /** "Puede que Tomás ya la haya hecho": se pide confirmar antes de marcar con datos viejos (C1). */
 data class ConfirmacionDeMarca(
