@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +46,10 @@ class WidgetCompacto : GlanceAppWidget() {
 class ReceptorWidgetCompacto : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = WidgetCompacto()
 
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        AlarmaDeMedianoche.programar(context)
+    }
 }
 
 @Composable

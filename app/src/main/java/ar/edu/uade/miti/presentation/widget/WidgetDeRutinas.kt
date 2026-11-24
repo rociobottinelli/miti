@@ -1,6 +1,8 @@
 package ar.edu.uade.miti.presentation.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +42,9 @@ import androidx.glance.text.TextStyle
 import ar.edu.uade.miti.R
 import ar.edu.uade.miti.presentation.hoy.RutinaDeHoy
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /** Widget 4x2 (Figma "Widget"): las rutinas de hoy, cada una se marca con un toque (RNF03). */
 class WidgetDeRutinas : GlanceAppWidget() {
@@ -57,6 +62,24 @@ class WidgetDeRutinas : GlanceAppWidget() {
 class ReceptorWidgetDeRutinas : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = WidgetDeRutinas()
 
+    /** Android también lo llama después de reiniciar el celular: ahí se vuelve a programar la alarma (RNF01). */
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        AlarmaDeMedianoche.programar(context)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != AlarmaDeMedianoche.ACCION) return super.onReceive(context, intent)
+        val pendiente = goAsync()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                actualizarWidgets(context)
+                AlarmaDeMedianoche.programar(context)
+            } finally {
+                pendiente.finish()
+            }
+        }
+    }
 }
 
 @Composable

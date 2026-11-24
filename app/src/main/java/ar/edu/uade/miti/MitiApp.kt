@@ -1,5 +1,6 @@
 package ar.edu.uade.miti
 
+import ar.edu.uade.miti.presentation.widget.ActualizadorDeWidgets
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
@@ -15,6 +16,8 @@ class MitiApp : Application(), Configuration.Provider {
 
     @Inject lateinit var programadorDeSync: ProgramadorDeSync
 
+    @Inject lateinit var actualizadorDeWidgets: ActualizadorDeWidgets
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(fabricaDeWorkers).build()
 
@@ -22,5 +25,7 @@ class MitiApp : Application(), Configuration.Provider {
         super.onCreate()
         // Solo encola un trabajo (no hace red ni disco acá): la sincronización periódica cada 15 minutos.
         programadorDeSync.programarPeriodica()
+        // Tampoco bloquea: escucha Room en segundo plano para que los widgets reflejen cada cambio (RNF05).
+        actualizadorDeWidgets.empezar()
     }
 }
