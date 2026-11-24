@@ -150,9 +150,9 @@ fun FormularioDeTarea(
                 TextButton(onClick = {
                     selector.selectedDateMillis?.let { alElegirFecha(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
                     eligiendoFecha = false
-                }) { Text(stringResource(R.string.accion_aceptar)) }
+                }) { Text(stringResource(R.string.agregar_aceptar)) }
             },
-            dismissButton = { TextButton(onClick = { eligiendoFecha = false }) { Text(stringResource(R.string.accion_cancelar_dialogo)) } },
+            dismissButton = { TextButton(onClick = { eligiendoFecha = false }) { Text(stringResource(R.string.agregar_cancelar)) } },
         ) { DatePicker(selector) }
     }
 
@@ -164,9 +164,9 @@ fun FormularioDeTarea(
                 TextButton(onClick = {
                     alElegirHora(LocalTime.of(selector.hour, selector.minute))
                     eligiendoHora = false
-                }) { Text(stringResource(R.string.accion_aceptar)) }
+                }) { Text(stringResource(R.string.agregar_aceptar)) }
             },
-            dismissButton = { TextButton(onClick = { eligiendoHora = false }) { Text(stringResource(R.string.accion_cancelar_dialogo)) } },
+            dismissButton = { TextButton(onClick = { eligiendoHora = false }) { Text(stringResource(R.string.agregar_cancelar)) } },
             text = { TimePicker(selector) },
         )
     }
