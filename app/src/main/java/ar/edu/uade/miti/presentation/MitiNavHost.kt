@@ -68,10 +68,9 @@ fun MitiNavHost() {
         ) {
             composable<Ruta.Hoy> {
                 HoyScreen(
-                    // Compra y Gasto se agregan en sus pantallas: se va a esa pestaña.
+                    // La compra se agrega en su pestaña; el gasto abre su formulario (#14).
                     alAgregarCompra = { irAPestania(navController, Ruta.Compras) },
-                    // Cuando entre el formulario de gasto (#14) esto abre ese formulario directo.
-                    alAgregarGasto = { irAPestania(navController, Ruta.Balance) },
+                    alAgregarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
                     // Ajustes (#21) todavía no tiene pantalla.
                     alAbrirAjustes = {},
                 )
