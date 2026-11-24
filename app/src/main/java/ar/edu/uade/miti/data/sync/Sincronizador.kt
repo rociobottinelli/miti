@@ -210,6 +210,7 @@ class Sincronizador @Inject constructor(
         val rutinas = base.rutinaDao()
         val gastos = base.gastoDao()
         val pendientes = base.pendienteDao()
+        val conflictos = base.conflictoGastoDao()
         return listOf(
             TablaSincronizable(
                 nombre = "hogares", aDto = { error("Los hogares no se suben") }, aEntidad = { it.toEntity() },
@@ -236,6 +237,13 @@ class Sincronizador @Inject constructor(
                 obtenerLocal = gastos::gastosParaSync, guardarDescargadas = gastos::guardarGastosDescargados,
                 descargar = api::descargarGastos,
                 subida = TablaSincronizable.Subida(gastos::gastosPorSubir, gastos::marcarGastoSincronizado, api::subirGastos),
+            ),
+            TablaSincronizable(
+                nombre = "conflictos_gasto", aDto = { error("Los conflictos los crea el servidor") },
+                aEntidad = { it.toEntity() }, id = { it.id }, metadatos = { it.sync },
+                horaDelServidor = { it.serverUpdatedAt },
+                obtenerLocal = conflictos::conflictosParaSync, guardarDescargadas = conflictos::guardarConflictosDescargados,
+                descargar = api::descargarConflictos,
             ),
             TablaSincronizable(
                 nombre = "pagos", aDto = { it.toDto() }, aEntidad = { it.toEntity() },
