@@ -226,3 +226,31 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
     aviso desaparece.
 - **Limitación:** marcar un conflicto como resuelto se guarda solo en el celular. Si se reinstala la app,
   vuelven a aparecer los conflictos viejos.
+
+## Pantalla Balance y formulario de gasto (#14, #15)
+
+- **Qué hace (RF04):**
+  - **Balance:** selector de mes (no deja ir al futuro), la tarjeta "Ana le debe $ X a Tomás" / "Están a mano"
+    con Registrar pago y lo que puso cada uno, el saldo de meses anteriores, los movimientos del mes (cada gasto
+    con la cuota que cae en el mes, "A medias" / "Solo Ana" y "Cuota 2 de 6", y los pagos) y los estados de carga,
+    vacío, sin la otra persona y error con Reintentar.
+  - **Formulario de gasto** para registrar y editar: monto grande con error al lado, descripción, quién pagó,
+    cómo se reparte, cuotas iguales y borrar (con confirmación).
+  - **Hoja de pago:** dirección, monto (propone saldar la deuda entera) y fecha.
+  - **Avisos de conflicto (C2)** arriba de todo: "Tu cambio en «Heladera» no se guardó. Vos pusiste $ X y quedó
+    $ Y", con "Usar mi cambio" o "Dejar como está".
+- **Desvíos respecto del Figma:**
+  - **Sin íconos por categoría** en los movimientos: el Figma muestra supermercado, auto, gas, etc., pero las
+    categorías están fuera del alcance de la preentrega (sección 8). Todos usan un ícono genérico de comprobante.
+  - **El formulario de gasto es una pantalla y no una hoja inferior.** Como destino de navegación tiene su propio
+    ViewModel, sobrevive a la rotación y a la muerte del proceso (`SavedStateHandle`), y lo pueden abrir Balance y,
+    más adelante, Compras al terminar una compra. Se ve igual (cierre con X arriba a la izquierda).
+  - Los chips "Estado demo" del Figma son controles del prototipo; no van en la app.
+- **Cómo se probó:**
+  - Tests de los dos ViewModels (AGENTS.md §14): carga inicial, validación, una solicitud inválida nunca guarda,
+    guardado, error de escritura, editar, borrar, deuda y totales por persona, cuotas del mes, pago propuesto y
+    validado, cambiar dirección, conflictos y meses.
+  - Tests del formato de dinero ("$ 18.750", "18.750,5").
+  - Previews de cada estado.
+- **Pendiente:** migrar `hiltViewModel` al paquete nuevo (`androidx.hilt.lifecycle.viewmodel.compose`) en todas las
+  pantallas a la vez (Hoy también lo usa).
