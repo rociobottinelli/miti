@@ -4,6 +4,8 @@
 
     <!-- Sincronizar con Supabase (D11). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Saber si hay conexión para el banner "Sin conexión" (#19). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Avisos de tareas (D10, #23): notificaciones (Android 13+), alarmas exactas (Android 12+) y
          volver a programarlas después de reiniciar el teléfono. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

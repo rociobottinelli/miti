@@ -11,6 +11,7 @@ import ar.edu.uade.miti.data.local.datastore.PreferenciasLocales
 import ar.edu.uade.miti.data.local.datastore.SesionLocal
 import ar.edu.uade.miti.data.local.datastore.SesionLocalDataStore
 import ar.edu.uade.miti.data.repository.SesionRepositoryImpl
+import ar.edu.uade.miti.data.repository.SincronizacionRepositoryImpl
 import ar.edu.uade.miti.data.avisos.AlarmasDeTareasAndroid
 import ar.edu.uade.miti.data.avisos.AvisoDeCambiosLocales
 import ar.edu.uade.miti.data.avisos.AvisoDeTareasNuevas
@@ -32,6 +33,7 @@ import ar.edu.uade.miti.domain.repository.OnboardingRepository
 import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.RutinaRepository
 import ar.edu.uade.miti.domain.repository.SesionRepository
+import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -55,6 +57,7 @@ abstract class RepositoryModule {
     @Binds abstract fun avisoDeCambios(impl: AvisoDeCambiosLocales): AvisoDeCambios
     @Binds abstract fun alarmasDeTareas(impl: AlarmasDeTareasAndroid): AlarmasDeTareas
     @Binds abstract fun avisoDeTareasNuevas(impl: AvisoDeTareasNuevasAndroid): AvisoDeTareasNuevas
+    @Binds abstract fun sincronizacion(impl: SincronizacionRepositoryImpl): SincronizacionRepository
     @Binds abstract fun preferenciasLocales(impl: PreferenciasDataStore): PreferenciasLocales
     @Binds abstract fun onboarding(impl: OnboardingRepositoryImpl): OnboardingRepository
 }

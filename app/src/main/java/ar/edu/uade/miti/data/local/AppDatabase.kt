@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import ar.edu.uade.miti.data.local.converter.Convertidores
+import ar.edu.uade.miti.data.local.dao.EstadoDeSyncDao
 import ar.edu.uade.miti.data.local.dao.ConflictoGastoDao
 import ar.edu.uade.miti.data.local.dao.GastoDao
 import ar.edu.uade.miti.data.local.dao.HogarDao
@@ -41,5 +42,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rutinaDao(): RutinaDao
     abstract fun pendienteDao(): PendienteDao
     abstract fun gastoDao(): GastoDao
+    abstract fun estadoDeSyncDao(): EstadoDeSyncDao
     abstract fun conflictoGastoDao(): ConflictoGastoDao
 }

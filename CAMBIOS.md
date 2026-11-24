@@ -148,6 +148,28 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Riesgo que resuelve:** un solo splash, igual en todas las versiones, que desaparece apenas la app está
   lista, en lugar de una pantalla extra que demora la entrada.
 
+## Indicadores de sincronización y datos desactualizados (#19, C1 y C4)
+
+- **Problema (C1, C4):** si la información llega tarde, se pueden repetir tareas. El docente pidió definir cómo
+  advertir datos desactualizados.
+- **Qué cambió (datos y dominio; las pantallas lo conectan):**
+  - `ObservarEstadoDeSincronizacionUseCase` da en un solo `Flow`: última sincronización, si hay conexión, si
+    está sincronizando, si el último intento falló y se reintenta, cuántos cambios faltan enviar y si los datos
+    están desactualizados. Junta DataStore, el estado de la red (`MonitorDeConexion`), WorkManager y Room.
+  - `ObservarItemsSinEnviarUseCase` da los ids con cambios sin enviar, para el ícono de cada ítem (RNF09) sin
+    meter el estado de sincronización en los modelos del dominio. Una rutina figura si tiene una marca sin enviar.
+  - `SincronizarAhoraUseCase` para el botón Reintentar.
+- **Umbral de "datos desactualizados" (regla `DatosDesactualizados` en el dominio, con tests):** nunca se
+  sincronizó, o la última sincronización completa fue hace **más de 30 minutos**. Con conexión se sincroniza al
+  abrir la app, después de cada cambio y cada 15 minutos, así que pasar los 30 minutos indica un problema (sin
+  conexión o un error que se repite). Se recalcula cada minuto, aunque no pase nada más.
+- **Qué se le muestra a la persona:**
+  - Siempre que no hay conexión: "Sin conexión · última sincronización hh:mm" (`BannerSinConexion`, #37).
+  - Si el último intento falló: el aviso de error con Reintentar, aclarando que los cambios siguen guardados.
+  - En cada ítem sin enviar: el ícono de pendiente (`IndicadorPendienteDeSync`, #37).
+  - Si los datos están desactualizados, al marcar una rutina: avisar que la otra persona pudo haberla hecho ya.
+  - Todo desaparece solo al sincronizar, porque se calcula de Room y DataStore.
+- Sin cambio de esquema de Room (solo una consulta nueva).
 ## Avisos de tareas con alarmas locales (#23) y aviso de tareas nuevas (#24)
 
 - **Qué hace (D10):** las tareas con aviso suenan en el celular de su responsable a la hora fijada, sin conexión
