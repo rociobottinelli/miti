@@ -46,7 +46,7 @@ class FakeHogarRepository(
     override fun observarIntegrantes(): Flow<List<Integrante>> = integrantes
 }
 
-class FakeRutinaRepository : FallaConfigurable(), RutinaRepository {
+open class FakeRutinaRepository : FallaConfigurable(), RutinaRepository {
     val rutinas = MutableStateFlow<List<Rutina>>(emptyList())
     val registros = MutableStateFlow<List<RegistroRutina>>(emptyList())
 
