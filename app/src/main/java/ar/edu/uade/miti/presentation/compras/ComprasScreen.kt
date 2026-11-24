@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCartCheckout
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilledIconButton
@@ -39,11 +40,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -74,7 +79,11 @@ import ar.edu.uade.miti.presentation.theme.MitiTheme
 import java.time.LocalDate
 
 @Composable
-fun ComprasScreen(modifier: Modifier = Modifier, viewModel: ComprasViewModel = hiltViewModel()) {
+fun ComprasScreen(
+    alRegistrarGasto: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ComprasViewModel = hiltViewModel(),
+) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val recursos = LocalResources.current
@@ -95,6 +104,7 @@ fun ComprasScreen(modifier: Modifier = Modifier, viewModel: ComprasViewModel = h
         alAgregar = viewModel::agregar,
         alTachar = viewModel::tachar,
         alTerminar = viewModel::terminar,
+        alRegistrarGasto = alRegistrarGasto,
         alReintentar = viewModel::reintentar,
         alSincronizar = viewModel::sincronizar,
         snackbar = snackbar,
@@ -102,19 +112,27 @@ fun ComprasScreen(modifier: Modifier = Modifier, viewModel: ComprasViewModel = h
     )
 }
 
-/** Figma 37:1098 (lista), 37:1272 (con carrito) y los estados del wireframe. Sin estado propio. */
+/**
+ * Figma 37:1098 (lista), 37:1272 (con carrito) y los estados del wireframe. Lo único propio es si el pop up
+ * "¿Registrar el gasto?" está abierto (estado visual, como el de confirmar borrado en el formulario de gasto).
+ */
 @Composable
 fun ComprasContenido(
     estado: ComprasUiState,
     alEscribir: (String) -> Unit,
     alAgregar: () -> Unit,
     alTachar: (id: String, enCarrito: Boolean) -> Unit,
+    /** Cierra la compra sin gasto ("Ahora no"). */
     alTerminar: () -> Unit,
+    /** Abre el formulario del gasto de la compra; guardarlo es lo que la cierra (flujo 3). */
+    alRegistrarGasto: () -> Unit,
     alReintentar: () -> Unit,
     alSincronizar: () -> Unit,
     modifier: Modifier = Modifier,
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    var preguntarGasto by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         // El Scaffold de la barra inferior ya aplicó los márgenes del sistema.
@@ -153,11 +171,30 @@ fun ComprasContenido(
                             icono = Icons.Outlined.ShoppingCart,
                         )
                     } else {
-                        Lista(estado, alTachar, alTerminar)
+                        Lista(estado, alTachar, alTerminar = { preguntarGasto = true })
                     }
                 }
             }
         }
+    }
+
+    if (preguntarGasto) {
+        AlertDialog(
+            // Tocar afuera solo cierra el pop up: la compra sigue abierta.
+            onDismissRequest = { preguntarGasto = false },
+            title = { Text(stringResource(R.string.compras_registrar_gasto_titulo)) },
+            text = { Text(stringResource(R.string.compras_registrar_gasto_texto)) },
+            confirmButton = {
+                TextButton(onClick = { preguntarGasto = false; alRegistrarGasto() }) {
+                    Text(stringResource(R.string.compras_registrar_gasto_si))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { preguntarGasto = false; alTerminar() }) {
+                    Text(stringResource(R.string.compras_registrar_gasto_no))
+                }
+            },
+        )
     }
 }
 
@@ -313,7 +350,7 @@ private val listaDeEjemplo = ComprasUiState.Contenido(
 
 @Composable
 private fun VistaPrevia(estado: ComprasUiState, oscuro: Boolean = false) {
-    MitiTheme(darkTheme = oscuro) { ComprasContenido(estado, {}, {}, { _, _ -> }, {}, {}, {}) }
+    MitiTheme(darkTheme = oscuro) { ComprasContenido(estado, {}, {}, { _, _ -> }, {}, {}, {}, {}) }
 }
 
 @Preview(name = "Con carrito (37:1272)", showSystemUi = true)

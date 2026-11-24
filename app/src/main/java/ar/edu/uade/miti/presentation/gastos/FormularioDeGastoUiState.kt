@@ -10,6 +10,8 @@ import androidx.annotation.StringRes
 data class FormularioDeGastoUiState(
     val cargando: Boolean = true,
     val editando: Boolean = false,
+    /** Es el gasto de la compra que se está terminando (flujo 3). */
+    val deCompra: Boolean = false,
     /** No se pudo cargar el gasto a editar (por ejemplo, la otra persona lo borró). */
     @param:StringRes val errorDeCarga: Int? = null,
     val integrantes: List<Persona> = emptyList(),

@@ -10,6 +10,11 @@
     </plurals>
     <string name="compras_terminar">Terminé la compra</string>
     <string name="compras_terminada">Compra terminada</string>
+    <!-- Flujo 3 de la preentrega: al terminar la compra se ofrece registrar el gasto. -->
+    <string name="compras_registrar_gasto_titulo">¿Registrar el gasto?</string>
+    <string name="compras_registrar_gasto_texto">Cargalo ahora y el balance se actualiza solo. Si no, la compra se cierra sin gasto.</string>
+    <string name="compras_registrar_gasto_si">Registrar gasto</string>
+    <string name="compras_registrar_gasto_no">Ahora no</string>
     <string name="compras_vacio_titulo">No falta nada</string>
     <string name="compras_vacio_descripcion">Agregá ítems abajo para armar la lista.</string>
     <string name="compras_error_titulo">No pudimos cargar la lista</string>

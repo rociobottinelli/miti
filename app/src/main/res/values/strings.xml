@@ -22,6 +22,7 @@
     <!-- Formulario de gasto (#14) -->
     <string name="gasto_titulo_registrar">Registrar gasto</string>
     <string name="gasto_titulo_editar">Editar gasto</string>
+    <string name="gasto_titulo_compra">Gasto de la compra</string>
     <string name="gasto_monto">Monto del gasto</string>
     <string name="gasto_descripcion">Descripción</string>
     <string name="gasto_quien_pago">¿Quién pagó?</string>

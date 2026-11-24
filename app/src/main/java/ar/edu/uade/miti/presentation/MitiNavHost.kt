@@ -77,7 +77,10 @@ fun MitiNavHost() {
                     alAbrirAjustes = { navController.navigate(Ruta.Ajustes) { launchSingleTop = true } },
                 )
             }
-            composable<Ruta.Compras> { ComprasScreen() }
+            composable<Ruta.Compras> {
+                // Flujo 3: el gasto de la compra se carga en el mismo formulario; guardarlo cierra la compra.
+                ComprasScreen(alRegistrarGasto = { navController.navigate(Ruta.FormularioDeGasto(deCompra = true)) })
+            }
             composable<Ruta.Balance> {
                 BalanceScreen(
                     alRegistrarGasto = { navController.navigate(Ruta.FormularioDeGasto()) },
