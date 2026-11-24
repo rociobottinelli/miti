@@ -89,6 +89,7 @@ class SincronizadorTest {
     private val hogarActivo = FakeHogarActivo("h1")
     private val estado = FakeEstadoDeSync()
     private lateinit var sincronizador: Sincronizador
+    private val avisadas = mutableListOf<String>()
 
     @Before
     fun arrancar() {
@@ -108,7 +109,7 @@ class SincronizadorTest {
             .create(SyncApiService::class.java)
         val config = ConfiguracionSupabase(servidor.url("/").toString(), CLAVE_DE_PRUEBA)
         val proveedor = ProveedorDeToken(authApiContra(servidor), sesion, reloj)
-        sincronizador = Sincronizador(api, config, proveedor, sesion, hogarActivo, estado, base, reloj)
+        sincronizador = Sincronizador(api, config, proveedor, sesion, hogarActivo, estado, base, reloj) { avisadas += it }
     }
 
     @After
@@ -355,5 +356,38 @@ class SincronizadorTest {
         sincronizador.sincronizar()
 
         assertTrue(base.conflictoGastoDao().conflictosParaSync("c1")!!.resuelto)
+    }
+
+    private fun tareaJson(id: String, titulo: String, responsable: String, server: String) =
+        """{"id":"$id","hogar_id":"h1","tipo":"TAREA","titulo":"$titulo","responsable_id":"$responsable",""" +
+            """"fecha_hora":"2026-12-01T18:00:00","avisar":true,"en_carrito":false,"resuelto":false,"gasto_id":null,""" +
+            """"updated_at":1,"deleted":false,"server_updated_at":"$server"}"""
+
+    @Test
+    fun `avisa las tareas nuevas asignadas a quien usa el celular (24)`() = runTest {
+        estado.cursores["pendientes"] = "2026-11-21T19:00:00Z"
+        falso.cuandoPidan(
+            "pendientes",
+            MockResponse(
+                code = 200,
+                body = "[" + tareaJson("t1", "Pagar ABL", "u-ana", "2026-11-21T20:00:00Z") + "," +
+                    tareaJson("t2", "Sacar turno", "u-tomas", "2026-11-21T20:00:01Z") + "]",
+            ),
+        )
+
+        sincronizador.sincronizar()
+
+        assertEquals(listOf("Pagar ABL"), avisadas)
+    }
+
+    @Test
+    fun `no avisa en la primera descarga ni dos veces la misma tarea`() = runTest {
+        val tarea = MockResponse(code = 200, body = "[" + tareaJson("t1", "Pagar ABL", "u-ana", "2026-11-21T20:00:00Z") + "]")
+        falso.cuandoPidan("pendientes", tarea, tarea)
+
+        sincronizador.sincronizar()   // primera vez: baja todo el hogar, no avisa
+        sincronizador.sincronizar()   // la misma tarea vuelve por el margen: ya estaba, no avisa
+
+        assertTrue(avisadas.isEmpty())
     }
 }

@@ -55,6 +55,7 @@ android {
     // Los tests de migraciones crean bases de versiones viejas a partir de los esquemas exportados. Con
     // Robolectric los assets salen de la variante debug (son dos JSON chicos; release no los lleva).
     sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
+    // Robolectric usa los recursos reales de la app (textos de las notificaciones, esquemas de Room).
     testOptions.unitTests.isIncludeAndroidResources = true
 }
 
