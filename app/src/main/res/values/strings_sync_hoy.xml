@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avisos de sincronización en Hoy (C1, #19). Aparte de strings.xml para no chocar con otras ramas. -->
+<resources>
+    <string name="sync_actualizar">Actualizar</string>
+    <string name="sync_desactualizado">Puede que no veas lo último del hogar</string>
+    <string name="sync_desactualizado_de">Puede que no veas lo último de %1$s</string>
+    <string name="sync_con_hora">%1$s · última sincronización %2$s</string>
+    <string name="sync_la_otra_persona">la otra persona</string>
+    <string name="sync_confirmar_titulo">¿Marcar «%1$s»?</string>
+    <string name="sync_confirmar_texto">Puede que %1$s ya la haya hecho: %2$s. Si la marcás igual, va a contar dos veces.</string>
+    <string name="sync_confirmar_desde">este celular no se sincroniza desde las %1$s</string>
+    <string name="sync_confirmar_nunca">este celular todavía no se sincronizó</string>
+    <string name="sync_confirmar_marcar">Marcar igual</string>
+    <string name="sync_confirmar_cancelar">Cancelar</string>
+</resources>

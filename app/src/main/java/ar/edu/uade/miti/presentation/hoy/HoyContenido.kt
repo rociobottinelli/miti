@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
-import ar.edu.uade.miti.presentation.components.BannerSinConexion
 import ar.edu.uade.miti.presentation.components.EsqueletoDeCarga
 import ar.edu.uade.miti.presentation.components.EstadoVacio
 import ar.edu.uade.miti.presentation.theme.Espaciado
@@ -58,6 +57,9 @@ fun HoyContenido(
     alAbrirAjustes: () -> Unit,
     alReintentar: () -> Unit,
     modifier: Modifier = Modifier,
+    alSincronizar: () -> Unit = {},
+    alConfirmarMarca: () -> Unit = {},
+    alCancelarMarca: () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
@@ -88,7 +90,7 @@ fun HoyContenido(
                     alTocarAccion = alReintentar,
                 )
                 is HoyUiState.Vacio -> {
-                    EncabezadoDeHoy(estado.encabezado, alAbrirAjustes)
+                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
                     EstadoVacio(
                         titulo = stringResource(R.string.hoy_vacio_titulo),
                         descripcion = stringResource(R.string.hoy_vacio_descripcion),
@@ -99,7 +101,7 @@ fun HoyContenido(
                     )
                 }
                 is HoyUiState.TodoAlDia -> {
-                    EncabezadoDeHoy(estado.encabezado, alAbrirAjustes)
+                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
                     EstadoVacio(
                         titulo = stringResource(R.string.hoy_al_dia_titulo),
                         descripcion = stringResource(R.string.hoy_al_dia_descripcion),
@@ -107,7 +109,12 @@ fun HoyContenido(
                         modifier = Modifier.weight(1f),
                     )
                 }
-                is HoyUiState.Contenido -> ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes)
+                is HoyUiState.Contenido -> {
+                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar)
+                    estado.confirmarMarca?.let {
+                        DialogoConfirmarMarca(it, estado.encabezado.fecha, alConfirmarMarca, alCancelarMarca)
+                    }
+                }
             }
         }
     }
@@ -119,14 +126,9 @@ private fun ListaDeHoy(
     alMarcar: (String) -> Unit,
     alElegirFiltro: (FiltroDeTareas) -> Unit,
     alAbrirAjustes: () -> Unit,
+    alSincronizar: () -> Unit,
 ) {
-    EncabezadoDeHoy(estado.encabezado, alAbrirAjustes)
-    estado.sinConexion?.let {
-        BannerSinConexion(
-            ultimaSincronizacion = it.ultimaSincronizacion?.comoHora(),
-            modifier = Modifier.padding(horizontal = Espaciado.margenPantalla).padding(bottom = Espaciado.entreCards),
-        )
-    }
+    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
     FiltrosDeTareas(estado.filtro, estado.encabezado.otro, alElegirFiltro)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -236,7 +238,18 @@ private fun HoyContenidoOscuroPreview() = VistaPrevia(contenidoDeEjemplo, oscuro
 
 @Preview(name = "Sin conexión", showSystemUi = true)
 @Composable
-private fun HoySinConexionPreview() = VistaPrevia(contenidoDeEjemplo.copy(sinConexion = SinConexion(LocalTime.of(14, 32))))
+private fun HoySinConexionPreview() = VistaPrevia(
+    contenidoDeEjemplo.copy(encabezado = encabezadoDeEjemplo.copy(aviso = AvisoDeSync.SinConexion(LocalDate.of(2026, 9, 30).atTime(14, 32)))),
+)
+
+@Preview(name = "Datos desactualizados al marcar", showSystemUi = true)
+@Composable
+private fun HoyConfirmarMarcaPreview() = VistaPrevia(
+    contenidoDeEjemplo.copy(
+        encabezado = encabezadoDeEjemplo.copy(aviso = AvisoDeSync.Desactualizado(LocalDate.of(2026, 9, 30).atTime(8, 15))),
+        confirmarMarca = ConfirmacionDeMarca("2", "Regar las plantas", "Tomás", LocalDate.of(2026, 9, 30).atTime(8, 15)),
+    ),
+)
 
 @Preview(name = "Filtro sin tareas", showSystemUi = true)
 @Composable
