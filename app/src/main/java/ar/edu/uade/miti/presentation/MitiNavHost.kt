@@ -2,6 +2,7 @@ package ar.edu.uade.miti.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -64,7 +65,8 @@ fun MitiNavHost() {
         NavHost(
             navController = navController,
             startDestination = Ruta.Hoy,
-            modifier = Modifier.padding(innerPadding),
+            // Lo que ocupa la barra inferior ya no cuenta para el teclado: así el campo de Compras sube justo.
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
         ) {
             composable<Ruta.Hoy> {
                 // Agregar (#12) y Ajustes (#21) todavía no tienen pantalla; se conectan en esas issues.
