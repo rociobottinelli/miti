@@ -14,6 +14,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 
 /** Avisa que hubo un cambio local que hay que subir. Los repositorios lo llaman después de cada escritura. */
@@ -63,6 +65,24 @@ class ProgramadorDeSync @Inject constructor(
             .build()
         workManager.enqueueUniquePeriodicWork(PERIODICA, ExistingPeriodicWorkPolicy.KEEP, pedido)
     }
+
+    /**
+     * Qué está haciendo WorkManager con la sincronización: si hay una corriendo y si la última falló y
+     * espera para reintentar (#19).
+     */
+    fun observarTrabajo(): Flow<EstadoDelTrabajo> =
+        combine(
+            workManager.getWorkInfosForUniqueWorkFlow(UNICA),
+            workManager.getWorkInfosForUniqueWorkFlow(PERIODICA),
+        ) { unica, periodica ->
+            val todos = unica + periodica
+            EstadoDelTrabajo(
+                sincronizando = todos.any { it.state == WorkInfo.State.RUNNING },
+                reintentando = unica.any { it.state == WorkInfo.State.ENQUEUED && it.runAttemptCount > 0 },
+            )
+        }
+
+    data class EstadoDelTrabajo(val sincronizando: Boolean, val reintentando: Boolean)
 
     private companion object {
         const val UNICA = "sincronizar"

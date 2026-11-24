@@ -11,6 +11,7 @@ nunca lee de la red para mostrar datos: Room es la única fuente de verdad (D04)
 | [`migrations/20261121000001_tablas.sql`](migrations/20261121000001_tablas.sql) | Tablas espejo de las entidades de Room, con las validaciones del dominio como `CHECK` y `server_updated_at` para la descarga incremental. |
 | [`migrations/20261121000002_acceso_por_hogar.sql`](migrations/20261121000002_acceso_por_hogar.sql) | Row Level Security: cada usuario solo ve y modifica su hogar (RNF10). Funciones `crear_hogar` y `unirse_a_hogar` con el límite de dos integrantes. |
 | [`migrations/20261121000003_ultima_modificacion_gana.sql`](migrations/20261121000003_ultima_modificacion_gana.sql) | D08: si llega tarde una versión con `updated_at` más viejo que el guardado, se ignora. |
+| [`migrations/20261123000004_conflictos_de_gastos.sql`](migrations/20261123000004_conflictos_de_gastos.sql) | C2: una edición de gasto hecha sobre una versión vieja no pisa la nueva; queda en `conflictos_gasto` para avisarle a quien la hizo. |
 | [`tests/verificar_acceso_por_hogar.sql`](tests/verificar_acceso_por_hogar.sql) | Verificación con cuatro usuarios simulados. Corre en una transacción con `ROLLBACK`: no deja datos. |
 
 ## Reglas que aplica el servidor
@@ -22,6 +23,8 @@ nunca lee de la red para mostrar datos: Room es la única fuente de verdad (D04)
 - **Dos integrantes como máximo:** `unirse_a_hogar` bloquea el hogar mientras cuenta, así que si dos personas
   usan el mismo código a la vez, solo entra una.
 - **Gana la última modificación (D08):** una versión con `updated_at` más viejo que el guardado no pisa la fila.
+- **Conflictos en gastos (C2):** si un gasto cambió desde la versión que se editó, la edición no entra y queda
+  en `conflictos_gasto`, visible solo para quien la hizo.
 - **Coherencia:** quien paga, se beneficia o es responsable tiene que ser del mismo hogar (claves foráneas compuestas).
 
 Errores propios que devuelve la API (campo `code` del JSON), para que la app muestre el mensaje de la preentrega:
@@ -35,7 +38,7 @@ Errores propios que devuelve la API (campo `code` del JSON), para que la app mue
 ## Configurar un proyecto desde cero
 
 1. Crear el proyecto en [supabase.com](https://supabase.com) (región São Paulo) y guardar la contraseña de la base en un lugar seguro, **fuera del repo**.
-2. En **SQL Editor**, ejecutar las migraciones **en orden** (`…0001_tablas.sql`, `…0002_acceso_por_hogar.sql`, `…0003_ultima_modificacion_gana.sql`).
+2. En **SQL Editor**, ejecutar las migraciones **en orden** (`…0001_tablas.sql`, `…0002_acceso_por_hogar.sql`, `…0003_ultima_modificacion_gana.sql`, `…0004_conflictos_de_gastos.sql`).
 3. Ejecutar `tests/verificar_acceso_por_hogar.sql`. Tiene que terminar con `OK: todas las verificaciones de acceso por hogar pasaron`.
 4. Copiar los datos de conexión a `local.properties` (en la raíz del repo; ya está en `.gitignore`):
 
