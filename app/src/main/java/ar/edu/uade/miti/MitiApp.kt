@@ -1,5 +1,6 @@
 package ar.edu.uade.miti
 
+import ar.edu.uade.miti.presentation.widget.ActualizadorDeWidgets
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
@@ -19,6 +20,8 @@ class MitiApp : Application(), Configuration.Provider {
 
     @Inject lateinit var programadorDeAvisos: ProgramadorDeAvisos
 
+    @Inject lateinit var actualizadorDeWidgets: ActualizadorDeWidgets
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(fabricaDeWorkers).build()
 
@@ -29,5 +32,7 @@ class MitiApp : Application(), Configuration.Provider {
         // Avisos de tareas (D10): los canales de notificación y las alarmas al día (también tras actualizar la app).
         Notificaciones.crearCanales(this)
         programadorDeAvisos.pedir()
+        // Widgets (#22): escucha Room en segundo plano, sin bloquear, para reflejar cada cambio (RNF05).
+        actualizadorDeWidgets.empezar()
     }
 }

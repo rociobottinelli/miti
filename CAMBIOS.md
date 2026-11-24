@@ -297,3 +297,24 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Desvío temporal:** la preentrega (flujo 3) ofrece registrar el gasto al terminar la compra. Hasta que esté
   el formulario de gasto (#44), "Terminé la compra" la cierra sin gasto. `TerminarCompraUseCase` ya recibe el
   gasto opcional, así que sumar el pop up no cambia el dominio.
+
+
+## Widgets de rutinas: cómo se mantienen al día y qué quedó afuera (#22)
+
+- **Problema:** el widget tiene que mostrar lo mismo que la app en menos de 5 segundos (RNF05), también cuando
+  marca la otra persona, y reiniciarse a la medianoche aunque nadie abra Miti.
+- **Qué cambió:**
+  - Los dos widgets (4x2 y 2x2) leen un mismo estado, `ObservarEstadoDelWidget`, armado con los casos de uso de
+    Hoy. Marcar usa `MarcarRutinaUseCase` vía Hilt (D03).
+  - Mientras el proceso de Miti está vivo (app abierta, o el `SyncWorker` trayendo cambios del otro celular),
+    `ActualizadorDeWidgets` escucha ese estado y actualiza los widgets apenas cambia Room.
+  - Con la app cerrada, una alarma no exacta (`AlarmaDeMedianoche`, sin permiso de alarmas exactas) los actualiza
+    a la medianoche; se reprograma al reiniciar el celular. `updatePeriodMillis` de 30 minutos queda de respaldo.
+- **Qué riesgo resuelve:** que el widget muestre rutinas de ayer o no vea la marca del otro (C1).
+- **Desvíos:**
+  - El widget **no pide confirmación** al marcar con datos desactualizados, como sí hace Hoy: un widget no puede
+    mostrar diálogos y el requisito es un toque (RNF03). En su lugar, el encabezado muestra "Sin conexión · hh:mm"
+    o "Puede no estar al día".
+  - El Figma muestra un ícono por rutina (huella, planta, tacho); el modelo `Rutina` de la preentrega no tiene
+    ícono, así que el widget no lo muestra.
+  - En Android 11 o anterior las esquinas del widget son rectas (Glance solo redondea desde Android 12).
