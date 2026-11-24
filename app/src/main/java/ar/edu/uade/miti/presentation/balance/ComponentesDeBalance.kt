@@ -48,6 +48,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
+import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Reparto
@@ -211,8 +212,8 @@ internal fun ItemDePago(pago: Movimiento.PagoHecho, modifier: Modifier = Modifie
 }
 
 /**
- * C2: una edición propia que no entró porque la otra persona cambió el gasto antes. Muestra los dos
- * montos y deja elegir; no se pierde en silencio.
+ * C2: una edición propia que no entró porque la otra persona cambió el gasto antes. Muestra cada campo
+ * que cambió con los dos valores (#51) y deja elegir; no se pierde en silencio.
  */
 @Composable
 internal fun TarjetaDeConflicto(
@@ -239,11 +240,7 @@ internal fun TarjetaDeConflicto(
             val detalle = when {
                 conflicto.conflicto.eraBorrado -> stringResource(R.string.conflicto_era_borrado)
                 conflicto.montoActualCentavos == null -> stringResource(R.string.conflicto_ya_no_esta, formatearPesos(conflicto.miMontoCentavos))
-                else -> stringResource(
-                    R.string.conflicto_dos_versiones,
-                    formatearPesos(conflicto.miMontoCentavos),
-                    formatearPesos(conflicto.montoActualCentavos),
-                )
+                else -> stringResource(R.string.conflicto_cambio_antes)
             }
             Text(
                 detalle,
@@ -251,6 +248,21 @@ internal fun TarjetaDeConflicto(
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.padding(top = 6.dp),
             )
+            if (!conflicto.conflicto.eraBorrado) {
+                conflicto.diferencias.forEach { diferencia ->
+                    Text(
+                        stringResource(
+                            R.string.conflicto_diferencia,
+                            stringResource(nombreDelCampo(diferencia.campo)),
+                            textoDelValor(diferencia.mio),
+                            textoDelValor(diferencia.quedo),
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
                 TextButton(onClick = alDescartar) { Text(stringResource(R.string.conflicto_descartar)) }
                 TextButton(onClick = alRehacer) { Text(stringResource(R.string.conflicto_rehacer)) }
@@ -258,6 +270,28 @@ internal fun TarjetaDeConflicto(
         }
     }
 }
+
+private fun nombreDelCampo(campo: CampoDeGasto): Int = when (campo) {
+    CampoDeGasto.DESCRIPCION -> R.string.conflicto_campo_descripcion
+    CampoDeGasto.MONTO -> R.string.conflicto_campo_monto
+    CampoDeGasto.PAGADOR -> R.string.conflicto_campo_pagador
+    CampoDeGasto.REPARTO -> R.string.conflicto_campo_reparto
+    CampoDeGasto.CUOTAS -> R.string.conflicto_campo_cuotas
+}
+
+/** Los textos de etiqueta ("A medias", "Cuota 1 de 3") van en minúscula porque quedan en medio de la oración. */
+@Composable
+private fun textoDelValor(valor: ValorDeCampo): String = when (valor) {
+    is ValorDeCampo.Texto -> stringResource(R.string.conflicto_valor_texto, valor.texto)
+    is ValorDeCampo.Pesos -> formatearPesos(valor.centavos)
+    is ValorDeCampo.Persona -> valor.nombre
+    ValorDeCampo.AMedias -> stringResource(R.string.gasto_a_medias).enMinuscula()
+    is ValorDeCampo.SoloDe -> stringResource(R.string.gasto_solo, valor.nombre).enMinuscula()
+    is ValorDeCampo.Cuotas ->
+        if (valor.total == 1) stringResource(R.string.conflicto_sin_cuotas) else stringResource(R.string.balance_cuota, valor.actual, valor.total).enMinuscula()
+}
+
+private fun String.enMinuscula() = replaceFirstChar { it.lowercaseChar() }
 
 @Composable
 private fun IconoDeMovimiento(icono: ImageVector) {
@@ -291,7 +325,21 @@ private fun TarjetaDeConflictoPreview() {
     MitiTheme {
         Column(Modifier.padding(16.dp).width(360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             TarjetaDeConflicto(
-                ConflictoEnPantalla(ConflictoDeGasto("c1", gasto, gasto.copy(montoTotalCentavos = 2_900_000), false), "Heladera", 2_900_000, 3_100_000),
+                ConflictoEnPantalla(
+                    ConflictoDeGasto("c1", gasto, gasto.copy(montoTotalCentavos = 2_900_000), false), "Heladera", 2_900_000, 3_100_000,
+                    listOf(DiferenciaDeGasto(CampoDeGasto.MONTO, ValorDeCampo.Pesos(2_900_000), ValorDeCampo.Pesos(3_100_000))),
+                ),
+                alRehacer = {}, alDescartar = {},
+            )
+            // #51: mismo monto, cambió quién pagó y el reparto.
+            TarjetaDeConflicto(
+                ConflictoEnPantalla(
+                    ConflictoDeGasto("c2", gasto, gasto, false), "Heladera", 3_100_000, 3_100_000,
+                    listOf(
+                        DiferenciaDeGasto(CampoDeGasto.PAGADOR, ValorDeCampo.Persona("Tomás"), ValorDeCampo.Persona("Ana")),
+                        DiferenciaDeGasto(CampoDeGasto.REPARTO, ValorDeCampo.SoloDe("Tomás"), ValorDeCampo.AMedias),
+                    ),
+                ),
                 alRehacer = {}, alDescartar = {},
             )
             SaldoAnterior(DeudaEnPantalla("ana", "Ana", "tomas", "Tomás", 500_000))

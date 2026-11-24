@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import ar.edu.uade.miti.R
 import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.model.BalanceDelMes
+import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Deuda
+import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Integrante
 import ar.edu.uade.miti.domain.usecase.gastos.DescartarConflictoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObservarConflictosDeGastoUseCase
@@ -112,7 +114,17 @@ class BalanceViewModel @Inject constructor(
             saldoAnterior = balance.saldoAnterior?.enPantalla(),
             movimientos = movimientos,
             conflictos = conflictos.map { c ->
-                ConflictoEnPantalla(c, c.miVersion.descripcion, c.miVersion.montoTotalCentavos, c.actual?.montoTotalCentavos)
+                fun Gasto.valor(campo: CampoDeGasto): ValorDeCampo = when (campo) {
+                    CampoDeGasto.DESCRIPCION -> ValorDeCampo.Texto(descripcion)
+                    CampoDeGasto.MONTO -> ValorDeCampo.Pesos(montoTotalCentavos)
+                    CampoDeGasto.PAGADOR -> ValorDeCampo.Persona(nombre(pagadorId))
+                    CampoDeGasto.REPARTO -> beneficiarioId?.let { ValorDeCampo.SoloDe(nombre(it)) } ?: ValorDeCampo.AMedias
+                    CampoDeGasto.CUOTAS -> ValorDeCampo.Cuotas(cuotaInicial, cuotasTotales)
+                }
+                val diferencias = c.actual?.let { quedo ->
+                    c.camposDistintos.map { DiferenciaDeGasto(it, c.miVersion.valor(it), quedo.valor(it)) }
+                }.orEmpty()
+                ConflictoEnPantalla(c, c.miVersion.descripcion, c.miVersion.montoTotalCentavos, c.actual?.montoTotalCentavos, diferencias)
             },
             pago = pagoEnCurso,
         )
