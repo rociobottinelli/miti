@@ -158,7 +158,7 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Qué cambió:** la tarjeta "Crear un hogar" tiene un botón **Crear mi hogar**. Al tocarlo se crea el hogar y
   la pantalla pasa a mostrar el código grande con Copiar y Compartir (como en el Figma) y un botón
   **Continuar**. Unirse sigue igual. El hogar se crea con el nombre "Nuestro hogar", porque el diseño no lo
-  pide; se puede cambiar en Ajustes (#21).
+  pide. Por ahora no se puede cambiar: el nombre no se muestra en ninguna pantalla.
 - **Además:** al entrar, "Tu hogar" primero busca si la persona ya tenía uno (cambió de celular o reinstaló).
   Si lo encuentra, sigue directo sin pedirle nada.
 - **Riesgo que resuelve:** que la persona que se une quede trabada con un hogar vacío creado sin querer.
