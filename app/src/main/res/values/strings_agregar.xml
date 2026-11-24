@@ -32,6 +32,6 @@
     <string name="tarea_avisar">Avisar a la hora</string>
     <string name="tarea_guardar">Guardar tarea</string>
     <string name="tarea_agregada">Tarea agregada: %1$s</string>
-    <string name="accion_aceptar">Aceptar</string>
-    <string name="accion_cancelar_dialogo">Cancelar</string>
+    <string name="agregar_aceptar">Aceptar</string>
+    <string name="agregar_cancelar">Cancelar</string>
 </resources>
