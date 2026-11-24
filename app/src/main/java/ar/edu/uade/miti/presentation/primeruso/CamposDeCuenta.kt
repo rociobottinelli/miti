@@ -40,7 +40,7 @@ internal fun EncabezadoDeCuenta(titulo: String, modifier: Modifier = Modifier, a
     Box(modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
         if (alVolver != null) {
             IconButton(onClick = alVolver, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accion_volver))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cuenta_volver))
             }
         }
         Text(

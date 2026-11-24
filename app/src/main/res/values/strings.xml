@@ -57,7 +57,7 @@
     <string name="onboarding_tareas_texto">Las tareas programadas le avisan a quien le toca.</string>
     <string name="onboarding_balance_titulo">Cuentas claras</string>
     <string name="onboarding_balance_texto">Los gastos se reparten solos y el balance siempre está al día.</string>
-    <string name="accion_volver">Volver</string>
+    <string name="cuenta_volver">Volver</string>
 
     <!-- Primer uso: cuenta (#17) -->
     <string name="cuenta_crear_titulo">Crear cuenta</string>
