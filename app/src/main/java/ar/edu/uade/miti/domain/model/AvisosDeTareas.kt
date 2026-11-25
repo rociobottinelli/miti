@@ -8,14 +8,20 @@ import java.time.LocalDateTime
  * cancela: si una tarea se resolvió, se borró o se le cambió el responsable, su alarma deja de sonar.
  */
 object TareasConAviso {
-    fun paraProgramar(tareas: List<Pendiente>, yoId: String?, ahora: LocalDateTime): List<Pendiente> {
-        if (yoId == null) return emptyList()
-        return tareas.filter { tarea ->
-            val hora = tarea.fechaHora
-            tarea.tipo == TipoPendiente.TAREA && tarea.avisar && !tarea.resuelto &&
-                tarea.responsableId == yoId && hora != null && hora.isAfter(ahora)
-        }.sortedBy { it.fechaHora }
-    }
+    fun paraProgramar(tareas: List<Pendiente>, yoId: String?, ahora: LocalDateTime): List<Pendiente> =
+        tareas.filter { tarea -> tarea.avisoVigente(yoId) && tarea.fechaHora?.isAfter(ahora) == true }
+            .sortedBy { it.fechaHora }
+
+    /**
+     * Las tareas cuyo aviso todavía tiene sentido, haya llegado su hora o no. Una tarea que ya sonó deja de
+     * programarse, pero su notificación sigue a la vista hasta que alguien la resuelva: solo se retira si la
+     * tarea se resolvió, se borró o cambió de responsable.
+     */
+    fun conAvisoVigente(tareas: List<Pendiente>, yoId: String?): Set<String> =
+        tareas.filter { it.avisoVigente(yoId) }.map { it.id }.toSet()
+
+    private fun Pendiente.avisoVigente(yoId: String?) =
+        yoId != null && tipo == TipoPendiente.TAREA && avisar && !resuelto && responsableId == yoId
 }
 
 /** Qué puede hacer el celular con los avisos. Hoy muestra un aviso si alguno falta (preentrega, sección 11). */

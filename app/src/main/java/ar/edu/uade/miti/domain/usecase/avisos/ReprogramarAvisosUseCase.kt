@@ -22,7 +22,10 @@ class ReprogramarAvisosUseCase @Inject constructor(
 ) {
     suspend operator fun invoke() {
         val yo = sesion.observarUsuario().first()?.id
-        val tareas = TareasConAviso.paraProgramar(pendientes.observarPendientes().first(), yo, LocalDateTime.now(reloj))
-        alarmas.programarSolo(tareas)
+        val todas = pendientes.observarPendientes().first()
+        alarmas.programarSolo(
+            tareas = TareasConAviso.paraProgramar(todas, yo, LocalDateTime.now(reloj)),
+            avisosVigentes = TareasConAviso.conAvisoVigente(todas, yo),
+        )
     }
 }

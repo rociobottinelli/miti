@@ -1,5 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import ar.edu.uade.miti.domain.model.PermisosDeAvisos
 import ar.edu.uade.miti.presentation.components.AvisoDeSync
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,7 +46,29 @@ data class Encabezado(
     val otro: IntegranteEnPantalla?,
     /** Qué tan al día está este celular; null si está todo bien (C1, #19). */
     val aviso: AvisoDeSync? = null,
+    /** Falta un permiso para que los avisos de tareas lleguen a tiempo; null si están todos (#23). */
+    val permisos: AvisoDePermisos? = null,
 )
+
+/**
+ * Preentrega, sección 11: "permiso de notificaciones rechazado: un aviso en Hoy que explica que no llegarán
+ * los avisos de tareas, con acceso a la configuración". Lo mismo si faltan las alarmas exactas (sección 17).
+ */
+enum class AvisoDePermisos {
+    /** Sin notificaciones los avisos no se ven: es lo más grave y se muestra primero. */
+    SIN_NOTIFICACIONES,
+
+    /** Sin alarmas exactas suenan, pero pueden llegar tarde (RNF06). */
+    SIN_ALARMAS_EXACTAS;
+
+    companion object {
+        fun segun(permisos: PermisosDeAvisos): AvisoDePermisos? = when {
+            !permisos.notificaciones -> SIN_NOTIFICACIONES
+            !permisos.alarmasExactas -> SIN_ALARMAS_EXACTAS
+            else -> null
+        }
+    }
+}
 
 /** [posicion] decide el color (ver `ColoresMiti`). */
 data class IntegranteEnPantalla(val id: String, val nombre: String, val posicion: Int)

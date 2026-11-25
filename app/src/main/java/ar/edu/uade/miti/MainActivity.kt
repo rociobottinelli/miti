@@ -6,8 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import ar.edu.uade.miti.data.sync.ProgramadorDeSync
+import ar.edu.uade.miti.data.sync.SYNC_EN_PANTALLA
+import ar.edu.uade.miti.data.sync.repetirCada
 import ar.edu.uade.miti.presentation.DestinoRaiz
 import ar.edu.uade.miti.presentation.RaizDeMiti
 import ar.edu.uade.miti.presentation.RaizViewModel
@@ -34,11 +38,13 @@ class MainActivity : ComponentActivity() {
                 RaizDeMiti(raiz)
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // Preentrega, sección 14: se sincroniza al abrir la app (y cada vez que vuelve a primer plano).
-        lifecycleScope.launch { programadorDeSync.sincronizarAhora() }
+        // Preentrega, sección 14: se sincroniza al abrir la app y cada vez que vuelve a primer plano. Además,
+        // mientras está en pantalla, cada 15 s, para ver enseguida lo que cambia el otro celular (C1).
+        // repeatOnLifecycle corta el ciclo en onStop y lo vuelve a arrancar en onStart (simetría, sin fugas).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                repetirCada(SYNC_EN_PANTALLA) { programadorDeSync.sincronizarAhora() }
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ import ar.edu.uade.miti.domain.model.Integrante
 import ar.edu.uade.miti.domain.model.Pendiente
 import ar.edu.uade.miti.domain.model.RutinaDelDia
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
+import ar.edu.uade.miti.domain.usecase.avisos.ConsultarPermisosDeAvisosUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
@@ -60,8 +61,15 @@ class HoyViewModel @Inject constructor(
     private val observarEstadoDeSincronizacion: ObservarEstadoDeSincronizacionUseCase,
     private val observarItemsSinEnviar: ObservarItemsSinEnviarUseCase,
     private val sincronizarAhora: SincronizarAhoraUseCase,
+    private val consultarPermisos: ConsultarPermisosDeAvisosUseCase,
     private val reloj: Clock,
 ) : ViewModel() {
+
+    /**
+     * Los permisos no avisan cuando cambian: se vuelven a mirar cada vez que Hoy vuelve a pantalla
+     * ([revisarPermisos]), por ejemplo al volver de la configuración.
+     */
+    private val permisos = MutableStateFlow(consultarPermisos())
 
     private val filtro = MutableStateFlow(FiltroDeTareas.TODAS)
 
@@ -117,6 +125,10 @@ class HoyViewModel @Inject constructor(
         porConfirmar.value = null
     }
 
+    fun revisarPermisos() {
+        permisos.value = consultarPermisos()
+    }
+
     /** Pide sincronizar ya (botones Reintentar y Actualizar de los avisos). */
     fun sincronizar() {
         viewModelScope.launch { sincronizarAhora() }
@@ -159,8 +171,9 @@ class HoyViewModel @Inject constructor(
             .flatMapLatest { (f, p) -> observarProximasTareas(p.responsableSegun(f)) }
 
         val contexto = combine(
-            personas, filtro, observarEstadoDeSincronizacion(), observarItemsSinEnviar(), porConfirmar,
-        ) { p, f, sync, sinEnviar, confirmar -> Contexto(p, f, sync, sinEnviar, confirmar) }
+            combine(personas, filtro, ::Pair),
+            observarEstadoDeSincronizacion(), observarItemsSinEnviar(), porConfirmar, permisos,
+        ) { (p, f), sync, sinEnviar, confirmar, perm -> Contexto(p, f, sync, sinEnviar, confirmar, AvisoDePermisos.segun(perm)) }
 
         return combine(
             observarRutinasDelDia(hoy),
@@ -171,7 +184,7 @@ class HoyViewModel @Inject constructor(
         ) { rutinas, todasLasTareas, tareas, hayItems, c ->
             val p = c.personas
             val f = c.filtro
-            val encabezado = Encabezado(hoy, p.yo, p.otro, AvisoDeSync.segun(c.sync, reloj.zone))
+            val encabezado = Encabezado(hoy, p.yo, p.otro, AvisoDeSync.segun(c.sync, reloj.zone), c.permisos)
             when {
                 !hayItems -> HoyUiState.Vacio(encabezado)
                 // Se decide con todas las tareas, no las filtradas: si no, "Mías" sin tareas propias
@@ -199,6 +212,7 @@ class HoyViewModel @Inject constructor(
         val sync: EstadoDeSincronizacion,
         val sinEnviar: Set<String>,
         val porConfirmar: String?,
+        val permisos: AvisoDePermisos?,
     )
 
     private fun aHoraLocal(instante: Instant?): LocalDateTime? = instante?.let { LocalDateTime.ofInstant(it, reloj.zone) }
