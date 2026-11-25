@@ -36,6 +36,7 @@ private fun BroadcastReceiver.enSegundoPlano(bloque: suspend () -> Unit) {
 @AndroidEntryPoint
 class ReceptorDeAlarma : BroadcastReceiver() {
     @Inject lateinit var pendientes: PendienteRepository
+    @Inject lateinit var alarmas: AlarmasDeTareasAndroid
 
     override fun onReceive(contexto: Context, intent: Intent) {
         val id = intent.getStringExtra(Notificaciones.EXTRA_TAREA_ID) ?: return
@@ -45,6 +46,7 @@ class ReceptorDeAlarma : BroadcastReceiver() {
             // Si no se pudo leer la base, se avisa igual con el título programado: es preferible a no avisar.
             if (tarea != null && (tarea.resuelto || tarea.tipo != TipoPendiente.TAREA)) return@enSegundoPlano
             Notificaciones.mostrarAvisoDeTarea(contexto, id, tarea?.titulo ?: tituloProgramado)
+            alarmas.registrarAvisada(id)
         }
     }
 
