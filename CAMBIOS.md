@@ -343,3 +343,17 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Qué riesgo resuelve:** que alguien elija "Usar mi cambio" o "Dejar como está" sin saber qué está eligiendo.
 - **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
   pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.
+
+## Alarmas exactas con USE_EXACT_ALARM (RNF06, D10)
+
+- **Problema:** probado en un emulador con Android 15: `SCHEDULE_EXACT_ALARM` viene negado por defecto desde
+  Android 14, así que las alarmas eran aproximadas. La ventana fue de 7 a 35 minutos y una sonó 6 min 44 s
+  tarde, fuera de los ±5 min de RNF06. Ninguna pantalla lo avisaba.
+- **Qué cambió:** el Manifest pide `USE_EXACT_ALARM`, que Android 13+ otorga sin preguntar, y deja
+  `SCHEDULE_EXACT_ALARM` solo para Android 12 (`maxSdkVersion="32"`), donde viene otorgado. El código no cambia:
+  `canScheduleExactAlarms()` da `true` y se usa `setExactAndAllowWhileIdle`.
+- **Por qué este permiso y no pedirle a la persona que active "Alarmas y recordatorios":** un recordatorio con
+  hora elegida por la persona es justo el caso de uso de este permiso, y pedir un ajuste escondido en la
+  configuración es un paso que muchos no harían. **Limitación:** Google Play restringe `USE_EXACT_ALARM` a apps
+  de alarmas, calendario o recordatorios; si Miti se publicara, habría que justificarlo en la ficha o volver a
+  `SCHEDULE_EXACT_ALARM` con el aviso en Hoy.
