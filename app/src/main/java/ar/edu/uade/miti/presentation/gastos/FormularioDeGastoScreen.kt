@@ -48,6 +48,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -301,10 +303,16 @@ private fun Cuotas(
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Toda la fila es el interruptor, como "Avisar a la hora" en la tarea: TalkBack lo lee con su nombre
+            // ("En cuotas, interruptor, desactivado") y se puede tocar en cualquier parte (RNF07, RNF08).
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.toggleable(value = estado.enCuotas, role = Role.Switch, onValueChange = onEnCuotasChange),
+            ) {
                 Icon(Icons.Outlined.CreditCard, contentDescription = null, modifier = Modifier.size(16.dp))
                 Text(stringResource(R.string.gasto_en_cuotas), modifier = Modifier.weight(1f))
-                Switch(checked = estado.enCuotas, onCheckedChange = onEnCuotasChange)
+                Switch(checked = estado.enCuotas, onCheckedChange = null)
             }
             if (estado.enCuotas) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
