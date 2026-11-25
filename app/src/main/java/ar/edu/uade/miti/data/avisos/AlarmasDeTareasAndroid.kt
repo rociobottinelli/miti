@@ -30,8 +30,9 @@ private val Context.avisos: DataStore<Preferences> by preferencesDataStore(name 
  * cancelar las que ya no corresponden: AlarmManager no permite listar las alarmas existentes.
  *
  * Con permiso de alarmas exactas usa setExactAndAllowWhileIdle (suena aunque el celular esté en reposo, RNF06).
- * Sin ese permiso (Android 12+ lo puede negar) usa una alarma aproximada: suena, pero el sistema puede
- * correrla unos minutos; Hoy lo informa (#23).
+ * El Manifest pide USE_EXACT_ALARM, que Android 13+ otorga solo, así que en la práctica siempre son exactas.
+ * Si igual faltara (Android 12 con el permiso revocado a mano), usa una aproximada: suena, pero el sistema
+ * puede correrla varios minutos.
  */
 @Singleton
 class AlarmasDeTareasAndroid @Inject constructor(
