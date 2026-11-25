@@ -1,6 +1,14 @@
 package ar.edu.uade.miti.presentation.hoy
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +60,13 @@ fun HoyScreen(
         }
     }
 
+    // Al volver a Hoy (por ejemplo, desde la configuración del sistema) se miran de nuevo los permisos.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.revisarPermisos()
+        onPauseOrDispose { }
+    }
+    val contexto = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
             val mensaje = when (evento) {
@@ -73,6 +88,7 @@ fun HoyScreen(
         alSincronizar = viewModel::sincronizar,
         alConfirmarMarca = viewModel::confirmarMarca,
         alCancelarMarca = viewModel::cancelarMarca,
+        alConfigurarAvisos = { abrirConfiguracionDeAvisos(contexto, it) },
         snackbarHostState = snackbarHostState,
     )
 
@@ -86,5 +102,24 @@ fun HoyScreen(
             alAgregarCompra = alAgregarCompra,
             alAgregarGasto = alAgregarGasto,
         )
+    }
+}
+
+/**
+ * Abre el ajuste del sistema que falta para los avisos (preentrega, sección 11: "con acceso a la
+ * configuración"). Es navegación hacia afuera de la app, por eso vive en la pantalla y no en el ViewModel.
+ */
+private fun abrirConfiguracionDeAvisos(contexto: Context, falta: AvisoDePermisos) {
+    val paquete = contexto.packageName
+    val intencion = when {
+        falta == AvisoDePermisos.SIN_ALARMAS_EXACTAS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$paquete"))
+        else -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, paquete)
+    }
+    try {
+        contexto.startActivity(intencion)
+    } catch (e: ActivityNotFoundException) {
+        // Algunos fabricantes no tienen esa pantalla: la ficha de la app tiene los mismos ajustes.
+        contexto.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$paquete")))
     }
 }

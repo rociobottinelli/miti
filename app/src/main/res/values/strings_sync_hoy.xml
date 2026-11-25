@@ -12,4 +12,8 @@
     <string name="sync_confirmar_nunca">este celular todavía no se sincronizó</string>
     <string name="sync_confirmar_marcar">Marcar igual</string>
     <string name="sync_confirmar_cancelar">Cancelar</string>
+    <!-- Preentrega, sección 11: aviso en Hoy si faltan permisos para los avisos de tareas. -->
+    <string name="hoy_permiso_notificaciones">Las notificaciones están desactivadas: no te van a llegar los avisos de tareas.</string>
+    <string name="hoy_permiso_alarmas">Sin el permiso de alarmas, los avisos de tareas pueden llegar unos minutos tarde.</string>
+    <string name="hoy_permiso_configurar">Configuración</string>
 </resources>
