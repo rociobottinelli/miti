@@ -6,15 +6,28 @@ Ana y uno de Tomás, para que se vea que lo que hace uno le llega al otro.
 
 ## Preparación (el día antes)
 
-1. **Un hogar limpio**, solo para la demo: dos cuentas nuevas (por ejemplo, `ana.demo@…` y `tomas.demo@…`), un
-   hogar creado por Ana y Tomás unido con el código. El hogar de las pruebas automáticas tiene datos como
-   "Super 76f5bc7b", que no se pueden mostrar.
-2. **Datos de partida**, cargados desde la app:
-   - Rutina **"Darle de comer a Pancho"**, todos los días, 2 veces.
-   - Rutina **"Regar las plantas"**, todos los días, 1 vez.
-   - Compras: **Leche, Pan, Yerba**.
-   - Gastos del mes: **Alquiler $ 600.000**, pagó Ana, a medias, y **Heladera $ 900.000** en 6 cuotas, pagó
-     Tomás, a medias.
+1. **Cargar el hogar de demo** con el script, que crea a Ana y Tomás con su perro Pancho y datos que parecen de
+   una casa real. Las fechas se calculan para el día siguiente:
+
+   ```bash
+   python3 supabase/demo/cargar_demo.py
+   ```
+
+   La primera vez va con `--crear-cuentas`. Las contraseñas quedan en `~/.config/miti/supabase.env`
+   (`DEMO_ANA_PASSWORD` y `DEMO_TOMAS_PASSWORD`). Cada vez que se corre, borra lo anterior y vuelve a cargar todo.
+   Después, en cada celular: cerrar sesión e ingresar con `ana@miti.test` o `tomas@miti.test`.
+
+2. **Qué carga:**
+   - **Rutinas:** "Darle de comer a Pancho" (todos los días, 2 veces), "Regar las plantas" (todos los días) y
+     "Sacar la basura" (lunes, miércoles y viernes). Sin marcas, así la demo arranca con "0 de 2".
+   - **Tareas:** "Llamar al plomero por la canilla del baño" (Tomás, mañana a las 18), "Llevar a Pancho a la
+     veterinaria" (Ana, en 2 días a las 10:30, con aviso) y "Pagar las expensas" (Ana, en 4 días, con aviso).
+   - **Compras:** Leche, Pan y Yerba.
+   - **El mes anterior:** alquiler ($ 600.000, Ana), expensas ($ 85.000, Tomás), supermercado, luz y la
+     **heladera en 6 cuotas** ($ 900.000, Tomás). Tomás le pagó $ 150.000 a Ana, así que queda un saldo que pasa
+     al mes de la demo ("De meses anteriores").
+   - **El mes de la demo:** alquiler, expensas, supermercado, internet, vacunas de Pancho (todo a medias), la
+     cuota 2 de 6 de la heladera, y "Remedios de Tomás", que pagó Ana pero son solo de Tomás.
 3. **Widget 4x2** en la pantalla de inicio de los dos celulares.
 4. **Permiso de notificaciones** dado en los dos. Volumen alto en el de Tomás.
 5. Ensayar una vez de punta a punta con un cronómetro.
@@ -43,7 +56,7 @@ Ana y uno de Tomás, para que se vea que lo que hace uno le llega al otro.
 - **Acción:**
   1. Ana agrega "Yerba". Si la vuelve a escribir, la app avisa "Ya está en la lista" (C1).
   2. Tomás, en Compras, tacha Leche y Yerba, que pasan al carrito.
-  3. Toca **Terminé la compra** → **Registrar gasto** → $ 18.500, "Supermercado", pagó Tomás, a medias →
+  3. Toca **Terminé la compra** → **Registrar gasto** → $ 18.500, "Súper chino", pagó Tomás, a medias →
      Guardar.
 - **Respuesta:** en Compras queda solo "Pan". En Balance, en los dos celulares, aparece el gasto y el saldo
   cambia solo.
@@ -72,10 +85,10 @@ Ana y uno de Tomás, para que se vea que lo que hace uno le llega al otro.
 
 - **Escenario:** los dos corrigen el mismo gasto sin estar conectados.
 - **Acción:**
-  1. Tomás, en modo avión, edita "Supermercado" a $ 19.000.
+  1. Tomás, en modo avión, edita "Súper chino" a $ 19.000.
   2. Ana, con conexión, cambia quién pagó a "Ana".
   3. Tomás saca el modo avión.
-- **Respuesta:** a Tomás le aparece arriba de Balance: "Tu cambio en «Supermercado» no se guardó. La otra
+- **Respuesta:** a Tomás le aparece arriba de Balance: "Tu cambio en «Súper chino» no se guardó. La otra
   persona lo cambió antes. Monto: vos pusiste $ 19.000 y quedó $ 18.500. Quién pagó: vos pusiste Tomás y quedó
   Ana." Puede elegir **Usar mi cambio** o **Dejar como está**.
 - **Valor:** en la preentrega, una de las dos ediciones se perdía sin aviso. Ahora nadie pierde un cambio sin
