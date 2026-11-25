@@ -16,7 +16,7 @@
         android:translateX="50.31"
         android:translateY="37.58">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFFFF"
             android:strokeColor="#FFBEC8CA"
             android:strokeWidth="1.27377"
             android:pathData="M58.38 0.64H10.83C5.2 0.64 0.64 5.2 0.64 10.83V92.35C0.64 97.98 5.2 102.54 10.83 102.54H58.38C64.01 102.54 68.57 97.98 68.57 92.35V10.83C68.57 5.2 64.01 0.64 58.38 0.64Z"/>
@@ -46,14 +46,14 @@
         android:translateX="97.66"
         android:translateY="47.55">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFFFF"
             android:pathData="M12.74 0C6.79 0 2.55 4.25 2.55 9.34V12.74L0 15.29V16.98H25.48V15.29L22.93 12.74V9.34C22.93 4.25 18.68 0 12.74 0Z"/>
     </group>
     <group
         android:translateX="106.15"
         android:translateY="62.42">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFFFF"
             android:pathData="M4.25 4.25C6.59 4.25 8.49 3.3 8.49 2.12 8.49 0.95 6.59 0 4.25 0 1.9 0 0 0.95 0 2.12 0 3.3 1.9 4.25 4.25 4.25Z"/>
     </group>
     <group
