@@ -45,6 +45,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
@@ -164,7 +165,14 @@ internal fun ItemDeGasto(gasto: Movimiento.CuotaDeGasto, alTocar: () -> Unit, mo
             IconoDeMovimiento(Icons.AutoMirrored.Outlined.ReceiptLong)
             Column(Modifier.weight(1f).padding(start = 10.dp)) {
                 Row {
-                    Text(gasto.descripcion, style = MaterialTheme.typography.titleSmall, maxLines = 1, modifier = Modifier.weight(1f))
+                    // Hasta dos renglones y "…": con la fuente al 200% (RNF08) un renglón cortaba la descripción en seco.
+                    Text(
+                        gasto.descripcion,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    )
                     Text(formatearPesos(gasto.montoCentavos), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
                 }
                 Text(

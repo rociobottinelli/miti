@@ -12,10 +12,13 @@ private val simbolos = DecimalFormatSymbols(Locale.forLanguageTag("es-AR"))
 private val sinDecimales = DecimalFormat("#,##0", simbolos)
 private val conDecimales = DecimalFormat("#,##0.00", simbolos)
 
-/** "$ 18.750" si son pesos justos, "$ 18.750,50" si hay centavos. */
+/**
+ * "$ 18.750" si son pesos justos, "$ 18.750,50" si hay centavos. Entre "$" y el número va un espacio que no
+ * corta renglón: con la fuente grande (RNF08) "Tomás le debe $" quedaba en un renglón y "74.500" en otro.
+ */
 fun formatearPesos(centavos: Long): String {
     val pesos = BigDecimal.valueOf(centavos, 2)
-    return "$ " + if (centavos % 100 == 0L) sinDecimales.format(pesos) else conDecimales.format(pesos)
+    return "$\u00A0" + if (centavos % 100 == 0L) sinDecimales.format(pesos) else conDecimales.format(pesos)
 }
 
 /** El número para un campo editable, sin "$": "18750" o "18750,50". */
