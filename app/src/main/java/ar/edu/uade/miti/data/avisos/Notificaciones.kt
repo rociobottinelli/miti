@@ -49,6 +49,8 @@ object Notificaciones {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(abrirApp(contexto))
             .setAutoCancel(true)
+            // Si el mismo aviso se vuelve a publicar (por ejemplo, reprogramar justo cuando sonaba), no suena dos veces.
+            .setOnlyAlertOnce(true)
             .addAction(0, contexto.getString(R.string.accion_marcar_hecha), completar)
             .build()
         mostrar(contexto, idDeNotificacion(tareaId), notificacion)
