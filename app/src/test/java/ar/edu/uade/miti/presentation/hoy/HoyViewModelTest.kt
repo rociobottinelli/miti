@@ -70,7 +70,7 @@ class HoyViewModelTest {
 
     private class AlarmasFalsas : AlarmasDeTareas {
         var permisos = PermisosDeAvisos(notificaciones = true, alarmasExactas = true)
-        override suspend fun programarSolo(tareas: List<Pendiente>) = Unit
+        override suspend fun programarSolo(tareas: List<Pendiente>, avisosVigentes: Set<String>) = Unit
         override fun permisos() = permisos
     }
 
