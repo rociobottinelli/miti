@@ -18,6 +18,9 @@ import ar.edu.uade.miti.domain.model.Rutina
 import ar.edu.uade.miti.domain.model.TipoPendiente
 import ar.edu.uade.miti.domain.model.Usuario
 import ar.edu.uade.miti.domain.repository.SesionRepository
+import ar.edu.uade.miti.domain.repository.AlarmasDeTareas
+import ar.edu.uade.miti.domain.model.PermisosDeAvisos
+import ar.edu.uade.miti.domain.usecase.avisos.ConsultarPermisosDeAvisosUseCase
 import ar.edu.uade.miti.domain.usecase.sincronizacion.SincronizarAhoraUseCase
 import ar.edu.uade.miti.domain.usecase.sincronizacion.ObservarItemsSinEnviarUseCase
 import ar.edu.uade.miti.domain.usecase.sincronizacion.ObservarEstadoDeSincronizacionUseCase
@@ -63,6 +66,13 @@ class HoyViewModelTest {
     private val hogar = FakeHogarRepository()
     private val sesion = FakeSesion(Usuario(ANA, "ana@mail.com"))
     private val sync = SyncFalso(miercoles.atTime(9, 25).toInstant(ZoneOffset.UTC))
+    private val alarmas = AlarmasFalsas()
+
+    private class AlarmasFalsas : AlarmasDeTareas {
+        var permisos = PermisosDeAvisos(notificaciones = true, alarmasExactas = true)
+        override suspend fun programarSolo(tareas: List<Pendiente>) = Unit
+        override fun permisos() = permisos
+    }
 
     private val pancho = Rutina("pancho", HOGAR, "Darle de comer a Pancho", Frecuencia.DIARIA, vecesPorDia = 2)
     private val basura = Rutina("basura", HOGAR, "Sacar la basura", Frecuencia.DIARIA, vecesPorDia = 1)
@@ -99,6 +109,7 @@ class HoyViewModelTest {
             observarEstadoDeSincronizacion = ObservarEstadoDeSincronizacionUseCase(sync, reloj),
             observarItemsSinEnviar = ObservarItemsSinEnviarUseCase(sync),
             sincronizarAhora = SincronizarAhoraUseCase(sync),
+            consultarPermisos = ConsultarPermisosDeAvisosUseCase(alarmas),
             reloj = reloj,
         )
     }
@@ -248,6 +259,7 @@ class HoyViewModelTest {
             ObservarEstadoDeSincronizacionUseCase(sync, reloj),
             ObservarItemsSinEnviarUseCase(sync),
             SincronizarAhoraUseCase(sync),
+            ConsultarPermisosDeAvisosUseCase(alarmas),
             reloj,
         )
 
@@ -258,6 +270,28 @@ class HoyViewModelTest {
             vm.reintentar()
 
             assertTrue(awaitItem() is HoyUiState.Contenido)
+        }
+    }
+
+    // Aviso de permisos (preentrega, sección 11)
+
+    @Test
+    fun `sin notificaciones avisa y al volver con el permiso dado el aviso se va`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        alarmas.permisos = PermisosDeAvisos(notificaciones = false, alarmasExactas = false)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            // Faltan los dos: se muestra el más grave, el de notificaciones.
+            assertEquals(AvisoDePermisos.SIN_NOTIFICACIONES, (primerEstado() as HoyUiState.Contenido).encabezado.permisos)
+
+            alarmas.permisos = PermisosDeAvisos(notificaciones = true, alarmasExactas = false)
+            vm.revisarPermisos()
+            assertEquals(AvisoDePermisos.SIN_ALARMAS_EXACTAS, (expectMostRecentItem() as HoyUiState.Contenido).encabezado.permisos)
+
+            alarmas.permisos = PermisosDeAvisos(notificaciones = true, alarmasExactas = true)
+            vm.revisarPermisos()
+            assertEquals(null, (expectMostRecentItem() as HoyUiState.Contenido).encabezado.permisos)
         }
     }
 

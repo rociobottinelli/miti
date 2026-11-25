@@ -343,3 +343,14 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Qué riesgo resuelve:** que alguien elija "Usar mi cambio" o "Dejar como está" sin saber qué está eligiendo.
 - **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
   pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.
+
+## Hoy avisa si faltan permisos para los avisos de tareas (preentrega, sección 11)
+
+- **Problema:** la preentrega diseña el estado "permiso de notificaciones rechazado" (un aviso en Hoy con acceso
+  a la configuración) y dice que lo mismo pasa sin alarmas exactas. `ConsultarPermisosDeAvisosUseCase` ya existía,
+  pero ninguna pantalla lo usaba: si la persona negaba las notificaciones, los avisos no llegaban y nada lo decía.
+- **Qué cambió:** `Encabezado.permisos` (`AvisoDePermisos`: sin notificaciones, que es lo más grave, o sin
+  alarmas exactas). Hoy lo muestra con `AvisoMiti` y el botón "Configuración", que abre el ajuste del sistema
+  que falta. Los permisos se vuelven a mirar cada vez que Hoy vuelve a pantalla (`LifecycleResumeEffect`).
+- **Cómo se probó:** test del ViewModel: sin los dos permisos muestra el de notificaciones; al darlo pasa al de
+  alarmas; con los dos el aviso desaparece.
