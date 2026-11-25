@@ -7,9 +7,9 @@ import org.junit.Test
 class DineroTest {
     @Test
     fun `formatea como en Argentina, sin decimales si son pesos justos`() {
-        assertEquals("$ 18.750", formatearPesos(1_875_000))
-        assertEquals("$ 1.234,50", formatearPesos(123_450))
-        assertEquals("$ 0", formatearPesos(0))
+        assertEquals("$\u00A018.750", formatearPesos(1_875_000))
+        assertEquals("$\u00A01.234,50", formatearPesos(123_450))
+        assertEquals("$\u00A00", formatearPesos(0))
     }
 
     @Test
@@ -31,5 +31,10 @@ class DineroTest {
     @Test
     fun `el monto editable vuelve a leerse igual`() {
         listOf(1_875_000L, 123_450L, 5L).forEach { assertEquals(it, leerMontoEnCentavos(montoEditable(it))) }
+    }
+
+    @Test
+    fun `el signo y el numero no se separan en dos renglones`() {
+        assertEquals('\u00A0', formatearPesos(7_450_000)[1])
     }
 }
