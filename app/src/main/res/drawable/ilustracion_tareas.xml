@@ -29,7 +29,7 @@
         android:translateX="63.7"
         android:translateY="61.14">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFFFF"
             android:pathData="M98.5 0H11.89C5.32 0 0 5.32 0 11.89V54.35C0 60.91 5.32 66.24 11.89 66.24H98.5C105.07 66.24 110.39 60.91 110.39 54.35V11.89C110.39 5.32 105.07 0 98.5 0Z"/>
     </group>
     <group
@@ -147,7 +147,7 @@
         android:translateX="138.63"
         android:translateY="14.65">
         <path
-            android:fillColor="#FF000000"
+            android:fillColor="#FFFFFFFF"
             android:strokeColor="#FFBEC8CA"
             android:strokeWidth="1.27377"
             android:pathData="M21.02 41.4C32.27 41.4 41.4 32.27 41.4 21.02 41.4 9.76 32.27 0.64 21.02 0.64 9.76 0.64 0.64 9.76 0.64 21.02 0.64 32.27 9.76 41.4 21.02 41.4Z"/>

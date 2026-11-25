@@ -343,3 +343,55 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Qué riesgo resuelve:** que alguien elija "Usar mi cambio" o "Dejar como está" sin saber qué está eligiendo.
 - **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
   pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.
+
+## El aviso de una tarea ya no desaparece al sonar (#23)
+
+- **Problema:** probado en un emulador con Android 15: la alarma sonaba, la notificación se publicaba y
+  200 ms después la misma app la retiraba. Al sonar, Android arranca el proceso; al arrancar, la app reprograma
+  los avisos, y como la tarea ya había pasado su hora quedaba afuera de las programadas, y `programarSolo`
+  cancelaba su alarma **y su notificación**.
+- **Qué cambió:** `ReprogramarAvisosUseCase` le pasa a `AlarmasDeTareas` también qué tareas siguen con el aviso
+  vigente (`TareasConAviso.conAvisoVigente`: propias, con aviso y sin resolver, sin mirar la hora). La alarma de
+  una tarea que ya sonó se deja de programar, pero su notificación solo se retira si la tarea se resolvió, se
+  borró o cambió de responsable.
+- **Qué riesgo resuelve:** que el aviso de RNF06 nunca se vea.
+- **Cómo se probó:** tests de dominio y de datos (Robolectric) para los dos casos, y en el emulador: tarea con
+  aviso, modo avión, reinicio y reloj adelantado; la notificación queda a la vista.
+
+## Alarmas exactas con USE_EXACT_ALARM (RNF06, D10)
+
+- **Problema:** probado en un emulador con Android 15: `SCHEDULE_EXACT_ALARM` viene negado por defecto desde
+  Android 14, así que las alarmas eran aproximadas. La ventana fue de 7 a 35 minutos y una sonó 6 min 44 s
+  tarde, fuera de los ±5 min de RNF06. Ninguna pantalla lo avisaba.
+- **Qué cambió:** el Manifest pide `USE_EXACT_ALARM`, que Android 13+ otorga sin preguntar, y deja
+  `SCHEDULE_EXACT_ALARM` solo para Android 12 (`maxSdkVersion="32"`), donde viene otorgado. El código no cambia:
+  `canScheduleExactAlarms()` da `true` y se usa `setExactAndAllowWhileIdle`.
+- **Por qué este permiso y no pedirle a la persona que active "Alarmas y recordatorios":** un recordatorio con
+  hora elegida por la persona es justo el caso de uso de este permiso, y pedir un ajuste escondido en la
+  configuración es un paso que muchos no harían. **Limitación:** Google Play restringe `USE_EXACT_ALARM` a apps
+  de alarmas, calendario o recordatorios; si Miti se publicara, habría que justificarlo en la ficha o volver a
+  `SCHEDULE_EXACT_ALARM` con el aviso en Hoy.
+
+## Hoy avisa si faltan permisos para los avisos de tareas (preentrega, sección 11)
+
+- **Problema:** la preentrega diseña el estado "permiso de notificaciones rechazado" (un aviso en Hoy con acceso
+  a la configuración) y dice que lo mismo pasa sin alarmas exactas. `ConsultarPermisosDeAvisosUseCase` ya existía,
+  pero ninguna pantalla lo usaba: si la persona negaba las notificaciones, los avisos no llegaban y nada lo decía.
+- **Qué cambió:** `Encabezado.permisos` (`AvisoDePermisos`: sin notificaciones, que es lo más grave, o sin
+  alarmas exactas). Hoy lo muestra con `AvisoMiti` y el botón "Configuración", que abre el ajuste del sistema
+  que falta. Los permisos se vuelven a mirar cada vez que Hoy vuelve a pantalla (`LifecycleResumeEffect`).
+- **Cómo se probó:** test del ViewModel: sin los dos permisos muestra el de notificaciones; al darlo pasa al de
+  alarmas; con los dos el aviso desaparece.
+
+## Con la app en pantalla se sincroniza cada 15 segundos (C1)
+
+- **Problema:** con los dos celulares con la app abierta, lo que cambiaba uno no le llegaba al otro hasta
+  cerrar y volver a abrir la app, o hasta la sincronización periódica (15 min). Es el punto débil que marcó la
+  corrección C1.
+- **Qué cambió:** mientras la app está en pantalla, `MainActivity` sincroniza al volver a primer plano y después
+  cada 15 s (`repetirCada(SYNC_EN_PANTALLA)` dentro de `repeatOnLifecycle(STARTED)`, que corta solo en `onStop`).
+  En segundo plano queda la periódica de 15 min. No cambia el backend: es el mismo `SyncWorker` (D06) más seguido,
+  y cada consulta baja solo lo nuevo.
+- **Por qué no Realtime de Supabase:** daría 1–2 s en vez de 15, pero suma una librería y se parece a "push desde
+  el servidor", que la preentrega deja fuera de alcance. Si hiciera falta, se puede sumar encima sin tirar esto.
+- **Cómo se probó:** tests con tiempo virtual (sincroniza al entrar, cada 15 s y deja de hacerlo al salir).

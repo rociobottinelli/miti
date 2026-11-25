@@ -30,8 +30,9 @@ private val Context.avisos: DataStore<Preferences> by preferencesDataStore(name 
  * cancelar las que ya no corresponden: AlarmManager no permite listar las alarmas existentes.
  *
  * Con permiso de alarmas exactas usa setExactAndAllowWhileIdle (suena aunque el celular esté en reposo, RNF06).
- * Sin ese permiso (Android 12+ lo puede negar) usa una alarma aproximada: suena, pero el sistema puede
- * correrla unos minutos; Hoy lo informa (#23).
+ * El Manifest pide USE_EXACT_ALARM, que Android 13+ otorga solo, así que en la práctica siempre son exactas.
+ * Si igual faltara (Android 12 con el permiso revocado a mano), usa una aproximada: suena, pero el sistema
+ * puede correrla varios minutos.
  */
 @Singleton
 class AlarmasDeTareasAndroid @Inject constructor(
@@ -41,13 +42,15 @@ class AlarmasDeTareasAndroid @Inject constructor(
     private val alarmManager get() = contexto.getSystemService(AlarmManager::class.java)
     private val programadas = stringSetPreferencesKey("tareas_programadas")
 
-    override suspend fun programarSolo(tareas: List<Pendiente>) {
+    override suspend fun programarSolo(tareas: List<Pendiente>, avisosVigentes: Set<String>) {
         val anteriores = contexto.avisos.data.first()[programadas].orEmpty()
         val nuevas = tareas.map { it.id }.toSet()
 
         (anteriores - nuevas).forEach { id ->
             alarmManager.cancel(intencion(id, titulo = ""))
-            Notificaciones.cancelarAvisoDeTarea(contexto, id)
+            // Si la tarea sale porque ya sonó, su notificación se queda: la app arranca justo al sonar la
+            // alarma y reprograma; sin esto, retiraba el aviso que acababa de mostrar.
+            if (id !in avisosVigentes) Notificaciones.cancelarAvisoDeTarea(contexto, id)
         }
         tareas.forEach { tarea -> programar(tarea) }
 

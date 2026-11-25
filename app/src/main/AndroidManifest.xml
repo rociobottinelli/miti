@@ -7,10 +7,16 @@
     <!-- Saber si hay conexión para el banner "Sin conexión" (#19). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Avisos de tareas (D10, #23): notificaciones (Android 13+, se piden en el primer uso, #17),
-         alarmas exactas (Android 12+) y
-         volver a programarlas después de reiniciar el teléfono. -->
+         alarmas exactas y volver a programarlas después de reiniciar el teléfono. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- RNF06 (±5 min) necesita alarmas exactas. Desde Android 13, USE_EXACT_ALARM las da sin pedirle nada a
+         la persona; SCHEDULE_EXACT_ALARM viene negado por defecto desde Android 14 y sin él la alarma se corría
+         hasta 35 min. En Android 12 (API 31-32) USE_EXACT_ALARM no existe y SCHEDULE_EXACT_ALARM viene otorgado.
+         Ver CAMBIOS.md. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application

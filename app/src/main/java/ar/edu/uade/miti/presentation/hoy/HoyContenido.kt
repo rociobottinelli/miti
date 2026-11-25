@@ -61,6 +61,8 @@ fun HoyContenido(
     alSincronizar: () -> Unit = {},
     alConfirmarMarca: () -> Unit = {},
     alCancelarMarca: () -> Unit = {},
+    /** "Configuración" del aviso de permisos: abre el ajuste del sistema que falta (lo resuelve HoyScreen). */
+    alConfigurarAvisos: (AvisoDePermisos) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
@@ -91,7 +93,7 @@ fun HoyContenido(
                     alTocarAccion = alReintentar,
                 )
                 is HoyUiState.Vacio -> {
-                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
+                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
                     EstadoVacio(
                         titulo = stringResource(R.string.hoy_vacio_titulo),
                         descripcion = stringResource(R.string.hoy_vacio_descripcion),
@@ -102,7 +104,7 @@ fun HoyContenido(
                     )
                 }
                 is HoyUiState.TodoAlDia -> {
-                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
+                    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
                     EstadoVacio(
                         titulo = stringResource(R.string.hoy_al_dia_titulo),
                         descripcion = stringResource(R.string.hoy_al_dia_descripcion),
@@ -111,7 +113,7 @@ fun HoyContenido(
                     )
                 }
                 is HoyUiState.Contenido -> {
-                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar)
+                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
                     estado.confirmarMarca?.let {
                         DialogoConfirmarMarca(it, estado.encabezado.fecha, alConfirmarMarca, alCancelarMarca)
                     }
@@ -128,8 +130,9 @@ private fun ListaDeHoy(
     alElegirFiltro: (FiltroDeTareas) -> Unit,
     alAbrirAjustes: () -> Unit,
     alSincronizar: () -> Unit,
+    alConfigurarAvisos: (AvisoDePermisos) -> Unit,
 ) {
-    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar)
+    EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
     FiltrosDeTareas(estado.filtro, estado.encabezado.otro, alElegirFiltro)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
