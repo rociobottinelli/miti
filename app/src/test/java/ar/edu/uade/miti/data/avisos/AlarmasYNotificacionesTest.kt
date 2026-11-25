@@ -42,7 +42,7 @@ class AlarmasYNotificacionesTest {
 
     @Test
     fun `programa una alarma exacta a la hora de la tarea`() = runTest {
-        alarmas.programarSolo(listOf(tarea("t1")))
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = emptySet())
 
         val alarma = shadowOf(alarmManager).scheduledAlarms.single()
         assertEquals(cuando.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), alarma.triggerAtTime)
@@ -54,7 +54,7 @@ class AlarmasYNotificacionesTest {
     fun `sin permiso de exactas igual programa una aproximada y lo informa`() = runTest {
         ShadowAlarmManager.setCanScheduleExactAlarms(false)
 
-        alarmas.programarSolo(listOf(tarea("t1")))
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = emptySet())
 
         assertEquals(1, shadowOf(alarmManager).scheduledAlarms.size)
         assertFalse(alarmas.permisos().alarmasExactas)
@@ -62,10 +62,10 @@ class AlarmasYNotificacionesTest {
 
     @Test
     fun `cancela las tareas que ya no corresponden y no toca las demas`() = runTest {
-        alarmas.programarSolo(listOf(tarea("t1"), tarea("t2", cuando.plusHours(1))))
+        alarmas.programarSolo(listOf(tarea("t1"), tarea("t2", cuando.plusHours(1))), avisosVigentes = emptySet())
         assertEquals(2, shadowOf(alarmManager).scheduledAlarms.size)
 
-        alarmas.programarSolo(listOf(tarea("t2", cuando.plusHours(1))))
+        alarmas.programarSolo(listOf(tarea("t2", cuando.plusHours(1))), avisosVigentes = emptySet())
 
         val quedan = shadowOf(alarmManager).scheduledAlarms
         assertEquals(1, quedan.size)
@@ -74,8 +74,8 @@ class AlarmasYNotificacionesTest {
 
     @Test
     fun `reprogramar la misma tarea con otra hora no la duplica`() = runTest {
-        alarmas.programarSolo(listOf(tarea("t1")))
-        alarmas.programarSolo(listOf(tarea("t1", cuando.plusMinutes(30))))
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = emptySet())
+        alarmas.programarSolo(listOf(tarea("t1", cuando.plusMinutes(30))), avisosVigentes = emptySet())
 
         assertEquals(1, shadowOf(alarmManager).scheduledAlarms.size)
     }
@@ -88,6 +88,28 @@ class AlarmasYNotificacionesTest {
         assertEquals("Pagar ABL", shadowOf(notificacion).contentTitle)
         assertEquals("Marcar como hecha", notificacion.actions.single().title)
         assertEquals(Notificaciones.CANAL_AVISOS, notificacion.channelId)
+    }
+
+    @Test
+    fun `una tarea que ya sono y sigue pendiente conserva su notificacion`() = runTest {
+        // La alarma arranca la app, la app reprograma y la tarea ya no se programa porque pasó su hora.
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = setOf("t1"))
+        Notificaciones.mostrarAvisoDeTarea(app, "t1", "Pagar ABL")
+
+        alarmas.programarSolo(emptyList(), avisosVigentes = setOf("t1"))
+
+        assertTrue(shadowOf(alarmManager).scheduledAlarms.isEmpty())
+        assertEquals(1, shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications.size)
+    }
+
+    @Test
+    fun `si la tarea se resolvio se retira su notificacion`() = runTest {
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = setOf("t1"))
+        Notificaciones.mostrarAvisoDeTarea(app, "t1", "Pagar ABL")
+
+        alarmas.programarSolo(emptyList(), avisosVigentes = emptySet())
+
+        assertTrue(shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications.isEmpty())
     }
 
     @Test

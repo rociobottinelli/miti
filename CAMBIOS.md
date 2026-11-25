@@ -344,6 +344,20 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
   pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.
 
+## El aviso de una tarea ya no desaparece al sonar (#23)
+
+- **Problema:** probado en un emulador con Android 15: la alarma sonaba, la notificación se publicaba y
+  200 ms después la misma app la retiraba. Al sonar, Android arranca el proceso; al arrancar, la app reprograma
+  los avisos, y como la tarea ya había pasado su hora quedaba afuera de las programadas, y `programarSolo`
+  cancelaba su alarma **y su notificación**.
+- **Qué cambió:** `ReprogramarAvisosUseCase` le pasa a `AlarmasDeTareas` también qué tareas siguen con el aviso
+  vigente (`TareasConAviso.conAvisoVigente`: propias, con aviso y sin resolver, sin mirar la hora). La alarma de
+  una tarea que ya sonó se deja de programar, pero su notificación solo se retira si la tarea se resolvió, se
+  borró o cambió de responsable.
+- **Qué riesgo resuelve:** que el aviso de RNF06 nunca se vea.
+- **Cómo se probó:** tests de dominio y de datos (Robolectric) para los dos casos, y en el emulador: tarea con
+  aviso, modo avión, reinicio y reloj adelantado; la notificación queda a la vista.
+
 ## Alarmas exactas con USE_EXACT_ALARM (RNF06, D10)
 
 - **Problema:** probado en un emulador con Android 15: `SCHEDULE_EXACT_ALARM` viene negado por defecto desde

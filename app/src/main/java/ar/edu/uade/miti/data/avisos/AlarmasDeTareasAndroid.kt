@@ -42,13 +42,15 @@ class AlarmasDeTareasAndroid @Inject constructor(
     private val alarmManager get() = contexto.getSystemService(AlarmManager::class.java)
     private val programadas = stringSetPreferencesKey("tareas_programadas")
 
-    override suspend fun programarSolo(tareas: List<Pendiente>) {
+    override suspend fun programarSolo(tareas: List<Pendiente>, avisosVigentes: Set<String>) {
         val anteriores = contexto.avisos.data.first()[programadas].orEmpty()
         val nuevas = tareas.map { it.id }.toSet()
 
         (anteriores - nuevas).forEach { id ->
             alarmManager.cancel(intencion(id, titulo = ""))
-            Notificaciones.cancelarAvisoDeTarea(contexto, id)
+            // Si la tarea sale porque ya sonó, su notificación se queda: la app arranca justo al sonar la
+            // alarma y reprograma; sin esto, retiraba el aviso que acababa de mostrar.
+            if (id !in avisosVigentes) Notificaciones.cancelarAvisoDeTarea(contexto, id)
         }
         tareas.forEach { tarea -> programar(tarea) }
 

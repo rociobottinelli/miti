@@ -55,7 +55,11 @@ class AvisosDeTareasTest {
 
     private class FakeAlarmas : AlarmasDeTareas {
         var programadas: List<String>? = null
-        override suspend fun programarSolo(tareas: List<Pendiente>) { programadas = tareas.map { it.id } }
+        var vigentes: Set<String>? = null
+        override suspend fun programarSolo(tareas: List<Pendiente>, avisosVigentes: Set<String>) {
+            programadas = tareas.map { it.id }
+            vigentes = avisosVigentes
+        }
         override fun permisos() = PermisosDeAvisos(notificaciones = true, alarmasExactas = false)
     }
 
@@ -78,6 +82,22 @@ class AvisosDeTareasTest {
     }
 
     @Test
+    fun `una tarea que ya sono sigue con el aviso vigente aunque no se programe`() = runTest {
+        val pendientes = FakePendienteRepository()
+        pendientes.pendientes.value = listOf(
+            tarea("sono", cuando = ahora.minusMinutes(5)),
+            tarea("resuelta", cuando = ahora.minusMinutes(5), resuelto = true),
+            tarea("de-tomas", responsable = TOMAS, cuando = ahora.minusMinutes(5)),
+        )
+        val alarmas = FakeAlarmas()
+
+        ReprogramarAvisosUseCase(pendientes, FakeSesion(Usuario(ANA, "ana@mail.com")), alarmas, relojEn(ahora))()
+
+        assertEquals(emptyList<String>(), alarmas.programadas)
+        assertEquals(setOf("sono"), alarmas.vigentes)
+    }
+
+    @Test
     fun `al cerrar sesion reprogramar cancela todo`() = runTest {
         val pendientes = FakePendienteRepository()
         pendientes.pendientes.value = listOf(tarea("mia"))
@@ -86,6 +106,7 @@ class AvisosDeTareasTest {
         ReprogramarAvisosUseCase(pendientes, FakeSesion(null), alarmas, relojEn(ahora))()
 
         assertEquals(emptyList<String>(), alarmas.programadas)
+        assertEquals(emptySet<String>(), alarmas.vigentes)
     }
 
     @Test
