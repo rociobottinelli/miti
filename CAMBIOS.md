@@ -395,3 +395,28 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Por qué no Realtime de Supabase:** daría 1–2 s en vez de 15, pero suma una librería y se parece a "push desde
   el servidor", que la preentrega deja fuera de alcance. Si hiciera falta, se puede sumar encima sin tirar esto.
 - **Cómo se probó:** tests con tiempo virtual (sincroniza al entrar, cada 15 s y deja de hacerlo al salir).
+
+## Un aviso que no sonó por un reinicio suena apenas se puede (RNF06, D10)
+
+- **Problema:** probado en un emulador: tarea con aviso a las 19:00, modo avión y reinicio a las 18:59. El
+  teléfono terminó de arrancar a las 18:59:13, pero Android le avisó a la app del reinicio recién a las
+  19:00:05. Al reprogramar, la tarea ya había vencido y no se volvía a programar: **el aviso se perdía**.
+- **Qué cambió:** `AlarmasDeTareasAndroid` recuerda qué avisos ya se mostraron (`ReceptorDeAlarma` los anota). Al
+  reprogramar, una tarea que estaba programada, sigue pendiente, pasó su hora y no se avisó, suena en ese momento.
+  Si se le cambia la hora, puede volver a sonar. La notificación usa `setOnlyAlertOnce`, así que si se publica dos
+  veces no suena dos veces.
+- **Qué riesgo resuelve:** que una tarea con aviso no avise nunca.
+- **Cómo se probó:** tests con Robolectric (suena ahora si no se avisó; no se repite; si ya sonó no vuelve a
+  sonar) y en el emulador: con el receptor de alarmas desactivado se pasó la hora sin aviso, y al abrir la app
+  aparecieron las dos notificaciones perdidas.
+
+## No mostrar conflictos de gasto que ya no tienen diferencias (C2)
+
+- **Problema:** probado en dos emuladores: un conflicto viejo se mostraba como "La otra persona lo cambió antes"
+  sin ninguna línea de qué cambió. La persona había rehecho su cambio desde otro celular, así que su versión y la
+  que quedó eran iguales, pero marcar un conflicto como resuelto se guarda solo en el celular donde se resolvió.
+- **Qué cambió:** `ConflictoDeGasto.yaCoinciden` (no era un borrado, el gasto existe y no hay campos distintos) y
+  `ObservarConflictosDeGastoUseCase` deja de mostrar esos conflictos. Los de borrado y los de un gasto que ya no
+  está se siguen mostrando.
+- **Qué riesgo resuelve:** un aviso que asusta y no dice nada, con dos botones que no cambian nada.
+- **Cómo se probó:** test del caso de uso con los cuatro casos (iguales, distintos, borrado, gasto que ya no está).
