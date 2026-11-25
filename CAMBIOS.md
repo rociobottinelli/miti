@@ -343,3 +343,16 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Qué riesgo resuelve:** que alguien elija "Usar mi cambio" o "Dejar como está" sin saber qué está eligiendo.
 - **Cómo se probó:** tests del dominio (cada campo, varios a la vez, gasto borrado) y del ViewModel (conflicto por
   pagador, por reparto y sin gasto); caso 9.7 de la guía de testing en dos celulares.
+
+## Con la app en pantalla se sincroniza cada 15 segundos (C1)
+
+- **Problema:** con los dos celulares con la app abierta, lo que cambiaba uno no le llegaba al otro hasta
+  cerrar y volver a abrir la app, o hasta la sincronización periódica (15 min). Es el punto débil que marcó la
+  corrección C1.
+- **Qué cambió:** mientras la app está en pantalla, `MainActivity` sincroniza al volver a primer plano y después
+  cada 15 s (`repetirCada(SYNC_EN_PANTALLA)` dentro de `repeatOnLifecycle(STARTED)`, que corta solo en `onStop`).
+  En segundo plano queda la periódica de 15 min. No cambia el backend: es el mismo `SyncWorker` (D06) más seguido,
+  y cada consulta baja solo lo nuevo.
+- **Por qué no Realtime de Supabase:** daría 1–2 s en vez de 15, pero suma una librería y se parece a "push desde
+  el servidor", que la preentrega deja fuera de alcance. Si hiciera falta, se puede sumar encima sin tirar esto.
+- **Cómo se probó:** tests con tiempo virtual (sincroniza al entrar, cada 15 s y deja de hacerlo al salir).
