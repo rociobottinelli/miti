@@ -395,3 +395,14 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
 - **Por qué no Realtime de Supabase:** daría 1–2 s en vez de 15, pero suma una librería y se parece a "push desde
   el servidor", que la preentrega deja fuera de alcance. Si hiciera falta, se puede sumar encima sin tirar esto.
 - **Cómo se probó:** tests con tiempo virtual (sincroniza al entrar, cada 15 s y deja de hacerlo al salir).
+
+## No mostrar conflictos de gasto que ya no tienen diferencias (C2)
+
+- **Problema:** probado en dos emuladores: un conflicto viejo se mostraba como "La otra persona lo cambió antes"
+  sin ninguna línea de qué cambió. La persona había rehecho su cambio desde otro celular, así que su versión y la
+  que quedó eran iguales, pero marcar un conflicto como resuelto se guarda solo en el celular donde se resolvió.
+- **Qué cambió:** `ConflictoDeGasto.yaCoinciden` (no era un borrado, el gasto existe y no hay campos distintos) y
+  `ObservarConflictosDeGastoUseCase` deja de mostrar esos conflictos. Los de borrado y los de un gasto que ya no
+  está se siguen mostrando.
+- **Qué riesgo resuelve:** un aviso que asusta y no dice nada, con dos botones que no cambian nada.
+- **Cómo se probó:** test del caso de uso con los cuatro casos (iguales, distintos, borrado, gasto que ya no está).
