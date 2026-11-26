@@ -13,6 +13,7 @@ import ar.edu.uade.miti.domain.model.Integrante
 import ar.edu.uade.miti.domain.usecase.gastos.DescartarConflictoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObservarConflictosDeGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObtenerBalanceDelMesUseCase
+import ar.edu.uade.miti.domain.usecase.gastos.EliminarPagoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarPagoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RehacerMiEdicionUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
@@ -50,6 +51,7 @@ class BalanceViewModel @Inject constructor(
     private val observarIntegrantes: ObservarIntegrantesUseCase,
     private val observarConflictos: ObservarConflictosDeGastoUseCase,
     private val registrarPago: RegistrarPagoUseCase,
+    private val eliminarPago: EliminarPagoUseCase,
     private val rehacerMiEdicion: RehacerMiEdicionUseCase,
     private val descartarConflicto: DescartarConflictoUseCase,
     private val reloj: Clock,
@@ -177,6 +179,14 @@ class BalanceViewModel @Inject constructor(
                     _eventos.emit(EventoDeBalance.NoSePudo(r.message))
                 }
             }
+        }
+    }
+
+    /** Borra un pago cargado por error (ya confirmado en el diálogo). */
+    fun borrarPago(pagoId: String) = viewModelScope.launch {
+        when (val r = eliminarPago(pagoId)) {
+            is Resource.Success -> _eventos.emit(EventoDeBalance.Mensaje(R.string.pago_borrado))
+            is Resource.Error -> _eventos.emit(EventoDeBalance.NoSePudo(r.message))
         }
     }
 

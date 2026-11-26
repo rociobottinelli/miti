@@ -37,6 +37,13 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -197,12 +204,31 @@ internal fun ItemDeGasto(gasto: Movimiento.CuotaDeGasto, alTocar: () -> Unit, mo
 
 /** Un pago registrado: se descuenta del balance del mes de su fecha. */
 @Composable
-internal fun ItemDePago(pago: Movimiento.PagoHecho, modifier: Modifier = Modifier) {
+internal fun ItemDePago(pago: Movimiento.PagoHecho, alBorrar: () -> Unit, modifier: Modifier = Modifier) {
+    // Un pago no se edita: si se cargó mal, se borra (con confirmación) y se vuelve a cargar.
+    var confirmar by rememberSaveable { mutableStateOf(false) }
+    if (confirmar) {
+        AlertDialog(
+            onDismissRequest = { confirmar = false },
+            title = { Text(stringResource(R.string.pago_borrar_titulo)) },
+            text = {
+                Text(stringResource(R.string.pago_borrar_texto, formatearPesos(pago.montoCentavos), pago.de, pago.a))
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmar = false; alBorrar() }) { Text(stringResource(R.string.pago_borrar)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmar = false }) { Text(stringResource(R.string.accion_cancelar)) }
+            },
+        )
+    }
+    val borrarPago = stringResource(R.string.pago_borrar)
     OutlinedCard(
+        onClick = { confirmar = true },
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         shape = MaterialTheme.shapes.medium,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().semantics { onClick(label = borrarPago) { confirmar = true; true } },
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             IconoDeMovimiento(Icons.Outlined.SwapHoriz)

@@ -459,3 +459,12 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   nuevo en `verificar_acceso_por_hogar.sql` (Tomás deshace la suya, no la de Ana, y una deshecha no vuelve).
 - **Importante:** la migración 5 tiene que correrse en Supabase **antes** de usar esta versión. Sin ella, el
   servidor rechaza el PATCH y la sincronización falla hasta que se corra.
+
+## Borrar un pago cargado por error
+
+- **Problema:** un pago no se podía corregir ni borrar. Si se cargaba mal (monto, dirección o dos veces), el
+  balance, que es el valor central de la app, quedaba mal para siempre.
+- **Qué cambió:** tocar un pago en Balance pregunta "¿Borrar este pago?" con el monto y quién le pagó a quién, y
+  `EliminarPagoUseCase` lo borra (borrado lógico, D07). El balance se recalcula solo y el otro celular lo recibe al
+  sincronizar. Un pago no se edita: si estaba mal, se borra y se vuelve a cargar.
+- **Cómo se probó:** test del ViewModel: al borrar el pago, la deuda vuelve.

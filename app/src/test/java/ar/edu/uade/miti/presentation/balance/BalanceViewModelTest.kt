@@ -12,11 +12,13 @@ import ar.edu.uade.miti.domain.fakes.relojEn
 import ar.edu.uade.miti.domain.model.CampoDeGasto
 import ar.edu.uade.miti.domain.model.ConflictoDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
+import ar.edu.uade.miti.domain.model.Pago
 import ar.edu.uade.miti.domain.model.Integrante
 import ar.edu.uade.miti.domain.model.Reparto
 import ar.edu.uade.miti.domain.usecase.gastos.DescartarConflictoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObservarConflictosDeGastoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.ObtenerBalanceDelMesUseCase
+import ar.edu.uade.miti.domain.usecase.gastos.EliminarPagoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarPagoUseCase
 import ar.edu.uade.miti.domain.usecase.gastos.RehacerMiEdicionUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
@@ -49,6 +51,7 @@ class BalanceViewModelTest {
         ObservarIntegrantesUseCase(hogares),
         ObservarConflictosDeGastoUseCase(gastos),
         RegistrarPagoUseCase(hogares, gastos, reloj, IdsSecuenciales()),
+        EliminarPagoUseCase(gastos),
         RehacerMiEdicionUseCase(gastos),
         DescartarConflictoUseCase(gastos),
         reloj,
@@ -95,6 +98,22 @@ class BalanceViewModelTest {
         assertEquals(noviembre, vm.contenido().mes)
         vm.mesAnterior()
         assertEquals(noviembre.minusMonths(1), vm.uiState.first { (it as? BalanceUiState.Contenido)?.mes == noviembre.minusMonths(1) }.let { (it as BalanceUiState.Contenido).mes })
+    }
+
+    @Test
+    fun `borrar un pago cargado por error lo saca y la deuda vuelve`() = runTest {
+        gastos.gastos.value = listOf(Gasto("g1", HOGAR, "Super", 2_400_000, TOMAS, Reparto.A_MEDIAS, mesInicio = noviembre))
+        gastos.pagos.value = listOf(Pago("p1", HOGAR, ANA, TOMAS, 1_200_000, LocalDate.of(2026, 11, 20)))
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+        assertNull(vm.contenido().resultado)
+
+        vm.eventos.test {
+            vm.borrarPago("p1")
+            assertEquals(EventoDeBalance.Mensaje(R.string.pago_borrado), awaitItem())
+        }
+        assertTrue(gastos.pagos.value.isEmpty())
+        assertEquals(1_200_000L, vm.contenido().resultado?.montoCentavos)
     }
 
     @Test

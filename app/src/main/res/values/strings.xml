@@ -73,6 +73,10 @@
     <string name="pago_confirmar">Registrar</string>
     <string name="pago_error_monto">Ingresá un monto mayor a cero</string>
     <string name="pago_registrado">Pago registrado</string>
+    <string name="pago_borrar">Borrar pago</string>
+    <string name="pago_borrar_titulo">¿Borrar este pago?</string>
+    <string name="pago_borrar_texto">El pago de %1$s de %2$s a %3$s sale del balance en los dos celulares.</string>
+    <string name="pago_borrado">Pago borrado</string>
     <string name="conflicto_titulo">Tu cambio en «%1$s» no se guardó</string>
     <string name="conflicto_cambio_antes">La otra persona lo cambió antes.</string>
     <!-- Una línea por campo que cambió (#51): "Quién pagó: vos pusiste Tomás y quedó Ana." -->
