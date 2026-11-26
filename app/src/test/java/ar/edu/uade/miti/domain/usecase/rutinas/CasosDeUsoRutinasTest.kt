@@ -12,6 +12,7 @@ import ar.edu.uade.miti.domain.fakes.relojEn
 import ar.edu.uade.miti.domain.model.Frecuencia
 import ar.edu.uade.miti.domain.model.RegistroRutina
 import ar.edu.uade.miti.domain.model.Rutina
+import ar.edu.uade.miti.domain.usecase.rutinas.DeshacerMarcaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.RegistrarRutinaUseCase
@@ -133,5 +134,21 @@ class CasosDeUsoRutinasTest {
         val marcarRutina = MarcarRutinaUseCase(repositorio, relojEn(juevesALas8), IdsSecuenciales())
 
         assertTrue(marcarRutina("no-existe", TOMAS) is Resource.Error)
+    }
+
+    @Test
+    fun `deshacer saca la ultima marca propia de hoy y no toca las del otro`() = runTest {
+        val repositorio = FakeRutinaRepository()
+        repositorio.registros.value = listOf(
+            RegistroRutina("ana-8", "pancho", ANA, juevesALas8.minusHours(1)),
+            RegistroRutina("tomas-8", "pancho", TOMAS, juevesALas8),
+            RegistroRutina("ana-ayer", "pancho", ANA, juevesALas8.minusDays(1)),
+        )
+        val deshacer = DeshacerMarcaUseCase(repositorio, relojEn(juevesALas8))
+
+        assertEquals(Resource.Success(true), deshacer("pancho", ANA))
+        assertEquals(listOf("tomas-8", "ana-ayer"), repositorio.registros.value.map { it.id })
+        // Ya no le queda ninguna marca propia de hoy.
+        assertEquals(Resource.Success(false), deshacer("pancho", ANA))
     }
 }

@@ -296,6 +296,33 @@ begin
     end if;
 end $$;
 
+-- 10. Deshacer marcas (migración 5): cada uno deshace solo las suyas, y una marca deshecha no vuelve.
+reset role;
+select pg_temp.como('00000000-0000-4000-a000-00000000000b', 'tomas@prueba.miti');
+set local role authenticated;
+do $$
+begin
+    update public.registros_rutina set deleted = true, updated_at = 10
+    where id = '50000000-0000-4000-a000-000000000002';
+    if not found or not (select deleted from public.registros_rutina where id = '50000000-0000-4000-a000-000000000002') then
+        raise exception 'FALLÓ: Tomás no pudo deshacer su marca';
+    end if;
+
+    -- La de Ana no la puede tocar: la política no la deja ver para editar.
+    update public.registros_rutina set deleted = true, updated_at = 11
+    where id = '50000000-0000-4000-a000-000000000001';
+    if found or (select deleted from public.registros_rutina where id = '50000000-0000-4000-a000-000000000001') then
+        raise exception 'FALLÓ: Tomás pudo deshacer una marca de Ana';
+    end if;
+
+    -- Una marca deshecha no vuelve.
+    update public.registros_rutina set deleted = false, updated_at = 12
+    where id = '50000000-0000-4000-a000-000000000002';
+    if not (select deleted from public.registros_rutina where id = '50000000-0000-4000-a000-000000000002') then
+        raise exception 'FALLÓ: una marca deshecha se volvió a activar';
+    end if;
+end $$;
+
 reset role;
 select 'OK: todas las verificaciones de acceso por hogar pasaron' as resultado;
 

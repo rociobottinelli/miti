@@ -34,6 +34,10 @@ interface RutinaDao {
     @Query("UPDATE rutinas SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
     suspend fun marcarBorrada(id: String, ahora: Long)
 
+    /** Deshacer una marca: borrado lógico, para que el otro celular también la deje de contar. */
+    @Query("UPDATE registros_rutina SET deleted = 1, updatedAt = :ahora, syncState = 'PENDIENTE' WHERE id = :id")
+    suspend fun marcarRegistroBorrado(id: String, ahora: Long)
+
     // --- Sincronización (#18). Incluyen filas borradas: el borrado lógico también viaja. ---
 
     @Query("SELECT * FROM rutinas WHERE syncState = 'PENDIENTE'")

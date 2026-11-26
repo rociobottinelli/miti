@@ -10,7 +10,9 @@ import ar.edu.uade.miti.domain.repository.PendienteRepository
 import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import ar.edu.uade.miti.domain.repository.SituacionDeSincronizacion
 import ar.edu.uade.miti.domain.usecase.gastos.RegistrarGastoUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.MarcarEnCarritoUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.RestaurarPendienteUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarListaDeComprasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.RegistrarCompraUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.TerminarCompraUseCase
@@ -67,6 +69,8 @@ class ComprasViewModelTest {
         registrarCompra = RegistrarCompraUseCase(hogares, pendientes, ids),
         marcarEnCarrito = MarcarEnCarritoUseCase(pendientes),
         terminarCompra = TerminarCompraUseCase(pendientes, RegistrarGastoUseCase(hogares, FakeGastoRepository(), reloj, ids)),
+        eliminarPendiente = EliminarPendienteUseCase(pendientes),
+        restaurarPendiente = RestaurarPendienteUseCase(pendientes),
         observarEstadoDeSincronizacion = ObservarEstadoDeSincronizacionUseCase(sync, reloj),
         observarItemsSinEnviar = ObservarItemsSinEnviarUseCase(sync),
         sincronizarAhora = SincronizarAhoraUseCase(sync),
@@ -98,6 +102,22 @@ class ComprasViewModelTest {
             assertEquals(listOf("Papa", "Tomate"), estado.porComprar.map { it.titulo })
             assertEquals("", estado.nuevoItem)
         }
+    }
+
+    @Test
+    fun `borrar un item lo saca y deshacer lo devuelve`() = runTest(planificador) {
+        val vm = viewModel()
+        vm.agregar("Lehce")
+        val id = pendientes.real.pendientes.value.single().id
+
+        vm.eventos.test {
+            vm.borrar(id)
+            assertEquals(EventoDeCompras.Borrado("Lehce"), awaitItem())
+        }
+        assertTrue(pendientes.real.pendientes.value.isEmpty())
+
+        vm.deshacerBorrado()
+        assertEquals(listOf("Lehce"), pendientes.real.pendientes.value.map { it.titulo })
     }
 
     @Test
@@ -214,7 +234,7 @@ class ComprasViewModelTest {
     }
 
     /** La base real del fake, con la opción de que leerla falle. */
-    private class PendientesQuePuedenFallar(private val real: FakePendienteRepository) : PendienteRepository by real {
+    private class PendientesQuePuedenFallar(val real: FakePendienteRepository) : PendienteRepository by real {
         var fallar = false
         override fun observarPendientes() = if (fallar) flow { throw IOException("Room no responde") } else real.observarPendientes()
     }

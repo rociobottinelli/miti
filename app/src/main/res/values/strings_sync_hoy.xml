@@ -19,4 +19,14 @@
     <!-- RF03: completar una tarea desde Hoy. -->
     <string name="hoy_tarea_marcar">Marcar como hecha</string>
     <string name="hoy_tarea_hecha">Hecha: %1$s</string>
+    <!-- Corregir errores: deshacer una marca y borrar ítems. -->
+    <string name="hoy_rutina_marcada">Marcaste: %1$s</string>
+    <string name="hoy_mas_opciones">Más opciones de %1$s</string>
+    <string name="hoy_deshacer_mi_marca">Deshacer mi marca de hoy</string>
+    <string name="hoy_borrar_rutina">Borrar rutina</string>
+    <string name="hoy_borrar_tarea">Borrar tarea</string>
+    <string name="hoy_borrar_titulo">¿Borrar «%1$s»?</string>
+    <string name="hoy_borrar_texto">Deja de aparecer en los dos celulares.</string>
+    <string name="hoy_borrar">Borrar</string>
+    <string name="hoy_borrado">Borrado: %1$s</string>
 </resources>

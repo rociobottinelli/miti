@@ -432,3 +432,30 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   `CompletarTareaUseCase` devuelve la tarea para el mensaje; el de la notificación no cambia.
 - **Cómo se probó:** tests del caso de uso (reabrir la vuelve a mostrar) y del ViewModel (completar avisa con el
   título y deshacer la deja pendiente).
+
+## Deshacer una marca de rutina y borrar rutinas, tareas e ítems de compras
+
+- **Problema:** salvo los gastos, nada se podía corregir. Un toque sin querer en el widget dejaba la rutina
+  marcada para los dos sin vuelta atrás; una rutina que ya no se hacía o un ítem mal escrito ("Lehce") quedaban
+  para siempre. En la validación con hogares reales (#27) es lo primero que iba a aparecer.
+- **Qué cambió:**
+  - **Deshacer una marca:** al marcar una rutina, el snackbar dice "Marcaste: …" con **Deshacer**. Además, el
+    menú "⋮" de la rutina ofrece "Deshacer mi marca de hoy" si la persona la marcó (sirve también para lo que se
+    marcó desde el widget). `DeshacerMarcaUseCase` borra (borrado lógico) la última marca **propia** de hoy; la
+    del otro no se toca. **Desvío de D08:** las marcas ya no son solo de agregar. Se pueden deshacer, pero no
+    editar: no cambian de rutina, de persona ni de hora.
+  - **En el servidor (migración 5):** cada uno puede poner `deleted = true` en sus propias marcas y en nada más
+    (permiso solo sobre esas columnas, más una política por `integrante_id`), y una marca deshecha no vuelve.
+    La sincronización sube las marcas como siempre (solo nuevas) y, si hay una deshecha, la marca borrada con un
+    PATCH.
+  - **Borrar una rutina o una tarea:** opción "Borrar" en el menú "⋮" de la tarjeta, con confirmación ("Deja de
+    aparecer en los dos celulares"). Si la tarea tenía aviso, la alarma se cancela sola al reprogramar.
+  - **Borrar un ítem de compras:** botón X en cada ítem, sin confirmación, con **Deshacer** en el snackbar.
+  - El menú es un botón "⋮" visible de 48 dp, no un toque largo: se descubre solo y TalkBack lo lee ("Más
+    opciones de Regar las plantas").
+- **Cómo se probó:** tests del caso de uso (deshace solo la última propia de hoy), del ViewModel de Hoy (marcar
+  avisa con Deshacer y lo deshace; "puedo deshacer" solo si la marqué yo; borrar rutina y tarea) y de Compras
+  (borrar y deshacer), de la sincronización (POST de la marca y después el PATCH que la deshace) y un bloque
+  nuevo en `verificar_acceso_por_hogar.sql` (Tomás deshace la suya, no la de Ana, y una deshecha no vuelve).
+- **Importante:** la migración 5 tiene que correrse en Supabase **antes** de usar esta versión. Sin ella, el
+  servidor rechaza el PATCH y la sincronización falla hasta que se corra.
