@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avisos de sincronización en Hoy (C1, #19). Aparte de strings.xml para no chocar con otras ramas. -->
+<resources>
+    <string name="sync_actualizar">Actualizar</string>
+    <string name="sync_desactualizado">Puede que no veas lo último del hogar</string>
+    <string name="sync_desactualizado_de">Puede que no veas lo último de %1$s</string>
+    <string name="sync_con_hora">%1$s · última sincronización %2$s</string>
+    <string name="sync_la_otra_persona">la otra persona</string>
+    <string name="sync_confirmar_titulo">¿Marcar «%1$s»?</string>
+    <string name="sync_confirmar_texto">Puede que %1$s ya la haya hecho: %2$s. Si la marcás igual, va a contar dos veces.</string>
+    <string name="sync_confirmar_desde">este celular no se sincroniza desde las %1$s</string>
+    <string name="sync_confirmar_nunca">este celular todavía no se sincronizó</string>
+    <string name="sync_confirmar_marcar">Marcar igual</string>
+    <string name="sync_confirmar_cancelar">Cancelar</string>
+    <!-- Preentrega, sección 11: aviso en Hoy si faltan permisos para los avisos de tareas. -->
+    <string name="hoy_permiso_notificaciones">Las notificaciones están desactivadas: no te van a llegar los avisos de tareas.</string>
+    <string name="hoy_permiso_alarmas">Sin el permiso de alarmas, los avisos de tareas pueden llegar unos minutos tarde.</string>
+    <string name="hoy_permiso_configurar">Configuración</string>
+    <!-- RF03: completar una tarea desde Hoy. -->
+    <string name="hoy_tarea_marcar">Marcar como hecha</string>
+    <string name="hoy_tarea_hecha">Hecha: %1$s</string>
+    <!-- Corregir errores: deshacer una marca y borrar ítems. -->
+    <string name="hoy_mas_opciones">Más opciones de %1$s</string>
+    <string name="hoy_deshacer_mi_marca">Deshacer mi marca de hoy</string>
+    <string name="hoy_borrar_rutina">Borrar rutina</string>
+    <string name="hoy_borrar_tarea">Borrar tarea</string>
+    <string name="hoy_borrar_titulo">¿Borrar «%1$s»?</string>
+    <string name="hoy_borrar_texto">Deja de aparecer en los dos celulares.</string>
+    <string name="hoy_borrar">Borrar</string>
+    <string name="hoy_borrado">Borrado: %1$s</string>
+    <string name="hoy_marcada_por">La marcó %1$s: solo %1$s puede desmarcarla.</string>
+    <string name="hoy_marcada_por_la_otra_persona">La marcó la otra persona: solo ella puede desmarcarla.</string>
+    <string name="hoy_desmarcar">Desmarcar</string>
+    <string name="hoy_marcar_pendiente">Volver a pendiente</string>
+    <string name="hoy_todo_al_dia">Todo al día por hoy. ¡Bien!</string>
+</resources>

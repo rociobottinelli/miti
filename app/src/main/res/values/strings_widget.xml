@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de los widgets (#22). Aparte de strings.xml para no chocar con otras ramas. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="widget_rutinas_nombre">Rutinas de hoy</string>
+    <string name="widget_rutinas_descripcion">Las rutinas del día; marcalas con un toque.</string>
+    <string name="widget_compacto_nombre">Próxima rutina</string>
+    <string name="widget_compacto_descripcion">La próxima rutina que falta, con el botón Hecho.</string>
+    <string name="widget_titulo">Miti · Hoy</string>
+    <string name="widget_abrir">Abrir Miti</string>
+    <string name="widget_marcar">Marcar %1$s</string>
+    <string name="widget_desmarcar">Desmarcar %1$s</string>
+    <string name="widget_hecho">Hecho</string>
+    <!-- "hoy" no cambia con la cantidad: no hace falta plural. -->
+    <string name="widget_progreso" tools:ignore="PluralsCandidate">%1$d de %2$d hoy</string>
+    <string name="widget_todo_al_dia">Todo al día</string>
+    <string name="widget_todo_al_dia_detalle" tools:ignore="PluralsCandidate">Completaron %1$d de %2$d hoy</string>
+    <string name="widget_sin_rutinas">Todavía no hay rutinas</string>
+    <string name="widget_sin_rutinas_detalle">Las nuevas rutinas van a aparecer acá</string>
+    <string name="widget_sin_hogar">Abrí Miti para empezar</string>
+    <string name="widget_sin_conexion">Sin conexión</string>
+    <string name="widget_sin_conexion_con_hora">Sin conexión · %1$s</string>
+    <string name="widget_sin_sincronizar">Cambios sin sincronizar</string>
+    <string name="widget_desactualizado">Puede no estar al día</string>
+    <string name="widget_desactualizado_con_hora">Puede no estar al día · %1$s</string>
+</resources>

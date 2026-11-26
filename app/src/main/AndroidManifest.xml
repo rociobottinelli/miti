@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Sincronizar con Supabase (D11). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Saber si hay conexión para el banner "Sin conexión" (#19). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Avisos de tareas (D10, #23): notificaciones (Android 13+, se piden en el primer uso, #17),
+         alarmas exactas y volver a programarlas después de reiniciar el teléfono. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- RNF06 (±5 min) necesita alarmas exactas. Desde Android 13, USE_EXACT_ALARM las da sin pedirle nada a
+         la persona; SCHEDULE_EXACT_ALARM viene negado por defecto desde Android 14 y sin él la alarma se corría
+         hasta 35 min. En Android 12 (API 31-32) USE_EXACT_ALARM no existe y SCHEDULE_EXACT_ALARM viene otorgado.
+         Ver CAMBIOS.md. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:name=".MitiApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Miti">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Miti.Splash"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".data.avisos.ReceptorDeAlarma"
+            android:exported="false" />
+        <receiver
+            android:name=".data.avisos.ReceptorDeCompletarTarea"
+            android:exported="false" />
+        <!-- Solo el sistema puede mandar estas acciones; exported es necesario para recibirlas. -->
+        <receiver
+            android:name=".data.avisos.ReceptorDeReinicio"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- WorkManager se inicializa desde MitiApp (con la fábrica de Hilt), no automáticamente. -->
+        <!-- Widgets de rutinas (#22). No se exportan acciones propias: solo las del sistema para widgets. -->
+        <receiver
+            android:name=".presentation.widget.ReceptorWidgetDeRutinas"
+            android:exported="true"
+            android:label="@string/widget_rutinas_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_rutinas" />
+        </receiver>
+
+        <receiver
+            android:name=".presentation.widget.ReceptorWidgetCompacto"
+            android:exported="true"
+            android:label="@string/widget_compacto_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_compacto" />
+        </receiver>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+    </application>
+
+</manifest>
