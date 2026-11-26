@@ -14,6 +14,7 @@ nunca lee de la red para mostrar datos: Room es la única fuente de verdad (D04)
 | [`migrations/20261123000004_conflictos_de_gastos.sql`](migrations/20261123000004_conflictos_de_gastos.sql) | C2: una edición de gasto hecha sobre una versión vieja no pisa la nueva; queda en `conflictos_gasto` para avisarle a quien la hizo. |
 | [`migrations/20261126000005_deshacer_marcas.sql`](migrations/20261126000005_deshacer_marcas.sql) | Cada uno puede deshacer **sus** marcas de rutina (solo `deleted = true`); una marca deshecha no vuelve. |
 | [`tests/verificar_acceso_por_hogar.sql`](tests/verificar_acceso_por_hogar.sql) | Verificación con cuatro usuarios simulados. Corre en una transacción con `ROLLBACK`: no deja datos. |
+| [`demo/cargar_demo.py`](demo/cargar_demo.py) | Carga el hogar de la demo (Ana y Tomás, con datos creíbles) usando la API pública con la sesión de cada uno. Se puede volver a correr: borra lo anterior y recarga con fechas del día siguiente. Ver [docs/guion-demo.md](../docs/guion-demo.md). |
 
 ## Reglas que aplica el servidor
 
