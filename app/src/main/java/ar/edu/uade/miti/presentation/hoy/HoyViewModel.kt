@@ -14,7 +14,9 @@ import ar.edu.uade.miti.domain.model.RutinaDelDia
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
 import ar.edu.uade.miti.domain.usecase.avisos.ConsultarPermisosDeAvisosUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
@@ -62,6 +64,8 @@ class HoyViewModel @Inject constructor(
     private val observarItemsSinEnviar: ObservarItemsSinEnviarUseCase,
     private val sincronizarAhora: SincronizarAhoraUseCase,
     private val consultarPermisos: ConsultarPermisosDeAvisosUseCase,
+    private val completarTarea: CompletarTareaUseCase,
+    private val reabrirTarea: ReabrirTareaUseCase,
     private val reloj: Clock,
 ) : ViewModel() {
 
@@ -81,6 +85,9 @@ class HoyViewModel @Inject constructor(
 
     /** Rutinas que se están marcando ahora: un doble toque no agrega dos marcas. */
     private val marcandoAhora = mutableSetOf<String>()
+
+    /** Lo mismo para las tareas que se están completando. */
+    private val completandoAhora = mutableSetOf<String>()
 
     private val _eventos = MutableSharedFlow<EventoDeHoy>(extraBufferCapacity = 1)
     val eventos: SharedFlow<EventoDeHoy> = _eventos.asSharedFlow()
@@ -129,6 +136,32 @@ class HoyViewModel @Inject constructor(
         permisos.value = consultarPermisos()
     }
 
+    /**
+     * RF03: completar una tarea desde la app (antes solo se podía desde la notificación). Sale de la lista
+     * al instante y el snackbar ofrece deshacerlo.
+     */
+    fun completar(tareaId: String) {
+        if (!completandoAhora.add(tareaId)) return
+        viewModelScope.launch {
+            try {
+                when (val resultado = completarTarea(tareaId)) {
+                    is Resource.Success -> _eventos.emit(EventoDeHoy.TareaHecha(tareaId, resultado.data.titulo))
+                    is Resource.Error -> _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
+                }
+            } finally {
+                completandoAhora.remove(tareaId)
+            }
+        }
+    }
+
+    /** El "Deshacer" del snackbar: la tarea vuelve a quedar pendiente. */
+    fun reabrir(tareaId: String) {
+        viewModelScope.launch {
+            val resultado = reabrirTarea(tareaId)
+            if (resultado is Resource.Error) _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
+        }
+    }
+
     /** Pide sincronizar ya (botones Reintentar y Actualizar de los avisos). */
     fun sincronizar() {
         viewModelScope.launch { sincronizarAhora() }
@@ -141,8 +174,8 @@ class HoyViewModel @Inject constructor(
                 val yo = observarUsuario().first()
                 val resultado = if (yo == null) null else marcarRutina(rutinaId, yo.id)
                 when {
-                    resultado is Resource.Success && !resultado.data -> _eventos.emit(EventoDeHoy.RUTINA_YA_COMPLETA)
-                    resultado !is Resource.Success -> _eventos.emit(EventoDeHoy.NO_SE_PUDO_MARCAR)
+                    resultado is Resource.Success && !resultado.data -> _eventos.emit(EventoDeHoy.RutinaYaCompleta)
+                    resultado !is Resource.Success -> _eventos.emit(EventoDeHoy.NoSePudoMarcar)
                 }
             } finally {
                 marcandoAhora.remove(rutinaId)

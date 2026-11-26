@@ -16,4 +16,7 @@
     <string name="hoy_permiso_notificaciones">Las notificaciones están desactivadas: no te van a llegar los avisos de tareas.</string>
     <string name="hoy_permiso_alarmas">Sin el permiso de alarmas, los avisos de tareas pueden llegar unos minutos tarde.</string>
     <string name="hoy_permiso_configurar">Configuración</string>
+    <!-- RF03: completar una tarea desde Hoy. -->
+    <string name="hoy_tarea_marcar">Marcar como hecha</string>
+    <string name="hoy_tarea_hecha">Hecha: %1$s</string>
 </resources>

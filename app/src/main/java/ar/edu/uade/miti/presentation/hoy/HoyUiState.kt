@@ -110,4 +110,13 @@ data class ConfirmacionDeMarca(
 )
 
 /** Mensajes que se muestran una sola vez (snackbar), no son parte del estado. */
-enum class EventoDeHoy { RUTINA_YA_COMPLETA, NO_SE_PUDO_MARCAR }
+sealed interface EventoDeHoy {
+    data object RutinaYaCompleta : EventoDeHoy
+    data object NoSePudoMarcar : EventoDeHoy
+
+    /** Se marcó una tarea como hecha: el snackbar ofrece deshacerlo (por si fue un toque sin querer). */
+    data class TareaHecha(val tareaId: String, val titulo: String) : EventoDeHoy
+
+    /** El mensaje viene del caso de uso ("La tarea ya no existe"…). */
+    data class NoSePudo(val mensaje: String) : EventoDeHoy
+}
