@@ -19,4 +19,6 @@
     <string name="compras_vacio_descripcion">Agregá ítems abajo para armar la lista.</string>
     <string name="compras_error_titulo">No pudimos cargar la lista</string>
     <string name="compras_error_descripcion">Intentá de nuevo en unos segundos.</string>
+    <string name="compras_borrar_item">Borrar %1$s</string>
+    <string name="compras_borrado">Borrado: %1$s</string>
 </resources>

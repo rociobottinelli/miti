@@ -7,6 +7,7 @@ import ar.edu.uade.miti.data.local.datastore.EstadoDeSyncLocal
 import ar.edu.uade.miti.data.local.datastore.SesionGuardada
 import ar.edu.uade.miti.data.local.entity.EstadoSync
 import ar.edu.uade.miti.data.local.entity.MetadatosSync
+import ar.edu.uade.miti.data.local.entity.RegistroRutinaEntity
 import ar.edu.uade.miti.data.local.entity.RutinaEntity
 import ar.edu.uade.miti.data.remote.CLAVE_DE_PRUEBA
 import ar.edu.uade.miti.data.remote.ClavePublicableInterceptor
@@ -20,6 +21,7 @@ import ar.edu.uade.miti.domain.model.Frecuencia
 import com.squareup.moshi.Moshi
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,6 +68,7 @@ class SincronizadorTest {
             return when (request.method) {
                 "GET" -> respuestasGet[tabla]?.removeFirstOrNull() ?: MockResponse(code = 200, body = "[]")
                 "POST" -> respuestasPost[tabla]?.invoke(request.body?.utf8().orEmpty()) ?: MockResponse(code = 201)
+                "PATCH" -> MockResponse(code = 204)
                 else -> MockResponse(code = 405)
             }
         }
@@ -149,6 +152,24 @@ class SincronizadorTest {
         assertTrue(cuerpo, cuerpo.contains("\"veces_por_dia\":2") && cuerpo.contains("\"hogar_id\":\"h1\""))
         assertEquals(EstadoSync.SINCRONIZADO, base.rutinaDao().rutinasParaSync("r1")!!.sync.syncState)
         assertEquals(ahora, estado.ultimaSincronizacion.value)
+    }
+
+    @Test
+    fun `una marca deshecha se sube y despues se marca borrada en el servidor`() = runTest {
+        base.rutinaDao().guardarRutina(rutina("r1", "Pancho", 100, EstadoSync.SINCRONIZADO))
+        base.rutinaDao().guardarRegistro(
+            RegistroRutinaEntity("m1", "r1", "u-ana", LocalDateTime.of(2027, 1, 15, 8, 0), MetadatosSync(200, true, EstadoSync.PENDIENTE)),
+        )
+
+        sincronizador.sincronizar()
+
+        // Primero el POST que solo agrega marcas nuevas (D08); después el PATCH que la deshace.
+        assertTrue(falso.posts("registros_rutina").single().headers["Prefer"]!!.contains("ignore-duplicates"))
+        val patch = falso.pedidos.single { it.method == "PATCH" }
+        assertEquals("/rest/v1/registros_rutina", patch.url.encodedPath)
+        assertEquals("eq.m1", patch.url.queryParameter("id"))
+        assertEquals("""{"updated_at":200,"deleted":true}""", patch.body!!.utf8())
+        assertEquals(EstadoSync.SINCRONIZADO, base.rutinaDao().registrosParaSync("m1")!!.sync.syncState)
     }
 
     @Test

@@ -84,6 +84,8 @@ data class RutinaDeHoy(
     val ultimaMarca: Marca?,
     /** Tiene una marca o un cambio que todavía no llegó al otro celular (RNF09). */
     val pendienteDeSync: Boolean = false,
+    /** Quien usa el celular la marcó hoy: puede deshacer su marca (por ejemplo, un toque sin querer). */
+    val puedoDeshacer: Boolean = false,
 ) {
     val completa: Boolean get() = hechas >= vecesPorDia
 }
@@ -116,6 +118,12 @@ sealed interface EventoDeHoy {
 
     /** Se marcó una tarea como hecha: el snackbar ofrece deshacerlo (por si fue un toque sin querer). */
     data class TareaHecha(val tareaId: String, val titulo: String) : EventoDeHoy
+
+    /** Se marcó una rutina: el snackbar ofrece deshacer la marca. */
+    data class RutinaMarcada(val rutinaId: String, val titulo: String) : EventoDeHoy
+
+    /** Se borró una rutina o una tarea (ya confirmado en el diálogo). */
+    data class Borrado(val titulo: String) : EventoDeHoy
 
     /** El mensaje viene del caso de uso ("La tarea ya no existe"…). */
     data class NoSePudo(val mensaje: String) : EventoDeHoy

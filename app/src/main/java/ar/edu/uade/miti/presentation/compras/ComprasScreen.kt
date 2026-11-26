@@ -25,10 +25,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCartCheckout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -90,11 +94,18 @@ fun ComprasScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
-            val mensaje = when (evento) {
-                EventoDeCompras.CompraTerminada -> recursos.getString(R.string.compras_terminada)
-                is EventoDeCompras.NoSePudo -> evento.mensaje
+            when (evento) {
+                EventoDeCompras.CompraTerminada -> snackbar.showSnackbar(recursos.getString(R.string.compras_terminada))
+                is EventoDeCompras.NoSePudo -> snackbar.showSnackbar(evento.mensaje)
+                is EventoDeCompras.Borrado -> {
+                    val resultado = snackbar.showSnackbar(
+                        message = recursos.getString(R.string.compras_borrado, evento.titulo),
+                        actionLabel = recursos.getString(R.string.accion_deshacer),
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (resultado == SnackbarResult.ActionPerformed) viewModel.deshacerBorrado()
+                }
             }
-            snackbar.showSnackbar(mensaje)
         }
     }
 
@@ -105,6 +116,7 @@ fun ComprasScreen(
         alTachar = viewModel::tachar,
         alTerminar = viewModel::terminar,
         alRegistrarGasto = alRegistrarGasto,
+        alBorrar = viewModel::borrar,
         alReintentar = viewModel::reintentar,
         alSincronizar = viewModel::sincronizar,
         snackbar = snackbar,
@@ -130,6 +142,8 @@ fun ComprasContenido(
     alSincronizar: () -> Unit,
     modifier: Modifier = Modifier,
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
+    /** Borrar un ítem de la lista (con "Deshacer" en el snackbar). */
+    alBorrar: (String) -> Unit = {},
 ) {
     var preguntarGasto by rememberSaveable { mutableStateOf(false) }
 
@@ -171,7 +185,7 @@ fun ComprasContenido(
                             icono = Icons.Outlined.ShoppingCart,
                         )
                     } else {
-                        Lista(estado, alTachar, alTerminar = { preguntarGasto = true })
+                        Lista(estado, alTachar, alTerminar = { preguntarGasto = true }, alBorrar = alBorrar)
                     }
                 }
             }
@@ -226,15 +240,20 @@ private fun Encabezado(contenido: ComprasUiState.Contenido?) {
 }
 
 @Composable
-private fun Lista(estado: ComprasUiState.Contenido, alTachar: (String, Boolean) -> Unit, alTerminar: () -> Unit) {
+private fun Lista(
+    estado: ComprasUiState.Contenido,
+    alTachar: (String, Boolean) -> Unit,
+    alTerminar: () -> Unit,
+    alBorrar: (String) -> Unit,
+) {
     LazyColumn(
         contentPadding = PaddingValues(start = Espaciado.margenPantalla, end = Espaciado.margenPantalla, top = 4.dp, bottom = 16.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        grupo("por-comprar", estado.porComprar, enCarrito = false, alTachar)
+        grupo("por-comprar", estado.porComprar, enCarrito = false, alTachar, alBorrar)
         if (estado.enCarrito.isNotEmpty()) {
             item(key = "titulo-carrito") { TituloDelCarrito(estado.enCarrito.size) }
-            grupo("carrito", estado.enCarrito, enCarrito = true, alTachar)
+            grupo("carrito", estado.enCarrito, enCarrito = true, alTachar, alBorrar)
             item(key = "terminar") {
                 Button(
                     onClick = alTerminar,
@@ -251,7 +270,13 @@ private fun Lista(estado: ComprasUiState.Contenido, alTachar: (String, Boolean) 
 }
 
 /** Una tarjeta con borde que agrupa las filas, separadas por una línea, como en el Figma. */
-private fun LazyListScope.grupo(clave: String, items: List<ItemDeCompra>, enCarrito: Boolean, alTachar: (String, Boolean) -> Unit) {
+private fun LazyListScope.grupo(
+    clave: String,
+    items: List<ItemDeCompra>,
+    enCarrito: Boolean,
+    alTachar: (String, Boolean) -> Unit,
+    alBorrar: (String) -> Unit,
+) {
     if (items.isEmpty()) return
     item(key = clave) {
         Surface(
@@ -262,7 +287,7 @@ private fun LazyListScope.grupo(clave: String, items: List<ItemDeCompra>, enCarr
             Column {
                 items.forEachIndexed { i, item ->
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    FilaDeCompra(item, enCarrito, alTachar)
+                    FilaDeCompra(item, enCarrito, alTachar, alBorrar)
                 }
             }
         }
@@ -270,7 +295,7 @@ private fun LazyListScope.grupo(clave: String, items: List<ItemDeCompra>, enCarr
 }
 
 @Composable
-private fun FilaDeCompra(item: ItemDeCompra, enCarrito: Boolean, alTachar: (String, Boolean) -> Unit) {
+private fun FilaDeCompra(item: ItemDeCompra, enCarrito: Boolean, alTachar: (String, Boolean) -> Unit, alBorrar: (String) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -290,7 +315,15 @@ private fun FilaDeCompra(item: ItemDeCompra, enCarrito: Boolean, alTachar: (Stri
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(end = 12.dp),
         )
-        if (item.pendienteDeSync) IndicadorPendienteDeSync(Modifier.padding(end = 12.dp))
+        if (item.pendienteDeSync) IndicadorPendienteDeSync(Modifier.padding(end = 4.dp))
+        // Borrar un ítem cargado por error ("Lehce"). Sin confirmación: el snackbar ofrece deshacerlo.
+        IconButton(onClick = { alBorrar(item.id) }) {
+            Icon(
+                Icons.Outlined.Close,
+                contentDescription = stringResource(R.string.compras_borrar_item, item.titulo),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

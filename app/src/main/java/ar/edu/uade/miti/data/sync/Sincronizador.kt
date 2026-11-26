@@ -13,6 +13,8 @@ import ar.edu.uade.miti.data.remote.ConfiguracionSupabase
 import ar.edu.uade.miti.data.remote.ProveedorDeToken
 import ar.edu.uade.miti.data.remote.SESION_VENCIDA
 import ar.edu.uade.miti.data.remote.SyncApiService
+import ar.edu.uade.miti.data.remote.dto.RegistroBorradoDto
+import ar.edu.uade.miti.data.remote.dto.RegistroRutinaDto
 import ar.edu.uade.miti.domain.model.TipoPendiente
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
@@ -113,6 +115,21 @@ class Sincronizador @Inject constructor(
         val respuesta = api.buscarIntegrante(autorizacion, "eq.$usuarioId")
         verificar(respuesta, "buscar el hogar")
         return respuesta.body()?.firstOrNull()?.hogarId
+    }
+
+    /**
+     * Las marcas se suben solo si son nuevas (D08: nunca se editan). Una marca deshecha, además, se marca como
+     * borrada en el servidor, que es el único cambio que acepta sobre una marca (migración 5). Si se deshizo antes
+     * de subirla, el POST ya la crea borrada y el PATCH no cambia nada.
+     */
+    private suspend fun subirRegistros(autorizacion: String, filas: List<RegistroRutinaDto>): Response<Unit> {
+        val nuevas = api.subirRegistros(autorizacion, filas)
+        if (!nuevas.isSuccessful) return nuevas
+        for (fila in filas.filter { it.deleted }) {
+            val borrada = api.borrarRegistro(autorizacion, "eq.${fila.id}", RegistroBorradoDto(fila.updatedAt))
+            if (!borrada.isSuccessful) return borrada
+        }
+        return nuevas
     }
 
     /** Sube las filas PENDIENTE de [tabla]. Devuelve (subidas, rechazadas). */
@@ -274,7 +291,7 @@ class Sincronizador @Inject constructor(
                 id = { it.id }, metadatos = { it.sync }, horaDelServidor = { it.serverUpdatedAt },
                 obtenerLocal = rutinas::registrosParaSync, guardarDescargadas = rutinas::guardarRegistrosDescargados,
                 descargar = api::descargarRegistros,
-                subida = TablaSincronizable.Subida(rutinas::registrosPorSubir, rutinas::marcarRegistroSincronizado, api::subirRegistros),
+                subida = TablaSincronizable.Subida(rutinas::registrosPorSubir, rutinas::marcarRegistroSincronizado, ::subirRegistros),
             ),
         )
     }

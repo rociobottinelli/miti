@@ -31,6 +31,9 @@ import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.DeshacerMarcaUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.EliminarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
@@ -53,6 +56,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -114,6 +118,9 @@ class HoyViewModelTest {
             consultarPermisos = ConsultarPermisosDeAvisosUseCase(alarmas),
             completarTarea = CompletarTareaUseCase(pendientes),
             reabrirTarea = ReabrirTareaUseCase(pendientes),
+            deshacerMarca = DeshacerMarcaUseCase(rutinas, reloj),
+            eliminarRutina = EliminarRutinaUseCase(rutinas),
+            eliminarPendiente = EliminarPendienteUseCase(pendientes),
             reloj = reloj,
         )
     }
@@ -188,6 +195,53 @@ class HoyViewModelTest {
 
         vm.reabrir("abl")
         assertEquals(false, pendientes.pendientes.value.single { it.id == "abl" }.resuelto)
+    }
+
+    @Test
+    fun `marcar avisa con Deshacer y deshacer saca solo la marca propia`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho)
+        rutinas.registros.value = listOf(RegistroRutina("de-tomas", "pancho", TOMAS, miercoles.atTime(8, 0)))
+        val vm = viewModel()
+
+        vm.eventos.test {
+            vm.marcar("pancho")
+            assertEquals(EventoDeHoy.RutinaMarcada("pancho", "Darle de comer a Pancho"), awaitItem())
+        }
+        assertEquals(2, rutinas.registros.value.size)
+
+        vm.deshacerMarca("pancho")
+        assertEquals(listOf("de-tomas"), rutinas.registros.value.map { it.id })
+    }
+
+    @Test
+    fun `puedo deshacer solo si yo marque la rutina hoy`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho, basura)
+        rutinas.registros.value = listOf(
+            RegistroRutina("m1", "pancho", ANA, miercoles.atTime(8, 0)),
+            RegistroRutina("m2", "basura", TOMAS, miercoles.atTime(8, 0)),
+        )
+
+        viewModel().uiState.test {
+            val rutinasEnPantalla = (primerEstado() as HoyUiState.Contenido).rutinas.associateBy { it.id }
+            assertTrue(rutinasEnPantalla.getValue("pancho").puedoDeshacer)
+            assertFalse(rutinasEnPantalla.getValue("basura").puedoDeshacer)
+        }
+    }
+
+    @Test
+    fun `borrar una rutina o una tarea las saca y avisa`() = runTest(planificador) {
+        rutinas.rutinas.value = listOf(pancho, basura)
+        pendientes.pendientes.value = listOf(abl, veterinario)
+        val vm = viewModel()
+
+        vm.eventos.test {
+            vm.borrarRutina("basura")
+            assertEquals(EventoDeHoy.Borrado("Sacar la basura"), awaitItem())
+            vm.borrarTarea("abl")
+            assertEquals(EventoDeHoy.Borrado("Pagar ABL"), awaitItem())
+        }
+        assertEquals(listOf("pancho"), rutinas.rutinas.value.map { it.id })
+        assertEquals(listOf("vete"), pendientes.pendientes.value.map { it.id })
     }
 
     @Test
@@ -281,6 +335,9 @@ class HoyViewModelTest {
             ConsultarPermisosDeAvisosUseCase(alarmas),
             CompletarTareaUseCase(pendientes),
             ReabrirTareaUseCase(pendientes),
+            DeshacerMarcaUseCase(rutinasQueFallan, reloj),
+            EliminarRutinaUseCase(rutinasQueFallan),
+            EliminarPendienteUseCase(pendientes),
             reloj,
         )
 

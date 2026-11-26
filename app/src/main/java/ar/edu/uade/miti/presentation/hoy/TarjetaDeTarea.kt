@@ -44,7 +44,7 @@ import java.time.LocalTime
  * indica y el snackbar permite deshacerlo.
  */
 @Composable
-fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifier = Modifier) {
+fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifier = Modifier, alBorrar: () -> Unit = {}) {
     val atrasada = tarea.cuando is CuandoVence.Atrasada
     val marcarComoHecha = stringResource(R.string.hoy_tarea_marcar)
     Surface(
@@ -98,6 +98,20 @@ fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifie
                 }
             }
             tarea.responsable?.let { AvatarDeIntegrante(nombre = it.nombre, posicion = it.posicion) }
+            MenuDeItem(
+                titulo = tarea.titulo,
+                opciones = listOf(
+                    OpcionDeMenu(
+                        texto = stringResource(R.string.hoy_borrar_tarea),
+                        confirmar = Confirmacion(
+                            titulo = stringResource(R.string.hoy_borrar_titulo, tarea.titulo),
+                            texto = stringResource(R.string.hoy_borrar_texto),
+                            boton = stringResource(R.string.hoy_borrar),
+                        ),
+                        alElegir = alBorrar,
+                    ),
+                ),
+            )
         }
     }
 }

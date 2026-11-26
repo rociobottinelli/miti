@@ -12,6 +12,7 @@ nunca lee de la red para mostrar datos: Room es la única fuente de verdad (D04)
 | [`migrations/20261121000002_acceso_por_hogar.sql`](migrations/20261121000002_acceso_por_hogar.sql) | Row Level Security: cada usuario solo ve y modifica su hogar (RNF10). Funciones `crear_hogar` y `unirse_a_hogar` con el límite de dos integrantes. |
 | [`migrations/20261121000003_ultima_modificacion_gana.sql`](migrations/20261121000003_ultima_modificacion_gana.sql) | D08: si llega tarde una versión con `updated_at` más viejo que el guardado, se ignora. |
 | [`migrations/20261123000004_conflictos_de_gastos.sql`](migrations/20261123000004_conflictos_de_gastos.sql) | C2: una edición de gasto hecha sobre una versión vieja no pisa la nueva; queda en `conflictos_gasto` para avisarle a quien la hizo. |
+| [`migrations/20261126000005_deshacer_marcas.sql`](migrations/20261126000005_deshacer_marcas.sql) | Cada uno puede deshacer **sus** marcas de rutina (solo `deleted = true`); una marca deshecha no vuelve. |
 | [`tests/verificar_acceso_por_hogar.sql`](tests/verificar_acceso_por_hogar.sql) | Verificación con cuatro usuarios simulados. Corre en una transacción con `ROLLBACK`: no deja datos. |
 
 ## Reglas que aplica el servidor
@@ -19,7 +20,8 @@ nunca lee de la red para mostrar datos: Room es la única fuente de verdad (D04)
 - **Aislamiento por hogar:** las políticas RLS comparan el `hogar_id` de cada fila con el hogar del usuario
   logueado (`mi_hogar()`). Sin sesión (solo con la clave pública) no se ve nada.
 - **Nada se borra de verdad (D07):** no hay permiso de `DELETE`; un borrado es `deleted = true`.
-- **Las marcas de rutina solo se agregan (D08)** y cada uno marca a su propio nombre.
+- **Las marcas de rutina solo se agregan (D08)** y cada uno marca a su propio nombre. Lo único que se puede
+  hacer con una marca es deshacer la propia (migración 5).
 - **Dos integrantes como máximo:** `unirse_a_hogar` bloquea el hogar mientras cuenta, así que si dos personas
   usan el mismo código a la vez, solo entra una.
 - **Gana la última modificación (D08):** una versión con `updated_at` más viejo que el guardado no pisa la fila.
@@ -38,7 +40,7 @@ Errores propios que devuelve la API (campo `code` del JSON), para que la app mue
 ## Configurar un proyecto desde cero
 
 1. Crear el proyecto en [supabase.com](https://supabase.com) (región São Paulo) y guardar la contraseña de la base en un lugar seguro, **fuera del repo**.
-2. En **SQL Editor**, ejecutar las migraciones **en orden** (`…0001_tablas.sql`, `…0002_acceso_por_hogar.sql`, `…0003_ultima_modificacion_gana.sql`, `…0004_conflictos_de_gastos.sql`).
+2. En **SQL Editor**, ejecutar las migraciones **en orden** (`…0001_tablas.sql`, `…0002_acceso_por_hogar.sql`, `…0003_ultima_modificacion_gana.sql`, `…0004_conflictos_de_gastos.sql`, `…0005_deshacer_marcas.sql`).
 3. Ejecutar `tests/verificar_acceso_por_hogar.sql`. Tiene que terminar con `OK: todas las verificaciones de acceso por hogar pasaron`.
 4. Copiar los datos de conexión a `local.properties` (en la raíz del repo; ya está en `.gitignore`):
 

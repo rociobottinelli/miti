@@ -17,6 +17,9 @@ import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.DeshacerMarcaUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.EliminarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
@@ -66,6 +69,9 @@ class HoyViewModel @Inject constructor(
     private val consultarPermisos: ConsultarPermisosDeAvisosUseCase,
     private val completarTarea: CompletarTareaUseCase,
     private val reabrirTarea: ReabrirTareaUseCase,
+    private val deshacerMarca: DeshacerMarcaUseCase,
+    private val eliminarRutina: EliminarRutinaUseCase,
+    private val eliminarPendiente: EliminarPendienteUseCase,
     private val reloj: Clock,
 ) : ViewModel() {
 
@@ -162,6 +168,39 @@ class HoyViewModel @Inject constructor(
         }
     }
 
+    /** Deshace la última marca propia de hoy (el "Deshacer" del snackbar o del menú de la rutina). */
+    fun deshacerMarca(rutinaId: String) {
+        viewModelScope.launch {
+            val yo = observarUsuario().first() ?: return@launch
+            val resultado = deshacerMarca(rutinaId, yo.id)
+            if (resultado is Resource.Error) _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
+        }
+    }
+
+    /** Borra una rutina (ya confirmado en el diálogo). */
+    fun borrarRutina(rutinaId: String) {
+        viewModelScope.launch {
+            val titulo = tituloDeRutina(rutinaId)
+            when (val resultado = eliminarRutina(rutinaId)) {
+                is Resource.Success -> _eventos.emit(EventoDeHoy.Borrado(titulo))
+                is Resource.Error -> _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
+            }
+        }
+    }
+
+    /** Borra una tarea (ya confirmado en el diálogo). Si tenía aviso, la alarma se cancela sola. */
+    fun borrarTarea(tareaId: String) {
+        viewModelScope.launch {
+            when (val resultado = eliminarPendiente(tareaId)) {
+                is Resource.Success -> _eventos.emit(EventoDeHoy.Borrado(resultado.data.titulo))
+                is Resource.Error -> _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
+            }
+        }
+    }
+
+    private suspend fun tituloDeRutina(rutinaId: String): String =
+        observarRutinasDelDia(LocalDate.now(reloj)).first().firstOrNull { it.rutina.id == rutinaId }?.rutina?.titulo.orEmpty()
+
     /** Pide sincronizar ya (botones Reintentar y Actualizar de los avisos). */
     fun sincronizar() {
         viewModelScope.launch { sincronizarAhora() }
@@ -176,6 +215,7 @@ class HoyViewModel @Inject constructor(
                 when {
                     resultado is Resource.Success && !resultado.data -> _eventos.emit(EventoDeHoy.RutinaYaCompleta)
                     resultado !is Resource.Success -> _eventos.emit(EventoDeHoy.NoSePudoMarcar)
+                    else -> _eventos.emit(EventoDeHoy.RutinaMarcada(rutinaId, tituloDeRutina(rutinaId)))
                 }
             } finally {
                 marcandoAhora.remove(rutinaId)
@@ -265,6 +305,7 @@ class HoyViewModel @Inject constructor(
         }
 
         fun rutinaEnPantalla(rutina: RutinaDelDia) = RutinaDeHoy(
+            puedoDeshacer = yo != null && rutina.registros.any { it.integranteId == yo.id },
             id = rutina.rutina.id,
             titulo = rutina.rutina.titulo,
             hechas = rutina.hechas,
