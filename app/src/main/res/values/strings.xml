@@ -17,6 +17,7 @@
     <!-- Acciones comunes -->
     <string name="accion_cerrar">Cerrar</string>
     <string name="accion_cancelar">Cancelar</string>
+    <string name="accion_deshacer">Deshacer</string>
     <string name="accion_volver">Volver</string>
 
     <!-- Formulario de gasto (#14) -->

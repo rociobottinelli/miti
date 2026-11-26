@@ -1,7 +1,6 @@
 package ar.edu.uade.miti.presentation.hoy
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Icon
@@ -20,6 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,14 +39,20 @@ import java.time.LocalTime
  * Una próxima tarea (Figma "TaskCard"): ícono a la izquierda (campana si tiene aviso), título, cuándo
  * vence y el avatar de quien la tiene asignada. Una atrasada se marca con texto, no solo con color (RNF08).
  */
+/**
+ * Una próxima tarea. Tocarla la marca como hecha (RF03), igual que una rutina; la casilla de la izquierda lo
+ * indica y el snackbar permite deshacerlo.
+ */
 @Composable
-fun TarjetaDeTarea(tarea: TareaDeHoy, modifier: Modifier = Modifier) {
+fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifier = Modifier) {
     val atrasada = tarea.cuando is CuandoVence.Atrasada
+    val marcarComoHecha = stringResource(R.string.hoy_tarea_marcar)
     Surface(
+        onClick = alCompletar,
         modifier = modifier
             .fillMaxWidth()
-            // TalkBack la lee como una sola cosa: "Pagar ABL, Jueves 18:00 · Tomás".
-            .semantics(mergeDescendants = true) {},
+            // TalkBack la lee como una sola cosa: "Pagar ABL, Jueves 18:00 · Tomás", y anuncia la acción.
+            .semantics(mergeDescendants = true) { onClick(label = marcarComoHecha) { alCompletar(); true } },
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -54,19 +62,13 @@ fun TarjetaDeTarea(tarea: TareaDeHoy, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // La casilla vacía, como en las rutinas: se toca para marcarla como hecha.
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.medium),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (tarea.conAviso) Icons.Outlined.NotificationsActive else Icons.Outlined.Event,
-                    contentDescription = if (tarea.conAviso) stringResource(R.string.hoy_tarea_con_aviso) else null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+                    .size(28.dp)
+                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                    .clearAndSetSemantics {},
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = tarea.titulo,
@@ -81,7 +83,12 @@ fun TarjetaDeTarea(tarea: TareaDeHoy, modifier: Modifier = Modifier) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val color = if (atrasada) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                    Icon(Icons.Outlined.Schedule, contentDescription = null, tint = color, modifier = Modifier.size(14.dp))
+                    Icon(
+                        imageVector = if (tarea.conAviso) Icons.Outlined.NotificationsActive else Icons.Outlined.Schedule,
+                        contentDescription = if (tarea.conAviso) stringResource(R.string.hoy_tarea_con_aviso) else null,
+                        tint = color,
+                        modifier = Modifier.size(14.dp),
+                    )
                     Text(
                         text = detalleDeTarea(tarea),
                         style = MaterialTheme.typography.bodySmall,
@@ -127,7 +134,7 @@ private val ejemplos = listOf(
 private fun TarjetaDeTareaPreview() {
     MitiTheme {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ejemplos.forEach { TarjetaDeTarea(it) }
+            ejemplos.forEach { TarjetaDeTarea(it, alCompletar = {}) }
         }
     }
 }
@@ -137,7 +144,7 @@ private fun TarjetaDeTareaPreview() {
 private fun TarjetaDeTareaOscuroPreview() {
     MitiTheme(darkTheme = true) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ejemplos.forEach { TarjetaDeTarea(it) }
+            ejemplos.forEach { TarjetaDeTarea(it, alCompletar = {}) }
         }
     }
 }

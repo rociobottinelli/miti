@@ -65,6 +65,16 @@ class CasosDeUsoPendientesTest {
     }
 
     @Test
+    fun `reabrir una tarea hecha por error la vuelve a mostrar`() = runTest {
+        val abl = registrarTarea("Pagar ABL", TOMAS, juevesALas18, avisar = true).exito()
+        CompletarTareaUseCase(pendientes)(abl.id)
+
+        ReabrirTareaUseCase(pendientes)(abl.id)
+
+        assertEquals(listOf(abl.id), ObservarProximasTareasUseCase(pendientes)().first().map { it.id })
+    }
+
+    @Test
     fun `tachar un item lo pasa al carrito`() = runTest {
         val leche = registrarCompra("Leche").exito()
         val detergente = registrarCompra("Detergente").exito()

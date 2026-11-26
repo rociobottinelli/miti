@@ -28,7 +28,9 @@ import ar.edu.uade.miti.domain.repository.SituacionDeSincronizacion
 import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
@@ -110,6 +112,8 @@ class HoyViewModelTest {
             observarItemsSinEnviar = ObservarItemsSinEnviarUseCase(sync),
             sincronizarAhora = SincronizarAhoraUseCase(sync),
             consultarPermisos = ConsultarPermisosDeAvisosUseCase(alarmas),
+            completarTarea = CompletarTareaUseCase(pendientes),
+            reabrirTarea = ReabrirTareaUseCase(pendientes),
             reloj = reloj,
         )
     }
@@ -166,9 +170,24 @@ class HoyViewModelTest {
 
         vm.eventos.test {
             vm.marcar("basura")
-            assertEquals(EventoDeHoy.RUTINA_YA_COMPLETA, awaitItem())
+            assertEquals(EventoDeHoy.RutinaYaCompleta, awaitItem())
         }
         assertEquals(1, rutinas.registros.value.size)
+    }
+
+    @Test
+    fun `tocar una tarea la marca como hecha y deshacer la vuelve a dejar pendiente`() = runTest(planificador) {
+        pendientes.pendientes.value = listOf(abl, veterinario)
+        val vm = viewModel()
+
+        vm.eventos.test {
+            vm.completar("abl")
+            assertEquals(EventoDeHoy.TareaHecha("abl", "Pagar ABL"), awaitItem())
+        }
+        assertTrue(pendientes.pendientes.value.single { it.id == "abl" }.resuelto)
+
+        vm.reabrir("abl")
+        assertEquals(false, pendientes.pendientes.value.single { it.id == "abl" }.resuelto)
     }
 
     @Test
@@ -179,7 +198,7 @@ class HoyViewModelTest {
 
         vm.eventos.test {
             vm.marcar("pancho")
-            assertEquals(EventoDeHoy.NO_SE_PUDO_MARCAR, awaitItem())
+            assertEquals(EventoDeHoy.NoSePudoMarcar, awaitItem())
         }
     }
 
@@ -260,6 +279,8 @@ class HoyViewModelTest {
             ObservarItemsSinEnviarUseCase(sync),
             SincronizarAhoraUseCase(sync),
             ConsultarPermisosDeAvisosUseCase(alarmas),
+            CompletarTareaUseCase(pendientes),
+            ReabrirTareaUseCase(pendientes),
             reloj,
         )
 

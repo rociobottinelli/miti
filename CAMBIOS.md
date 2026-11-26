@@ -420,3 +420,15 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   está se siguen mostrando.
 - **Qué riesgo resuelve:** un aviso que asusta y no dice nada, con dos botones que no cambian nada.
 - **Cómo se probó:** test del caso de uso con los cuatro casos (iguales, distintos, borrado, gasto que ya no está).
+
+## Completar una tarea desde Hoy, con "Deshacer" (RF03)
+
+- **Problema:** RF03 dice que una tarea se marca "desde la app o la notificación", pero la tarjeta de Hoy no hacía
+  nada al tocarla: solo se podía completar desde la notificación. Una tarea sin aviso, o cuya notificación se
+  cerró, no tenía forma de marcarse.
+- **Qué cambió:** tocar la tarjeta de una tarea la marca como hecha, igual que una rutina. Una casilla a la
+  izquierda lo indica, y la campana de aviso pasa al renglón de la hora. Sale de la lista al instante y el
+  snackbar dice "Hecha: …" con **Deshacer** (`ReabrirTareaUseCase`), por si fue un toque sin querer.
+  `CompletarTareaUseCase` devuelve la tarea para el mensaje; el de la notificación no cambia.
+- **Cómo se probó:** tests del caso de uso (reabrir la vuelve a mostrar) y del ViewModel (completar avisa con el
+  título y deshacer la deja pendiente).

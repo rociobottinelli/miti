@@ -61,6 +61,8 @@ fun HoyContenido(
     alSincronizar: () -> Unit = {},
     alConfirmarMarca: () -> Unit = {},
     alCancelarMarca: () -> Unit = {},
+    /** Tocar una tarea la marca como hecha (RF03). */
+    alCompletarTarea: (String) -> Unit = {},
     /** "Configuración" del aviso de permisos: abre el ajuste del sistema que falta (lo resuelve HoyScreen). */
     alConfigurarAvisos: (AvisoDePermisos) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -113,7 +115,7 @@ fun HoyContenido(
                     )
                 }
                 is HoyUiState.Contenido -> {
-                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
+                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar, alConfigurarAvisos, alCompletarTarea)
                     estado.confirmarMarca?.let {
                         DialogoConfirmarMarca(it, estado.encabezado.fecha, alConfirmarMarca, alCancelarMarca)
                     }
@@ -131,6 +133,7 @@ private fun ListaDeHoy(
     alAbrirAjustes: () -> Unit,
     alSincronizar: () -> Unit,
     alConfigurarAvisos: (AvisoDePermisos) -> Unit,
+    alCompletarTarea: (String) -> Unit,
 ) {
     EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
     FiltrosDeTareas(estado.filtro, estado.encabezado.otro, alElegirFiltro)
@@ -167,7 +170,7 @@ private fun ListaDeHoy(
             }
         } else {
             items(estado.tareas, key = { "tarea-${it.id}" }) { tarea ->
-                TarjetaDeTarea(tarea, modifier = Modifier.animateItem())
+                TarjetaDeTarea(tarea, alCompletar = { alCompletarTarea(tarea.id) }, modifier = Modifier.animateItem())
             }
         }
     }
