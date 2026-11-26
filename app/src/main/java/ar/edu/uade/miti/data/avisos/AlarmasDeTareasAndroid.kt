@@ -42,19 +42,49 @@ class AlarmasDeTareasAndroid @Inject constructor(
     private val alarmManager get() = contexto.getSystemService(AlarmManager::class.java)
     private val programadas = stringSetPreferencesKey("tareas_programadas")
 
+    /** Tareas cuyo aviso ya se mostró (lo anota [ReceptorDeAlarma]), para no repetirlo. */
+    private val avisadas = stringSetPreferencesKey("tareas_avisadas")
+
     override suspend fun programarSolo(tareas: List<Pendiente>, avisosVigentes: Set<String>) {
-        val anteriores = contexto.avisos.data.first()[programadas].orEmpty()
+        val guardado = contexto.avisos.data.first()
+        val anteriores = guardado[programadas].orEmpty()
+        val yaAvisadas = guardado[avisadas].orEmpty()
         val nuevas = tareas.map { it.id }.toSet()
 
         (anteriores - nuevas).forEach { id ->
             alarmManager.cancel(intencion(id, titulo = ""))
-            // Si la tarea sale porque ya sonó, su notificación se queda: la app arranca justo al sonar la
-            // alarma y reprograma; sin esto, retiraba el aviso que acababa de mostrar.
-            if (id !in avisosVigentes) Notificaciones.cancelarAvisoDeTarea(contexto, id)
+            when {
+                // Se resolvió, se borró o cambió de responsable: el aviso ya no corresponde.
+                id !in avisosVigentes -> Notificaciones.cancelarAvisoDeTarea(contexto, id)
+                // Sigue pendiente y su hora pasó sin que sonara: por ejemplo, el teléfono se reinició justo a
+                // esa hora y Android avisó del reinicio cuando ya era tarde (probado en un emulador). Suena ahora,
+                // tarde, que es mejor que nunca. Si ya sonó, su notificación se queda como está.
+                id !in yaAvisadas -> sonarAhora(id)
+            }
         }
         tareas.forEach { tarea -> programar(tarea) }
 
-        contexto.avisos.edit { it[programadas] = nuevas }
+        contexto.avisos.edit {
+            it[programadas] = nuevas
+            // Una tarea que se vuelve a programar (por ejemplo, le cambiaron la hora) puede volver a sonar.
+            it[avisadas] = (yaAvisadas intersect avisosVigentes) - nuevas
+        }
+    }
+
+    /** Lo llama [ReceptorDeAlarma] después de mostrar el aviso. */
+    suspend fun registrarAvisada(tareaId: String) {
+        contexto.avisos.edit { it[avisadas] = it[avisadas].orEmpty() + tareaId }
+    }
+
+    private fun sonarAhora(tareaId: String) {
+        // Sin título: al sonar, el receptor lo lee de Room.
+        val intencion = intencion(tareaId, titulo = "")
+        val ahora = System.currentTimeMillis()
+        if (puedeExactas()) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ahora, intencion)
+        } else {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ahora, intencion)
+        }
     }
 
     override fun permisos() = PermisosDeAvisos(

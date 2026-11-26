@@ -45,6 +45,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
@@ -191,10 +194,17 @@ private fun CampoQueAbreDialogo(
             trailingIcon = { Icon(icono, contentDescription = null) },
             isError = error,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            // TalkBack lee la capa de encima; si leyera también el campo, lo diría dos veces.
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
         )
-        // Una capa encima para que todo el campo responda al toque y TalkBack lo anuncie como botón.
-        Box(Modifier.matchParentSize().clickable(role = Role.Button, onClickLabel = etiqueta, onClick = alTocar))
+        // Una capa encima para que todo el campo responda al toque y TalkBack lo anuncie como botón, con su
+        // nombre y su valor ("Fecha, mié 25/11"). Sin la descripción decía solo "botón" (RNF08).
+        Box(
+            Modifier
+                .matchParentSize()
+                .clickable(role = Role.Button, onClickLabel = etiqueta, onClick = alTocar)
+                .semantics { contentDescription = "$etiqueta, $valor" },
+        )
     }
 }
 

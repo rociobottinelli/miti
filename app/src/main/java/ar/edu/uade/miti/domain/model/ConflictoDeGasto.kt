@@ -30,5 +30,12 @@ data class ConflictoDeGasto(
         }
 }
 
+/**
+ * Lo que quedó ya es igual a lo que puso esta persona: el conflicto no tiene nada que avisar. No aplica si la
+ * edición era borrar (el gasto sigue y la persona quería sacarlo) ni si el gasto ya no está.
+ */
+val ConflictoDeGasto.yaCoinciden: Boolean
+    get() = !eraBorrado && actual != null && camposDistintos.isEmpty()
+
 /** Lo que se puede editar de un gasto, como lo agrupa el formulario. */
 enum class CampoDeGasto { DESCRIPCION, MONTO, PAGADOR, REPARTO, CUOTAS }

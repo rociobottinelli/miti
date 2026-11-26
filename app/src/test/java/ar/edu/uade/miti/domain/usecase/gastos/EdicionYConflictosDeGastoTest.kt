@@ -12,6 +12,7 @@ import ar.edu.uade.miti.domain.model.DatosDeGasto
 import ar.edu.uade.miti.domain.model.Gasto
 import ar.edu.uade.miti.domain.model.Reparto
 import java.time.YearMonth
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -138,5 +139,21 @@ class EdicionYConflictosDeGastoTest {
     @Test
     fun `si el gasto ya no esta no hay campos para comparar`() {
         assertTrue(ConflictoDeGasto("c1", actual = null, miVersion = heladera, eraBorrado = false).camposDistintos.isEmpty())
+    }
+
+    @Test
+    fun `un conflicto cuyas dos versiones ya coinciden no se muestra`() = runTest {
+        val gastos = FakeGastoRepository()
+        val otroMonto = heladera.copy(montoTotalCentavos = heladera.montoTotalCentavos + 100)
+        gastos.conflictos.value = listOf(
+            ConflictoDeGasto("igual", heladera, heladera, eraBorrado = false),
+            ConflictoDeGasto("distinto", heladera, otroMonto, eraBorrado = false),
+            ConflictoDeGasto("borrado", heladera, heladera, eraBorrado = true),
+            ConflictoDeGasto("ya-no-esta", actual = null, miVersion = heladera, eraBorrado = false),
+        )
+
+        val visibles = ObservarConflictosDeGastoUseCase(gastos)().first().map { it.id }
+
+        assertEquals(listOf("distinto", "borrado", "ya-no-esta"), visibles)
     }
 }

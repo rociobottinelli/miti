@@ -95,11 +95,28 @@ class AlarmasYNotificacionesTest {
         // La alarma arranca la app, la app reprograma y la tarea ya no se programa porque pasó su hora.
         alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = setOf("t1"))
         Notificaciones.mostrarAvisoDeTarea(app, "t1", "Pagar ABL")
+        alarmas.registrarAvisada("t1")
 
         alarmas.programarSolo(emptyList(), avisosVigentes = setOf("t1"))
 
-        assertTrue(shadowOf(alarmManager).scheduledAlarms.isEmpty())
+        assertTrue("ya sonó: no vuelve a sonar", shadowOf(alarmManager).scheduledAlarms.isEmpty())
         assertEquals(1, shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications.size)
+    }
+
+    @Test
+    fun `si la hora paso sin que sonara, por ejemplo durante un reinicio, suena ahora`() = runTest {
+        alarmas.programarSolo(listOf(tarea("t1")), avisosVigentes = setOf("t1"))
+
+        // Al reprogramar después del reinicio, la tarea ya venció y sigue pendiente, pero nunca sonó.
+        val antes = System.currentTimeMillis()
+        alarmas.programarSolo(emptyList(), avisosVigentes = setOf("t1"))
+
+        val alarma = shadowOf(alarmManager).scheduledAlarms.single()
+        assertTrue(alarma.triggerAtTime in antes..System.currentTimeMillis())
+
+        // Y no se repite en la siguiente reprogramación.
+        alarmas.programarSolo(emptyList(), avisosVigentes = setOf("t1"))
+        assertEquals(1, shadowOf(alarmManager).scheduledAlarms.size)
     }
 
     @Test
