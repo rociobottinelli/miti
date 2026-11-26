@@ -82,6 +82,7 @@ fun BalanceScreen(
             cambiarFechaDelPago = viewModel::onFechaDelPagoChange,
             registrarPago = viewModel::registrarElPago,
             cerrarPago = viewModel::cerrarPago,
+            borrarPago = { viewModel.borrarPago(it) },
             rehacer = { viewModel.rehacer(it) },
             descartar = { viewModel.descartar(it) },
             reintentar = viewModel::reintentar,
@@ -103,6 +104,7 @@ data class AccionesDeBalance(
     val cambiarFechaDelPago: (LocalDate) -> Unit = {},
     val registrarPago: () -> Unit = {},
     val cerrarPago: () -> Unit = {},
+    val borrarPago: (String) -> Unit = {},
     val rehacer: (ConflictoDeGasto) -> Unit = {},
     val descartar: (ConflictoDeGasto) -> Unit = {},
     val reintentar: () -> Unit = {},
@@ -195,7 +197,7 @@ private fun ListaDeBalance(estado: BalanceUiState.Contenido, acciones: AccionesD
             items(estado.movimientos, key = { it.id }) { movimiento ->
                 when (movimiento) {
                     is Movimiento.CuotaDeGasto -> ItemDeGasto(movimiento, alTocar = { acciones.editarGasto(movimiento.gastoId) })
-                    is Movimiento.PagoHecho -> ItemDePago(movimiento)
+                    is Movimiento.PagoHecho -> ItemDePago(movimiento, alBorrar = { acciones.borrarPago(movimiento.pagoId) })
                 }
             }
         }

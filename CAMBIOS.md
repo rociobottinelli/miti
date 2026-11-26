@@ -420,3 +420,12 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   está se siguen mostrando.
 - **Qué riesgo resuelve:** un aviso que asusta y no dice nada, con dos botones que no cambian nada.
 - **Cómo se probó:** test del caso de uso con los cuatro casos (iguales, distintos, borrado, gasto que ya no está).
+
+## Borrar un pago cargado por error
+
+- **Problema:** un pago no se podía corregir ni borrar. Si se cargaba mal (monto, dirección o dos veces), el
+  balance, que es el valor central de la app, quedaba mal para siempre.
+- **Qué cambió:** tocar un pago en Balance pregunta "¿Borrar este pago?" con el monto y quién le pagó a quién, y
+  `EliminarPagoUseCase` lo borra (borrado lógico, D07). El balance se recalcula solo y el otro celular lo recibe al
+  sincronizar. Un pago no se edita: si estaba mal, se borra y se vuelve a cargar.
+- **Cómo se probó:** test del ViewModel: al borrar el pago, la deuda vuelve.
