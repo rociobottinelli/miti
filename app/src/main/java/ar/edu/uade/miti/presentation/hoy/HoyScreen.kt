@@ -72,18 +72,13 @@ fun HoyScreen(
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
             when (evento) {
-                EventoDeHoy.RutinaYaCompleta -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_evento_ya_completa))
                 EventoDeHoy.NoSePudoMarcar -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_evento_no_se_pudo_marcar))
                 is EventoDeHoy.NoSePudo -> snackbarHostState.showSnackbar(evento.mensaje)
                 is EventoDeHoy.Borrado -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_borrado, evento.titulo))
-                is EventoDeHoy.RutinaMarcada -> {
-                    val resultado = snackbarHostState.showSnackbar(
-                        message = recursos.getString(R.string.hoy_rutina_marcada, evento.titulo),
-                        actionLabel = recursos.getString(R.string.accion_deshacer),
-                        duration = SnackbarDuration.Short,
-                    )
-                    if (resultado == SnackbarResult.ActionPerformed) viewModel.deshacerMarca(evento.rutinaId)
-                }
+                is EventoDeHoy.MarcadaPorOtro -> snackbarHostState.showSnackbar(
+                    evento.quien?.let { recursos.getString(R.string.hoy_marcada_por, it) }
+                        ?: recursos.getString(R.string.hoy_marcada_por_la_otra_persona),
+                )
                 is EventoDeHoy.TareaHecha -> {
                     val resultado = snackbarHostState.showSnackbar(
                         message = recursos.getString(R.string.hoy_tarea_hecha, evento.titulo),

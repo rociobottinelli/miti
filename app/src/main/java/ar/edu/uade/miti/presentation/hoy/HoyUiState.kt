@@ -22,7 +22,7 @@ sealed interface HoyUiState {
     /** El hogar no tiene ninguna rutina ni tarea todavía. */
     data class Vacio(val encabezado: Encabezado) : HoyUiState
 
-    /** Hay ítems, pero hoy no queda nada por hacer. */
+    /** Hay ítems, pero ninguno es para hoy (por ejemplo, solo rutinas de otros días de la semana). */
     data class TodoAlDia(val encabezado: Encabezado) : HoyUiState
 
     data class Contenido(
@@ -32,6 +32,8 @@ sealed interface HoyUiState {
         val tareas: List<TareaDeHoy>,
         /** Datos desactualizados y la persona tocó una rutina: se le pregunta antes de marcar (C1). */
         val confirmarMarca: ConfirmacionDeMarca? = null,
+        /** Todo lo de hoy está hecho: se muestra "Todo al día" arriba, pero la lista sigue para poder destildar. */
+        val todoAlDia: Boolean = false,
     ) : HoyUiState {
         val rutinasCompletas: Int get() = rutinas.count { it.completa }
     }
@@ -100,6 +102,8 @@ data class TareaDeHoy(
     val responsable: IntegranteEnPantalla?,
     val conAviso: Boolean,
     val pendienteDeSync: Boolean = false,
+    /** Ya está hecha: se muestra tildada y tocarla la vuelve a dejar pendiente. */
+    val hecha: Boolean = false,
 )
 
 /** "Puede que Tomás ya la haya hecho": se pide confirmar antes de marcar con datos viejos (C1). */
@@ -113,14 +117,13 @@ data class ConfirmacionDeMarca(
 
 /** Mensajes que se muestran una sola vez (snackbar), no son parte del estado. */
 sealed interface EventoDeHoy {
-    data object RutinaYaCompleta : EventoDeHoy
     data object NoSePudoMarcar : EventoDeHoy
 
     /** Se marcó una tarea como hecha: el snackbar ofrece deshacerlo (por si fue un toque sin querer). */
     data class TareaHecha(val tareaId: String, val titulo: String) : EventoDeHoy
 
-    /** Se marcó una rutina: el snackbar ofrece deshacer la marca. */
-    data class RutinaMarcada(val rutinaId: String, val titulo: String) : EventoDeHoy
+    /** Se tocó una rutina hecha que marcó solo la otra persona: no se puede destildar desde este celular. */
+    data class MarcadaPorOtro(val quien: String?) : EventoDeHoy
 
     /** Se borró una rutina o una tarea (ya confirmado en el diálogo). */
     data class Borrado(val titulo: String) : EventoDeHoy

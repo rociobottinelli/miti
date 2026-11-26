@@ -8,6 +8,7 @@
     <string name="widget_titulo">Miti · Hoy</string>
     <string name="widget_abrir">Abrir Miti</string>
     <string name="widget_marcar">Marcar %1$s</string>
+    <string name="widget_desmarcar">Desmarcar %1$s</string>
     <string name="widget_hecho">Hecho</string>
     <!-- "hoy" no cambia con la cantidad: no hace falta plural. -->
     <string name="widget_progreso" tools:ignore="PluralsCandidate">%1$d de %2$d hoy</string>

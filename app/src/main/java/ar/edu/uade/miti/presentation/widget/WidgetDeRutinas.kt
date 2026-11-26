@@ -133,19 +133,16 @@ private fun Encabezado(estado: EstadoDelWidget) {
 }
 
 /**
- * Toda la fila es el botón (48 dp de alto, RNF07). Una rutina completa no hace nada al tocarla: las marcas
- * no se borran (D08) y el caso de uso ya no agrega otra.
+ * Toda la fila es el botón (48 dp de alto, RNF07). Igual que en Hoy, tocar alterna: una rutina completa se
+ * destilda si la marca es propia. Si la marcó solo la otra persona, el toque no cambia nada (el widget no puede
+ * mostrar un aviso; en Hoy sí se explica).
  */
 @Composable
 private fun FilaDeRutina(rutina: RutinaDeHoy) {
     val colores = GlanceTheme.colors
-    val accion = if (rutina.completa) {
-        GlanceModifier
-    } else {
-        GlanceModifier
-            .clickable(actionRunCallback<MarcarRutinaDesdeWidget>(actionParametersOf(MarcarRutinaDesdeWidget.RUTINA to rutina.id)))
-            .describir(texto(R.string.widget_marcar, rutina.titulo))
-    }
+    val accion = GlanceModifier
+        .clickable(actionRunCallback<MarcarRutinaDesdeWidget>(actionParametersOf(MarcarRutinaDesdeWidget.RUTINA to rutina.id)))
+        .describir(texto(if (rutina.completa) R.string.widget_desmarcar else R.string.widget_marcar, rutina.titulo))
     Row(accion.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         Image(
             ImageProvider(if (rutina.completa) R.drawable.ic_widget_casilla_marcada else R.drawable.ic_widget_casilla),

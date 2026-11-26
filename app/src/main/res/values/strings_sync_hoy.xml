@@ -20,7 +20,6 @@
     <string name="hoy_tarea_marcar">Marcar como hecha</string>
     <string name="hoy_tarea_hecha">Hecha: %1$s</string>
     <!-- Corregir errores: deshacer una marca y borrar ítems. -->
-    <string name="hoy_rutina_marcada">Marcaste: %1$s</string>
     <string name="hoy_mas_opciones">Más opciones de %1$s</string>
     <string name="hoy_deshacer_mi_marca">Deshacer mi marca de hoy</string>
     <string name="hoy_borrar_rutina">Borrar rutina</string>
@@ -29,4 +28,9 @@
     <string name="hoy_borrar_texto">Deja de aparecer en los dos celulares.</string>
     <string name="hoy_borrar">Borrar</string>
     <string name="hoy_borrado">Borrado: %1$s</string>
+    <string name="hoy_marcada_por">La marcó %1$s: solo %1$s puede desmarcarla.</string>
+    <string name="hoy_marcada_por_la_otra_persona">La marcó la otra persona: solo ella puede desmarcarla.</string>
+    <string name="hoy_desmarcar">Desmarcar</string>
+    <string name="hoy_marcar_pendiente">Volver a pendiente</string>
+    <string name="hoy_todo_al_dia">Todo al día por hoy. ¡Bien!</string>
 </resources>

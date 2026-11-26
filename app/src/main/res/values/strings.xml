@@ -133,7 +133,6 @@
     <string name="hoy_al_dia_descripcion">Todas las rutinas y tareas del día están cubiertas. ¡Bien!</string>
     <string name="hoy_error_titulo">No pudimos mostrar tu día</string>
     <string name="hoy_error_descripcion">Tus datos siguen guardados en este celular. Probá de nuevo.</string>
-    <string name="hoy_evento_ya_completa">Esa rutina ya está hecha por hoy</string>
     <string name="hoy_evento_no_se_pudo_marcar">No se pudo marcar. Probá de nuevo.</string>
 
     <!-- Primer uso: onboarding (#17) -->

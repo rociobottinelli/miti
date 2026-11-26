@@ -37,6 +37,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.miti.R
+import ar.edu.uade.miti.presentation.components.TipoDeAviso
+import ar.edu.uade.miti.presentation.components.AvisoMiti
 import ar.edu.uade.miti.presentation.components.EsqueletoDeCarga
 import ar.edu.uade.miti.presentation.components.EstadoVacio
 import ar.edu.uade.miti.presentation.theme.Espaciado
@@ -146,6 +148,17 @@ private fun ListaDeHoy(
         contentPadding = PaddingValues(start = Espaciado.margenPantalla, end = Espaciado.margenPantalla, bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(Espaciado.entreCards),
     ) {
+        // Con todo hecho se festeja, pero la lista no se esconde: así se puede destildar lo marcado sin querer.
+        if (estado.todoAlDia) {
+            item(key = "todo-al-dia") {
+                AvisoMiti(
+                    texto = stringResource(R.string.hoy_todo_al_dia),
+                    icono = Icons.Outlined.CheckCircle,
+                    tipo = TipoDeAviso.INFORMATIVO,
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
         if (estado.rutinas.isNotEmpty()) {
             item(key = "titulo-rutinas") {
                 TituloDeSeccion(

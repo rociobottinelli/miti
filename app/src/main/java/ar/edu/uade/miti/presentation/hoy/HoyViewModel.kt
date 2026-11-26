@@ -14,13 +14,15 @@ import ar.edu.uade.miti.domain.model.RutinaDelDia
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
 import ar.edu.uade.miti.domain.usecase.avisos.ConsultarPermisosDeAvisosUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
-import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.AlternarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.ObservarTareasHechasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.DeshacerMarcaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.EliminarRutinaUseCase
-import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.AlternarRutinaUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.ToqueDeRutina
 import ar.edu.uade.miti.domain.usecase.rutinas.ObservarRutinasDelDiaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,12 +64,13 @@ class HoyViewModel @Inject constructor(
     private val observarSiHayItems: ObservarSiHayItemsUseCase,
     private val observarIntegrantes: ObservarIntegrantesUseCase,
     private val observarUsuario: ObservarUsuarioUseCase,
-    private val marcarRutina: MarcarRutinaUseCase,
+    private val alternarRutina: AlternarRutinaUseCase,
     private val observarEstadoDeSincronizacion: ObservarEstadoDeSincronizacionUseCase,
     private val observarItemsSinEnviar: ObservarItemsSinEnviarUseCase,
     private val sincronizarAhora: SincronizarAhoraUseCase,
     private val consultarPermisos: ConsultarPermisosDeAvisosUseCase,
-    private val completarTarea: CompletarTareaUseCase,
+    private val observarTareasHechas: ObservarTareasHechasUseCase,
+    private val alternarTarea: AlternarTareaUseCase,
     private val reabrirTarea: ReabrirTareaUseCase,
     private val deshacerMarca: DeshacerMarcaUseCase,
     private val eliminarRutina: EliminarRutinaUseCase,
@@ -92,8 +95,8 @@ class HoyViewModel @Inject constructor(
     /** Rutinas que se están marcando ahora: un doble toque no agrega dos marcas. */
     private val marcandoAhora = mutableSetOf<String>()
 
-    /** Lo mismo para las tareas que se están completando. */
-    private val completandoAhora = mutableSetOf<String>()
+    /** Lo mismo para las tareas que se están tocando. */
+    private val tocandoTareas = mutableSetOf<String>()
 
     private val _eventos = MutableSharedFlow<EventoDeHoy>(extraBufferCapacity = 1)
     val eventos: SharedFlow<EventoDeHoy> = _eventos.asSharedFlow()
@@ -114,16 +117,18 @@ class HoyViewModel @Inject constructor(
     }
 
     /**
-     * Si los datos están desactualizados (C1: "si la información llega tarde, pueden repetir tareas"),
-     * antes de marcar se pregunta: la otra persona pudo haberla hecho y este celular todavía no lo sabe.
+     * Tocar una rutina: la tilda si le faltan marcas y la destilda si ya está completa (ver [AlternarRutinaUseCase]).
+     * Si los datos están desactualizados (C1: "si la información llega tarde, pueden repetir tareas"), antes de
+     * tildar se pregunta: la otra persona pudo haberla hecho y este celular todavía no lo sabe. Para destildar no.
      */
     fun marcar(rutinaId: String) {
         viewModelScope.launch {
-            val completa = (uiState.value as? HoyUiState.Contenido)?.rutinas?.firstOrNull { it.id == rutinaId }?.completa == true
-            if (!completa && observarEstadoDeSincronizacion().first().desactualizado) {
+            val dia = observarRutinasDelDia(LocalDate.now(reloj)).first().firstOrNull { it.rutina.id == rutinaId }
+            val vaATildar = dia == null || !dia.completa
+            if (vaATildar && observarEstadoDeSincronizacion().first().desactualizado) {
                 porConfirmar.value = rutinaId
             } else {
-                marcarYa(rutinaId)
+                alternarYa(rutinaId)
             }
         }
     }
@@ -131,7 +136,7 @@ class HoyViewModel @Inject constructor(
     fun confirmarMarca() {
         val id = porConfirmar.value ?: return
         porConfirmar.value = null
-        marcarYa(id)
+        alternarYa(id)
     }
 
     fun cancelarMarca() {
@@ -143,19 +148,24 @@ class HoyViewModel @Inject constructor(
     }
 
     /**
-     * RF03: completar una tarea desde la app (antes solo se podía desde la notificación). Sale de la lista
-     * al instante y el snackbar ofrece deshacerlo.
+     * Tocar una tarea (RF03): si está pendiente la marca como hecha; si ya estaba hecha, la destilda. Una tarea hecha
+     * sigue en la lista, tildada, hasta que pasa su fecha, así el mismo toque la deshace. Si estaba atrasada,
+     * desaparece al marcarla (ya venció): solo en ese caso el snackbar ofrece "Deshacer".
      */
     fun completar(tareaId: String) {
-        if (!completandoAhora.add(tareaId)) return
+        if (!tocandoTareas.add(tareaId)) return
         viewModelScope.launch {
             try {
-                when (val resultado = completarTarea(tareaId)) {
-                    is Resource.Success -> _eventos.emit(EventoDeHoy.TareaHecha(tareaId, resultado.data.titulo))
+                when (val resultado = alternarTarea(tareaId)) {
+                    is Resource.Success -> {
+                        val tarea = resultado.data
+                        val desaparece = tarea.resuelto && tarea.fechaHora?.toLocalDate()?.isBefore(LocalDate.now(reloj)) == true
+                        if (desaparece) _eventos.emit(EventoDeHoy.TareaHecha(tareaId, tarea.titulo))
+                    }
                     is Resource.Error -> _eventos.emit(EventoDeHoy.NoSePudo(resultado.message))
                 }
             } finally {
-                completandoAhora.remove(tareaId)
+                tocandoTareas.remove(tareaId)
             }
         }
     }
@@ -168,7 +178,7 @@ class HoyViewModel @Inject constructor(
         }
     }
 
-    /** Deshace la última marca propia de hoy (el "Deshacer" del snackbar o del menú de la rutina). */
+    /** Deshace la última marca propia de hoy (el menú de una rutina a medias, por ejemplo 1 de 2). */
     fun deshacerMarca(rutinaId: String) {
         viewModelScope.launch {
             val yo = observarUsuario().first() ?: return@launch
@@ -206,16 +216,19 @@ class HoyViewModel @Inject constructor(
         viewModelScope.launch { sincronizarAhora() }
     }
 
-    private fun marcarYa(rutinaId: String) {
+    /** Tildar o destildar: el cambio se ve en la tarjeta al instante, así que no hace falta otro aviso. */
+    private fun alternarYa(rutinaId: String) {
         if (!marcandoAhora.add(rutinaId)) return
         viewModelScope.launch {
             try {
                 val yo = observarUsuario().first()
-                val resultado = if (yo == null) null else marcarRutina(rutinaId, yo.id)
+                val resultado = if (yo == null) null else alternarRutina(rutinaId, yo.id)
                 when {
-                    resultado is Resource.Success && !resultado.data -> _eventos.emit(EventoDeHoy.RutinaYaCompleta)
                     resultado !is Resource.Success -> _eventos.emit(EventoDeHoy.NoSePudoMarcar)
-                    else -> _eventos.emit(EventoDeHoy.RutinaMarcada(rutinaId, tituloDeRutina(rutinaId)))
+                    resultado.data is ToqueDeRutina.MarcadaPorOtro -> {
+                        val quien = (resultado.data as ToqueDeRutina.MarcadaPorOtro).integranteId
+                        _eventos.emit(EventoDeHoy.MarcadaPorOtro(observarIntegrantes().first().firstOrNull { it.id == quien }?.nombre))
+                    }
                 }
             } finally {
                 marcandoAhora.remove(rutinaId)
@@ -240,8 +253,15 @@ class HoyViewModel @Inject constructor(
         val personas = combine(observarUsuario(), observarIntegrantes()) { usuario, integrantes ->
             Personas(usuario?.id, integrantes)
         }
+        // Primero las pendientes por fecha y al final las hechas (tildadas), como las rutinas.
         val tareasFiltradas = combine(filtro, personas) { f, p -> f to p }
-            .flatMapLatest { (f, p) -> observarProximasTareas(p.responsableSegun(f)) }
+            .flatMapLatest { (f, p) ->
+                val responsable = p.responsableSegun(f)
+                combine(observarProximasTareas(responsable), observarTareasHechas(hoy, responsable)) { pendientes, hechas ->
+                    pendientes + hechas
+                }
+            }
+        val todasLasTareas = combine(observarProximasTareas(), observarTareasHechas(hoy), ::Pair)
 
         val contexto = combine(
             combine(personas, filtro, ::Pair),
@@ -250,11 +270,11 @@ class HoyViewModel @Inject constructor(
 
         return combine(
             observarRutinasDelDia(hoy),
-            observarProximasTareas(),
+            todasLasTareas,
             tareasFiltradas,
             observarSiHayItems(),
             contexto,
-        ) { rutinas, todasLasTareas, tareas, hayItems, c ->
+        ) { rutinas, (pendientes, hechas), tareas, hayItems, c ->
             val p = c.personas
             val f = c.filtro
             val encabezado = Encabezado(hoy, p.yo, p.otro, AvisoDeSync.segun(c.sync, reloj.zone), c.permisos)
@@ -262,8 +282,10 @@ class HoyViewModel @Inject constructor(
                 !hayItems -> HoyUiState.Vacio(encabezado)
                 // Se decide con todas las tareas, no las filtradas: si no, "Mías" sin tareas propias
                 // escondería los filtros y no habría forma de volver a "Todo".
-                rutinas.all { it.completa } && todasLasTareas.isEmpty() -> HoyUiState.TodoAlDia(encabezado)
+                rutinas.isEmpty() && pendientes.isEmpty() && hechas.isEmpty() -> HoyUiState.TodoAlDia(encabezado)
                 else -> HoyUiState.Contenido(
+                    // Con todo hecho se festeja arriba, pero la lista queda para poder destildar.
+                    todoAlDia = rutinas.all { it.completa } && pendientes.isEmpty(),
                     encabezado = encabezado,
                     filtro = f,
                     rutinas = rutinas.map { p.rutinaEnPantalla(it).copy(pendienteDeSync = it.rutina.id in c.sinEnviar) }
@@ -322,6 +344,7 @@ class HoyViewModel @Inject constructor(
             cuando = cuandoVence(requireNotNull(tarea.fechaHora), hoy),
             responsable = tarea.responsableId?.let { porId[it] },
             conAviso = tarea.avisar,
+            hecha = tarea.resuelto,
         )
     }
 }

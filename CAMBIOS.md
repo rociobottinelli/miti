@@ -439,11 +439,10 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   marcada para los dos sin vuelta atrás; una rutina que ya no se hacía o un ítem mal escrito ("Lehce") quedaban
   para siempre. En la validación con hogares reales (#27) es lo primero que iba a aparecer.
 - **Qué cambió:**
-  - **Deshacer una marca:** al marcar una rutina, el snackbar dice "Marcaste: …" con **Deshacer**. Además, el
-    menú "⋮" de la rutina ofrece "Deshacer mi marca de hoy" si la persona la marcó (sirve también para lo que se
-    marcó desde el widget). `DeshacerMarcaUseCase` borra (borrado lógico) la última marca **propia** de hoy; la
-    del otro no se toca. **Desvío de D08:** las marcas ya no son solo de agregar. Se pueden deshacer, pero no
-    editar: no cambian de rutina, de persona ni de hora.
+  - **Deshacer una marca:** tocar una rutina completa la destilda (ver "Tocar alterna" más abajo). Si está a
+    medias (1 de 2), el menú "⋮" ofrece "Deshacer mi marca de hoy". `DeshacerMarcaUseCase` borra (borrado lógico)
+    la última marca **propia** de hoy; la del otro no se toca. **Desvío de D08:** las marcas ya no son solo de
+    agregar. Se pueden deshacer, pero no editar: no cambian de rutina, de persona ni de hora.
   - **En el servidor (migración 5):** cada uno puede poner `deleted = true` en sus propias marcas y en nada más
     (permiso solo sobre esas columnas, más una política por `integrante_id`), y una marca deshecha no vuelve.
     La sincronización sube las marcas como siempre (solo nuevas) y, si hay una deshecha, la marca borrada con un
@@ -468,3 +467,30 @@ importante de este archivo pasa a la sección "Decisiones relevantes" del README
   `EliminarPagoUseCase` lo borra (borrado lógico, D07). El balance se recalcula solo y el otro celular lo recibe al
   sincronizar. Un pago no se edita: si estaba mal, se borra y se vuelve a cargar.
 - **Cómo se probó:** test del ViewModel: al borrar el pago, la deuda vuelve.
+
+## Tocar alterna: el mismo toque tilda y destilda rutinas y tareas
+
+- **Problema:** después de agregar "Deshacer" con snackbars, quedaban dos formas de arreglar un error (el
+  snackbar, que dura unos segundos, y el menú), y las tareas hechas desaparecían, así que pasado el snackbar ya
+  no se podían destildar. Además, con todo hecho, Hoy pasaba a "Todo al día" y escondía la lista. La forma que
+  ya conoce cualquiera que usó una lista de tareas es más simple: tocar tilda, tocar de nuevo destilda.
+- **Qué cambió:**
+  - `AlternarRutinaUseCase` y `AlternarTareaUseCase` deciden qué hace un toque. Una rutina a la que le faltan
+    marcas suma la propia; una completa se destilda si la marca es propia. Si la hizo solo el otro, no se toca y
+    Hoy explica "La marcó Tomás: solo Tomás puede desmarcarla". Una tarea pendiente pasa a hecha, y una hecha
+    vuelve a pendiente.
+  - **El widget usa el mismo caso de uso (D03):** antes, tocar una rutina completa en el widget no hacía nada.
+  - **Las tareas hechas siguen en Hoy,** tildadas, tachadas y al final de la lista (`ObservarTareasHechasUseCase`),
+    hasta que pasa su fecha. Una tarea atrasada desaparece al hacerla (ya venció), y solo en ese caso el snackbar
+    ofrece "Deshacer".
+  - **Sin snackbar al marcar una rutina:** el cambio se ve en la tarjeta y vibra (tilde o destilde). El
+    "Marcaste…" era ruido en algo que se hace varias veces por día.
+  - **Con todo hecho,** arriba aparece "Todo al día por hoy. ¡Bien!" y la lista queda a la vista para poder
+    destildar. La pantalla "Todo al día" queda solo para cuando no hay nada para hoy (por ejemplo, solo rutinas
+    de otros días).
+  - **Datos desactualizados (C1):** se pregunta antes de tildar, no antes de destildar.
+  - **TalkBack** dice el estado ("Hecha" o "Pendiente") y la acción ("Marcar como hecha", "Desmarcar" o "Volver
+    a pendiente").
+- **Cómo se probó:** tests del ViewModel de Hoy: destildar saca solo la marca propia; si la marcó el otro, avisa
+  quién y no cambia nada; una tarea tildada queda al final y otro toque la destilda; una tarea atrasada ofrece
+  deshacer; con todo hecho festeja sin esconder la lista; sin nada para hoy muestra "Todo al día".

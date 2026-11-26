@@ -27,6 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
@@ -60,11 +63,21 @@ fun TarjetaDeRutina(
         rutina.completa -> stringResource(R.string.hoy_rutina_hecha)
         else -> stringResource(R.string.hoy_progreso, rutina.hechas, rutina.vecesPorDia)
     }
+    // Tocar alterna, como en una lista de tareas: si está completa, la destilda (solo la marca propia).
+    val accion = stringResource(if (rutina.completa) R.string.hoy_desmarcar else R.string.hoy_tarea_marcar)
+    val vibracion = LocalHapticFeedback.current
+    val alTocar = {
+        vibracion.performHapticFeedback(if (rutina.completa) HapticFeedbackType.ToggleOff else HapticFeedbackType.ToggleOn)
+        alMarcar()
+    }
     Surface(
-        onClick = alMarcar,
+        onClick = alTocar,
         modifier = modifier
             .fillMaxWidth()
-            .semantics { stateDescription = estado },
+            .semantics {
+                stateDescription = estado
+                onClick(label = accion) { alTocar(); true }
+            },
         shape = MaterialTheme.shapes.large,
         color = if (rutina.completa) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -114,7 +127,10 @@ fun TarjetaDeRutina(
             MenuDeItem(
                 titulo = rutina.titulo,
                 opciones = buildList {
-                    if (rutina.puedoDeshacer) add(OpcionDeMenu(stringResource(R.string.hoy_deshacer_mi_marca), alElegir = alDeshacer))
+                    // Completa se destilda con un toque; a medias (1 de 2) el toque suma, así que deshacer va acá.
+                    if (rutina.puedoDeshacer && !rutina.completa) {
+                        add(OpcionDeMenu(stringResource(R.string.hoy_deshacer_mi_marca), alElegir = alDeshacer))
+                    }
                     add(
                         OpcionDeMenu(
                             texto = stringResource(R.string.hoy_borrar_rutina),
@@ -150,7 +166,7 @@ private fun detalleDeRutina(rutina: RutinaDeHoy): String {
  * la tarjeta, por eso la casilla no se anuncia sola.
  */
 @Composable
-private fun CasillaDeProgreso(hechas: Int, completa: Boolean, modifier: Modifier = Modifier) {
+internal fun CasillaDeProgreso(hechas: Int, completa: Boolean, modifier: Modifier = Modifier) {
     val colores = MaterialTheme.colorScheme
     val forma = RoundedCornerShape(8.dp)
     val (fondo, borde) = when {

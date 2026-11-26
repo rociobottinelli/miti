@@ -2,7 +2,6 @@ package ar.edu.uade.miti.presentation.hoy
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.border
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,21 +40,30 @@ import java.time.LocalTime
  * vence y el avatar de quien la tiene asignada. Una atrasada se marca con texto, no solo con color (RNF08).
  */
 /**
- * Una próxima tarea. Tocarla la marca como hecha (RF03), igual que una rutina; la casilla de la izquierda lo
- * indica y el snackbar permite deshacerlo.
+ * Una tarea de Hoy. Tocarla la marca como hecha (RF03) y, si ya está hecha, la vuelve a dejar pendiente: el mismo
+ * cuadradito que las rutinas, así se entiende igual.
  */
 @Composable
 fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifier = Modifier, alBorrar: () -> Unit = {}) {
-    val atrasada = tarea.cuando is CuandoVence.Atrasada
-    val marcarComoHecha = stringResource(R.string.hoy_tarea_marcar)
+    val atrasada = tarea.cuando is CuandoVence.Atrasada && !tarea.hecha
+    val accion = stringResource(if (tarea.hecha) R.string.hoy_marcar_pendiente else R.string.hoy_tarea_marcar)
+    val estado = stringResource(if (tarea.hecha) R.string.hoy_rutina_hecha else R.string.hoy_rutina_pendiente)
+    val vibracion = LocalHapticFeedback.current
+    val alTocar = {
+        vibracion.performHapticFeedback(if (tarea.hecha) HapticFeedbackType.ToggleOff else HapticFeedbackType.ToggleOn)
+        alCompletar()
+    }
     Surface(
-        onClick = alCompletar,
+        onClick = alTocar,
         modifier = modifier
             .fillMaxWidth()
-            // TalkBack la lee como una sola cosa: "Pagar ABL, Jueves 18:00 · Tomás", y anuncia la acción.
-            .semantics(mergeDescendants = true) { onClick(label = marcarComoHecha) { alCompletar(); true } },
+            // TalkBack la lee como una sola cosa: "Pagar ABL, Jueves 18:00 · Tomás, Hecha", y anuncia la acción.
+            .semantics(mergeDescendants = true) {
+                stateDescription = estado
+                onClick(label = accion) { alTocar(); true }
+            },
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = if (tarea.hecha) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
@@ -62,18 +71,13 @@ fun TarjetaDeTarea(tarea: TareaDeHoy, alCompletar: () -> Unit, modifier: Modifie
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // La casilla vacía, como en las rutinas: se toca para marcarla como hecha.
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                    .clearAndSetSemantics {},
-            )
+            CasillaDeProgreso(hechas = 0, completa = tarea.hecha)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = tarea.titulo,
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (tarea.hecha) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    textDecoration = if (tarea.hecha) TextDecoration.LineThrough else null,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
