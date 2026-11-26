@@ -1,6 +1,6 @@
 package ar.edu.uade.miti.presentation.widget
 
-import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.AlternarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.sesion.ObservarUsuarioUseCase
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -14,6 +14,6 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface DependenciasDelWidget {
     fun observarEstado(): ObservarEstadoDelWidget
-    fun marcarRutina(): MarcarRutinaUseCase
+    fun alternarRutina(): AlternarRutinaUseCase
     fun observarUsuario(): ObservarUsuarioUseCase
 }

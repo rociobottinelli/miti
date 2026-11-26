@@ -28,10 +28,13 @@ import ar.edu.uade.miti.domain.repository.SituacionDeSincronizacion
 import ar.edu.uade.miti.domain.repository.SincronizacionRepository
 import ar.edu.uade.miti.domain.usecase.ObservarSiHayItemsUseCase
 import ar.edu.uade.miti.domain.usecase.hogar.ObservarIntegrantesUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.AlternarTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.CompletarTareaUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.ObservarTareasHechasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarProximasTareasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ReabrirTareaUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
+import ar.edu.uade.miti.domain.usecase.rutinas.AlternarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.DeshacerMarcaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.EliminarRutinaUseCase
 import ar.edu.uade.miti.domain.usecase.rutinas.MarcarRutinaUseCase
@@ -111,12 +114,15 @@ class HoyViewModelTest {
             observarSiHayItems = ObservarSiHayItemsUseCase(rutinas, pendientes),
             observarIntegrantes = ObservarIntegrantesUseCase(hogar),
             observarUsuario = ObservarUsuarioUseCase(sesion),
-            marcarRutina = MarcarRutinaUseCase(rutinas, reloj, IdsSecuenciales()),
+            alternarRutina = AlternarRutinaUseCase(
+                rutinas, MarcarRutinaUseCase(rutinas, reloj, IdsSecuenciales()), DeshacerMarcaUseCase(rutinas, reloj), reloj,
+            ),
             observarEstadoDeSincronizacion = ObservarEstadoDeSincronizacionUseCase(sync, reloj),
             observarItemsSinEnviar = ObservarItemsSinEnviarUseCase(sync),
             sincronizarAhora = SincronizarAhoraUseCase(sync),
             consultarPermisos = ConsultarPermisosDeAvisosUseCase(alarmas),
-            completarTarea = CompletarTareaUseCase(pendientes),
+            observarTareasHechas = ObservarTareasHechasUseCase(pendientes),
+            alternarTarea = AlternarTareaUseCase(pendientes, CompletarTareaUseCase(pendientes), ReabrirTareaUseCase(pendientes)),
             reabrirTarea = ReabrirTareaUseCase(pendientes),
             deshacerMarca = DeshacerMarcaUseCase(rutinas, reloj),
             eliminarRutina = EliminarRutinaUseCase(rutinas),
@@ -170,47 +176,61 @@ class HoyViewModelTest {
     }
 
     @Test
-    fun `marcar una rutina ya completa avisa y no agrega otra marca`() = runTest(planificador) {
+    fun `tocar una rutina que completo solo el otro explica quien fue y no la cambia`() = runTest(planificador) {
         rutinas.rutinas.value = listOf(basura, pancho)
         rutinas.registros.value = listOf(RegistroRutina("m1", "basura", TOMAS, miercoles.atTime(8, 0)))
         val vm = viewModel()
 
         vm.eventos.test {
             vm.marcar("basura")
-            assertEquals(EventoDeHoy.RutinaYaCompleta, awaitItem())
+            assertEquals(EventoDeHoy.MarcadaPorOtro("Tomás"), awaitItem())
         }
         assertEquals(1, rutinas.registros.value.size)
     }
 
     @Test
-    fun `tocar una tarea la marca como hecha y deshacer la vuelve a dejar pendiente`() = runTest(planificador) {
-        pendientes.pendientes.value = listOf(abl, veterinario)
-        val vm = viewModel()
-
-        vm.eventos.test {
-            vm.completar("abl")
-            assertEquals(EventoDeHoy.TareaHecha("abl", "Pagar ABL"), awaitItem())
-        }
-        assertTrue(pendientes.pendientes.value.single { it.id == "abl" }.resuelto)
-
-        vm.reabrir("abl")
-        assertEquals(false, pendientes.pendientes.value.single { it.id == "abl" }.resuelto)
-    }
-
-    @Test
-    fun `marcar avisa con Deshacer y deshacer saca solo la marca propia`() = runTest(planificador) {
+    fun `tocar una rutina completa la destilda sacando solo mi marca`() = runTest(planificador) {
         rutinas.rutinas.value = listOf(pancho)
         rutinas.registros.value = listOf(RegistroRutina("de-tomas", "pancho", TOMAS, miercoles.atTime(8, 0)))
         val vm = viewModel()
 
-        vm.eventos.test {
-            vm.marcar("pancho")
-            assertEquals(EventoDeHoy.RutinaMarcada("pancho", "Darle de comer a Pancho"), awaitItem())
-        }
+        vm.marcar("pancho")
         assertEquals(2, rutinas.registros.value.size)
 
-        vm.deshacerMarca("pancho")
+        vm.marcar("pancho")
         assertEquals(listOf("de-tomas"), rutinas.registros.value.map { it.id })
+    }
+
+    @Test
+    fun `tocar una tarea la tilda, sigue en la lista y otro toque la destilda`() = runTest(planificador) {
+        pendientes.pendientes.value = listOf(abl, veterinario)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            primerEstado()
+            vm.completar("abl")
+            val tildada = expectMostRecentItem() as HoyUiState.Contenido
+            // Las pendientes primero; la hecha queda al final, tildada.
+            assertEquals(listOf("vete" to false, "abl" to true), tildada.tareas.map { it.id to it.hecha })
+
+            vm.completar("abl")
+            val destildada = expectMostRecentItem() as HoyUiState.Contenido
+            assertEquals(listOf("abl" to false, "vete" to false), destildada.tareas.map { it.id to it.hecha })
+        }
+    }
+
+    @Test
+    fun `una tarea atrasada desaparece al hacerla y por eso se ofrece deshacer`() = runTest(planificador) {
+        val atrasada = tarea("plomero", "Llamar al plomero", ANA, miercoles.minusDays(1).atTime(9, 0))
+        pendientes.pendientes.value = listOf(atrasada, abl)
+        val vm = viewModel()
+
+        vm.eventos.test {
+            vm.completar("plomero")
+            assertEquals(EventoDeHoy.TareaHecha("plomero", "Llamar al plomero"), awaitItem())
+        }
+        vm.reabrir("plomero")
+        assertEquals(false, pendientes.pendientes.value.single { it.id == "plomero" }.resuelto)
     }
 
     @Test
@@ -257,9 +277,23 @@ class HoyViewModelTest {
     }
 
     @Test
-    fun `con todo hecho y sin tareas pendientes muestra todo al dia`() = runTest(planificador) {
+    fun `con todo hecho festeja pero deja la lista para poder destildar`() = runTest(planificador) {
         rutinas.rutinas.value = listOf(basura)
         rutinas.registros.value = listOf(RegistroRutina("m1", "basura", ANA, miercoles.atTime(8, 0)))
+
+        viewModel().uiState.test {
+            val estado = primerEstado() as HoyUiState.Contenido
+            assertTrue(estado.todoAlDia)
+            assertTrue(estado.rutinas.single().completa)
+        }
+    }
+
+    @Test
+    fun `si no hay nada para hoy muestra todo al dia`() = runTest(planificador) {
+        // Solo una rutina de los lunes, y hoy es miércoles.
+        rutinas.rutinas.value = listOf(
+            Rutina("lunes", HOGAR, "Cambiar las sábanas", Frecuencia.DIAS_DE_LA_SEMANA, setOf(java.time.DayOfWeek.MONDAY), 1),
+        )
 
         viewModel().uiState.test {
             assertTrue(primerEstado() is HoyUiState.TodoAlDia)
@@ -272,7 +306,7 @@ class HoyViewModelTest {
         rutinas.registros.value = listOf(RegistroRutina("m1", "basura", ANA, miercoles.atTime(21, 3)))
 
         viewModel(desde = miercoles.atTime(23, 59)).uiState.test {
-            assertTrue(primerEstado() is HoyUiState.TodoAlDia)
+            assertTrue((primerEstado() as HoyUiState.Contenido).todoAlDia)
 
             planificador.advanceTimeBy(61_000)
 
@@ -328,12 +362,16 @@ class HoyViewModelTest {
             ObservarSiHayItemsUseCase(rutinasQueFallan, pendientes),
             ObservarIntegrantesUseCase(hogar),
             ObservarUsuarioUseCase(sesion),
-            MarcarRutinaUseCase(rutinasQueFallan, reloj, IdsSecuenciales()),
+            AlternarRutinaUseCase(
+                rutinasQueFallan, MarcarRutinaUseCase(rutinasQueFallan, reloj, IdsSecuenciales()),
+                DeshacerMarcaUseCase(rutinasQueFallan, reloj), reloj,
+            ),
             ObservarEstadoDeSincronizacionUseCase(sync, reloj),
             ObservarItemsSinEnviarUseCase(sync),
             SincronizarAhoraUseCase(sync),
             ConsultarPermisosDeAvisosUseCase(alarmas),
-            CompletarTareaUseCase(pendientes),
+            ObservarTareasHechasUseCase(pendientes),
+            AlternarTareaUseCase(pendientes, CompletarTareaUseCase(pendientes), ReabrirTareaUseCase(pendientes)),
             ReabrirTareaUseCase(pendientes),
             DeshacerMarcaUseCase(rutinasQueFallan, reloj),
             EliminarRutinaUseCase(rutinasQueFallan),
