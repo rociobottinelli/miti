@@ -53,6 +53,13 @@ data class RegistroRutinaDto(
     @Json(name = "server_updated_at") val serverUpdatedAt: String? = null,
 )
 
+/** Lo único que se puede cambiar de una marca ya subida: deshacerla (migración 5). */
+@JsonClass(generateAdapter = true)
+data class RegistroBorradoDto(
+    @Json(name = "updated_at") val updatedAt: Long,
+    val deleted: Boolean = true,
+)
+
 @JsonClass(generateAdapter = true)
 data class PendienteDto(
     val id: String,

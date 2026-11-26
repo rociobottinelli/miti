@@ -39,6 +39,9 @@ data class ItemDeCompra(
 sealed interface EventoDeCompras {
     data object CompraTerminada : EventoDeCompras
 
+    /** Se borró un ítem: el snackbar ofrece deshacerlo. */
+    data class Borrado(val titulo: String) : EventoDeCompras
+
     /** El mensaje viene del caso de uso ("Ya está en la lista", "No hay nada en el carrito"…). */
     data class NoSePudo(val mensaje: String) : EventoDeCompras
 }

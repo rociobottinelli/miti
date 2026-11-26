@@ -52,6 +52,8 @@ fun TarjetaDeRutina(
     rutina: RutinaDeHoy,
     alMarcar: () -> Unit,
     modifier: Modifier = Modifier,
+    alDeshacer: () -> Unit = {},
+    alBorrar: () -> Unit = {},
 ) {
     val detalle = detalleDeRutina(rutina)
     val estado = when {
@@ -109,6 +111,24 @@ fun TarjetaDeRutina(
                     if (rutina.pendienteDeSync) IndicadorPendienteDeSync()
                 }
             }
+            MenuDeItem(
+                titulo = rutina.titulo,
+                opciones = buildList {
+                    if (rutina.puedoDeshacer) add(OpcionDeMenu(stringResource(R.string.hoy_deshacer_mi_marca), alElegir = alDeshacer))
+                    add(
+                        OpcionDeMenu(
+                            texto = stringResource(R.string.hoy_borrar_rutina),
+                            confirmar = Confirmacion(
+                                titulo = stringResource(R.string.hoy_borrar_titulo, rutina.titulo),
+                                texto = stringResource(R.string.hoy_borrar_texto),
+                                boton = stringResource(R.string.hoy_borrar),
+                            ),
+                            alElegir = alBorrar,
+                        ),
+                    )
+                },
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
         }
     }
 }

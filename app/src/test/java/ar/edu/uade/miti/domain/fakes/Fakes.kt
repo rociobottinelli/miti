@@ -59,6 +59,7 @@ open class FakeRutinaRepository : FallaConfigurable(), RutinaRepository {
     override suspend fun guardarRutina(rutina: Rutina) = escribir { rutinas.update { reemplazar(it, rutina) { r -> r.id } } }
     override suspend fun eliminarRutina(id: String) = escribir { rutinas.update { lista -> lista.filterNot { it.id == id } } }
     override suspend fun agregarRegistro(registro: RegistroRutina) = escribir { registros.update { it + registro } }
+    override suspend fun quitarRegistro(id: String) = escribir { registros.update { lista -> lista.filterNot { it.id == id } } }
 }
 
 class FakePendienteRepository : FallaConfigurable(), PendienteRepository {

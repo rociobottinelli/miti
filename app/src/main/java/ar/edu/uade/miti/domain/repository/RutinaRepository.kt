@@ -12,4 +12,7 @@ interface RutinaRepository {
     suspend fun guardarRutina(rutina: Rutina): Resource<Unit>
     suspend fun eliminarRutina(id: String): Resource<Unit>
     suspend fun agregarRegistro(registro: RegistroRutina): Resource<Unit>
+
+    /** Deshace una marca (borrado lógico): deja de contar en los dos celulares. */
+    suspend fun quitarRegistro(id: String): Resource<Unit>
 }

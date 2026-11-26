@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.edu.uade.miti.core.Resource
 import ar.edu.uade.miti.domain.model.Pendiente
+import ar.edu.uade.miti.domain.usecase.pendientes.EliminarPendienteUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.MarcarEnCarritoUseCase
+import ar.edu.uade.miti.domain.usecase.pendientes.RestaurarPendienteUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.ObservarListaDeComprasUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.RegistrarCompraUseCase
 import ar.edu.uade.miti.domain.usecase.pendientes.TerminarCompraUseCase
@@ -43,6 +45,8 @@ class ComprasViewModel @Inject constructor(
     private val registrarCompra: RegistrarCompraUseCase,
     private val marcarEnCarrito: MarcarEnCarritoUseCase,
     private val terminarCompra: TerminarCompraUseCase,
+    private val eliminarPendiente: EliminarPendienteUseCase,
+    private val restaurarPendiente: RestaurarPendienteUseCase,
     private val observarEstadoDeSincronizacion: ObservarEstadoDeSincronizacionUseCase,
     private val observarItemsSinEnviar: ObservarItemsSinEnviarUseCase,
     private val sincronizarAhora: SincronizarAhoraUseCase,
@@ -123,6 +127,30 @@ class ComprasViewModel @Inject constructor(
             } finally {
                 terminando.value = false
             }
+        }
+    }
+
+    /** El último ítem borrado, para el "Deshacer" del snackbar. */
+    private var ultimoBorrado: Pendiente? = null
+
+    fun borrar(id: String) {
+        viewModelScope.launch {
+            when (val resultado = eliminarPendiente(id)) {
+                is Resource.Success -> {
+                    ultimoBorrado = resultado.data
+                    _eventos.emit(EventoDeCompras.Borrado(resultado.data.titulo))
+                }
+                is Resource.Error -> _eventos.emit(EventoDeCompras.NoSePudo(resultado.message))
+            }
+        }
+    }
+
+    fun deshacerBorrado() {
+        val item = ultimoBorrado ?: return
+        ultimoBorrado = null
+        viewModelScope.launch {
+            val resultado = restaurarPendiente(item)
+            if (resultado is Resource.Error) _eventos.emit(EventoDeCompras.NoSePudo(resultado.message))
         }
     }
 

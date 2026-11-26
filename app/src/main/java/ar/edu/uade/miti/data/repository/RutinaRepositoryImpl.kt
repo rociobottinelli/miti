@@ -34,4 +34,6 @@ class RutinaRepositoryImpl @Inject constructor(
     override suspend fun eliminarRutina(id: String) = avisoDeCambios.escribir { dao.marcarBorrada(id, reloj.millis()) }
 
     override suspend fun agregarRegistro(registro: RegistroRutina) = avisoDeCambios.escribir { dao.guardarRegistro(registro.toEntity(reloj.cambioPendiente())) }
+
+    override suspend fun quitarRegistro(id: String) = avisoDeCambios.escribir { dao.marcarRegistroBorrado(id, reloj.millis()) }
 }

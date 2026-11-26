@@ -6,7 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.runtime.Composable
@@ -69,11 +71,28 @@ fun HoyScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
-            val mensaje = when (evento) {
-                EventoDeHoy.RUTINA_YA_COMPLETA -> R.string.hoy_evento_ya_completa
-                EventoDeHoy.NO_SE_PUDO_MARCAR -> R.string.hoy_evento_no_se_pudo_marcar
+            when (evento) {
+                EventoDeHoy.RutinaYaCompleta -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_evento_ya_completa))
+                EventoDeHoy.NoSePudoMarcar -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_evento_no_se_pudo_marcar))
+                is EventoDeHoy.NoSePudo -> snackbarHostState.showSnackbar(evento.mensaje)
+                is EventoDeHoy.Borrado -> snackbarHostState.showSnackbar(recursos.getString(R.string.hoy_borrado, evento.titulo))
+                is EventoDeHoy.RutinaMarcada -> {
+                    val resultado = snackbarHostState.showSnackbar(
+                        message = recursos.getString(R.string.hoy_rutina_marcada, evento.titulo),
+                        actionLabel = recursos.getString(R.string.accion_deshacer),
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (resultado == SnackbarResult.ActionPerformed) viewModel.deshacerMarca(evento.rutinaId)
+                }
+                is EventoDeHoy.TareaHecha -> {
+                    val resultado = snackbarHostState.showSnackbar(
+                        message = recursos.getString(R.string.hoy_tarea_hecha, evento.titulo),
+                        actionLabel = recursos.getString(R.string.accion_deshacer),
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (resultado == SnackbarResult.ActionPerformed) viewModel.reabrir(evento.tareaId)
+                }
             }
-            snackbarHostState.showSnackbar(recursos.getString(mensaje))
         }
     }
 
@@ -89,6 +108,12 @@ fun HoyScreen(
         alConfirmarMarca = viewModel::confirmarMarca,
         alCancelarMarca = viewModel::cancelarMarca,
         alConfigurarAvisos = { abrirConfiguracionDeAvisos(contexto, it) },
+        alCompletarTarea = viewModel::completar,
+        acciones = AccionesDeItems(
+            deshacerMarca = viewModel::deshacerMarca,
+            borrarRutina = viewModel::borrarRutina,
+            borrarTarea = viewModel::borrarTarea,
+        ),
         snackbarHostState = snackbarHostState,
     )
 

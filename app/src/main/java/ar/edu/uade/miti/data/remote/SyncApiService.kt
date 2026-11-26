@@ -6,12 +6,14 @@ import ar.edu.uade.miti.data.remote.dto.HogarDto
 import ar.edu.uade.miti.data.remote.dto.IntegranteDto
 import ar.edu.uade.miti.data.remote.dto.PagoDto
 import ar.edu.uade.miti.data.remote.dto.PendienteDto
+import ar.edu.uade.miti.data.remote.dto.RegistroBorradoDto
 import ar.edu.uade.miti.data.remote.dto.RegistroRutinaDto
 import ar.edu.uade.miti.data.remote.dto.RutinaDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Query
 
@@ -83,6 +85,18 @@ interface SyncApiService {
         @Body filas: List<RegistroRutinaDto>,
         @Query("columns") columnas: String = "id,rutina_id,integrante_id,fecha_hora,updated_at,deleted",
         @Header("Prefer") preferencia: String = SOLO_NUEVOS,
+    ): Response<Unit>
+
+    /**
+     * Deshacer una marca: la única edición que el servidor acepta sobre una marca, y solo sobre las propias
+     * (migración 5). [id] va como filtro de PostgREST: "eq.<uuid>".
+     */
+    @PATCH("rest/v1/registros_rutina")
+    suspend fun borrarRegistro(
+        @Header("Authorization") autorizacion: String,
+        @Query("id") id: String,
+        @Body cambio: RegistroBorradoDto,
+        @Header("Prefer") preferencia: String = "return=minimal",
     ): Response<Unit>
 
     @GET("rest/v1/pendientes")

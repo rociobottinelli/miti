@@ -61,6 +61,10 @@ fun HoyContenido(
     alSincronizar: () -> Unit = {},
     alConfirmarMarca: () -> Unit = {},
     alCancelarMarca: () -> Unit = {},
+    /** Tocar una tarea la marca como hecha (RF03). */
+    alCompletarTarea: (String) -> Unit = {},
+    /** Las opciones del menú "⋮" de cada tarjeta. */
+    acciones: AccionesDeItems = AccionesDeItems(),
     /** "Configuración" del aviso de permisos: abre el ajuste del sistema que falta (lo resuelve HoyScreen). */
     alConfigurarAvisos: (AvisoDePermisos) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -113,7 +117,7 @@ fun HoyContenido(
                     )
                 }
                 is HoyUiState.Contenido -> {
-                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
+                    ListaDeHoy(estado, alMarcar, alElegirFiltro, alAbrirAjustes, alSincronizar, alConfigurarAvisos, alCompletarTarea, acciones)
                     estado.confirmarMarca?.let {
                         DialogoConfirmarMarca(it, estado.encabezado.fecha, alConfirmarMarca, alCancelarMarca)
                     }
@@ -131,6 +135,8 @@ private fun ListaDeHoy(
     alAbrirAjustes: () -> Unit,
     alSincronizar: () -> Unit,
     alConfigurarAvisos: (AvisoDePermisos) -> Unit,
+    alCompletarTarea: (String) -> Unit,
+    acciones: AccionesDeItems,
 ) {
     EncabezadoConAviso(estado.encabezado, alAbrirAjustes, alSincronizar, alConfigurarAvisos)
     FiltrosDeTareas(estado.filtro, estado.encabezado.otro, alElegirFiltro)
@@ -148,7 +154,13 @@ private fun ListaDeHoy(
                 )
             }
             items(estado.rutinas, key = { "rutina-${it.id}" }) { rutina ->
-                TarjetaDeRutina(rutina, alMarcar = { alMarcar(rutina.id) }, modifier = Modifier.animateItem())
+                TarjetaDeRutina(
+                    rutina,
+                    alMarcar = { alMarcar(rutina.id) },
+                    modifier = Modifier.animateItem(),
+                    alDeshacer = { acciones.deshacerMarca(rutina.id) },
+                    alBorrar = { acciones.borrarRutina(rutina.id) },
+                )
             }
         }
         item(key = "titulo-tareas") { TituloDeSeccion(stringResource(R.string.hoy_seccion_tareas)) }
@@ -167,7 +179,12 @@ private fun ListaDeHoy(
             }
         } else {
             items(estado.tareas, key = { "tarea-${it.id}" }) { tarea ->
-                TarjetaDeTarea(tarea, modifier = Modifier.animateItem())
+                TarjetaDeTarea(
+                    tarea,
+                    alCompletar = { alCompletarTarea(tarea.id) },
+                    modifier = Modifier.animateItem(),
+                    alBorrar = { acciones.borrarTarea(tarea.id) },
+                )
             }
         }
     }
@@ -275,3 +292,10 @@ private fun HoyCargandoPreview() = VistaPrevia(HoyUiState.Cargando)
 @Preview(name = "Error", showSystemUi = true)
 @Composable
 private fun HoyErrorPreview() = VistaPrevia(HoyUiState.Error)
+
+/** Lo que se puede hacer desde el menú "⋮" de las tarjetas de Hoy. */
+data class AccionesDeItems(
+    val deshacerMarca: (String) -> Unit = {},
+    val borrarRutina: (String) -> Unit = {},
+    val borrarTarea: (String) -> Unit = {},
+)
